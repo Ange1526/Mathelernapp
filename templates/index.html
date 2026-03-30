@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Willkommen{% endblock %}
+{% block content %}
+<section class="hero">
+  <div class="hero-content">
+    <h1>Deine App<br><span class="accent">beginnt hier.</span></h1>
+    <p>Ein sauberer Startpunkt mit Login, Datenbank und allem was du brauchst.</p>
+    <div class="hero-actions">
+      <a href="{{ url_for('register') }}" class="btn-primary btn-large">Jetzt starten</a>
+      <a href="{{ url_for('login') }}" class="btn-ghost">Einloggen →</a>
+    </div>
+  </div>
+  <div class="hero-visual">
+    <div class="card-float card-1">✓ Login &amp; Registrierung</div>
+    <div class="card-float card-2">✓ PostgreSQL Datenbank</div>
+    <div class="card-float card-3">✓ Sicher &amp; deployed</div>
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<div class="dashboard">
+  <div class="dash-header">
+    <h2>Dein Dashboard</h2>
+    <p>Hallo <strong>{{ current_user.username }}</strong> – hier sind deine Notizen.</p>
+  </div>
+
+  <!-- Neue Notiz -->
+  <div class="dash-card new-note">
+    <h3>Neue Notiz</h3>
+    <form method="POST">
+      <div class="form-group">
+        <textarea name="content" rows="3" placeholder="Was möchtest du festhalten?" required></textarea>
+      </div>
+      <button type="submit" class="btn-primary">Speichern</button>
+    </form>
+  </div>
+
+  <!-- Notizen-Liste -->
+  <div class="notes-grid">
+    {% if notes %}
+      {% for note in notes %}
+      <div class="note-card">
+        <p>{{ note.content }}</p>
+        <div class="note-footer">
+          <small>{{ note.created_at.strftime('%d.%m.%Y %H:%M') }}</small>
+          <form method="POST" action="{{ url_for('delete_note', note_id=note.id) }}" style="display:inline">
+            <button type="submit" class="btn-delete" onclick="return confirm('Löschen?')">✕</button>
+          </form>
+        </div>
+      </div>
+      {% endfor %}
+    {% else %}
+      <div class="empty-state">
+        <p>Noch keine Notizen. Erstelle deine erste oben!</p>
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
