@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Registrieren{% endblock %}
+{% block content %}
+<div class="auth-wrapper">
+  <div class="auth-card">
+    <h2>Konto erstellen</h2>
+    <p class="auth-sub">Schon registriert? <a href="{{ url_for('login') }}">Einloggen</a></p>
+
+    <form method="POST">
+      <div class="form-group">
+        <label>Benutzername</label>
+        <input type="text" name="username" required autofocus placeholder="dein_name">
+      </div>
+      <div class="form-group">
+        <label>E-Mail</label>
+        <input type="email" name="email" required placeholder="du@beispiel.ch">
+      </div>
+      <div class="form-group">
+        <label>Passwort <small>(min. 6 Zeichen)</small></label>
+        <input type="password" name="password" required placeholder="••••••••">
+      </div>
+      <button type="submit" class="btn-primary btn-full">Konto erstellen</button>
+    </form>
+  </div>
+</div>
+{% endblock %}
