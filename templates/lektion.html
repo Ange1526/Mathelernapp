@@ -1,0 +1,168 @@
+{% extends "base.html" %}
+
+{% block content %}
+<style>
+    body { background-color: #F4F7FA !important; }
+
+    .lektion-wrapper {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 40px 20px;
+        min-height: 70vh;
+    }
+
+    .task-card {
+        background: white;
+        width: 100%;
+        max-width: 600px;
+        padding: 50px 40px;
+        border-radius: 40px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.03);
+        position: relative;
+        text-align: center;
+    }
+
+    .task-header { text-align: left; margin-bottom: 30px; }
+
+    .chapter-info {
+        color: #667EEA;
+        font-weight: bold;
+        text-transform: uppercase;
+        font-size: 0.8rem;
+        letter-spacing: 1px;
+    }
+
+    .task-instruction {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #2D3748;
+        margin-top: 5px;
+    }
+
+    .level-indicator {
+        position: absolute;
+        top: 30px;
+        right: 30px;
+        background-color: #667EEA;
+        color: white;
+        width: 45px;
+        height: 45px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 12px;
+        font-size: 1.3rem;
+        font-weight: bold;
+    }
+
+    .math-expression {
+        font-size: clamp(2.5rem, 10vw, 4rem);
+        font-weight: 700;
+        color: #2D3748;
+        margin: 40px 0;
+    }
+
+    .answer-input {
+        width: 100%;
+        max-width: 300px;
+        background-color: #F7FAFC;
+        border: 2px solid #EDF2F7;
+        border-radius: 15px;
+        padding: 18px;
+        font-size: 1.8rem;
+        text-align: center;
+        outline: none;
+        transition: all 0.2s;
+        color: #2D3748;
+    }
+
+    .answer-input:focus {
+        border-color: #667EEA;
+        background-color: #fff;
+        box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+    }
+
+    .button-row {
+        display: flex;
+        justify-content: flex-end;
+        max-width: 300px;
+        margin: 30px auto 0;
+    }
+
+    .btn-check {
+        background: linear-gradient(135deg, #7F73CF 0%, #B885DC 100%);
+        color: white;
+        border: none;
+        padding: 15px 40px;
+        border-radius: 15px;
+        font-weight: 600;
+        cursor: pointer;
+        font-size: 1.1rem;
+        transition: transform 0.1s;
+    }
+
+    .btn-check:active { transform: scale(0.98); }
+
+    .is-correct { border: 3px solid #48BB78 !important; background-color: #F0FFF4 !important; }
+    .is-wrong { border: 3px solid #F56565 !important; background-color: #FFF5F5 !important; }
+</style>
+
+<div class="lektion-wrapper">
+    <div class="task-card">
+        <div class="level-indicator">
+            {{ current_user.current_level if current_user.is_authenticated else '1' }}
+        </div>
+
+        <div class="task-header">
+            <div class="chapter-info">Kapitel {{ chapter|default('1') }}</div>
+            <div class="task-instruction">Löse die Aufgabe</div>
+        </div>
+
+        <div class="math-expression">
+            {{ frage|default('0 + 0') }}
+        </div>
+
+        <form action="{{ url_for('check') }}" method="POST">
+            <input type="text" 
+                   id="antwort-input"
+                   name="antwort" 
+                   inputmode="decimal"
+                   placeholder="Antwort..." 
+                   class="answer-input"
+                   autocomplete="off"
+                   autofocus 
+                   required>
+            
+            <input type="hidden" name="chapter" value="{{ chapter }}">
+            
+            <div class="button-row">
+                <button type="submit" class="btn-check">Prüfen</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const inputField = document.getElementById("antwort-input");
+    
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                if ("{{ category }}" === "success") {
+                    inputField.classList.add("is-correct");
+                } else if ("{{ category }}" === "error") {
+                    inputField.classList.add("is-wrong");
+                    setTimeout(() => {
+                        inputField.classList.remove("is-wrong");
+                        inputField.value = "";
+                        inputField.focus();
+                    }, 1200);
+                }
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+});
+</script>
+{% endblock %}

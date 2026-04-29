@@ -1,46 +1,164 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>{% block title %}MeineApp{% endblock %}</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AlgebraLernen</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-purple: #9262C4;
+            --main-blue: #667EEA;
+            --bg-light: #F7FAFC;
+            --text-dark: #2D3748;
+            --text-medium: #718096;
+            --status-green: #48BB78;
+            --orange-flame: #F6AD55;
+            --level-b-bg: #EBF4FF;
+            --level-b-text: #3182CE;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-light);
+            margin: 0;
+            color: var(--text-dark);
+        }
+
+        /* HEADER */
+        .header {
+            background-color: white;
+            padding: 15px 50px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            width: 100%;
+            z-index: 1000;
+            box-sizing: border-box; /* Wichtig, damit Padding die Breite nicht sprengt */
+        }
+
+        .logo-area {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo-square {
+            background-color: var(--main-blue);
+            color: white;
+            font-weight: bold;
+            padding: 10px;
+            border-radius: 10px;
+            font-size: 0.8rem;
+        }
+
+        .logo-text {
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        .user-stats {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .stat-pill {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background-color: var(--level-b-bg);
+            padding: 8px 18px;
+            border-radius: 100px;
+            font-size: 0.9rem;
+            color: var(--main-blue);
+        }
+
+        .stat-pill.orange {
+            background-color: #FFF5F1;
+            color: #FF7043;
+        }
+
+        .avatar-area {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--text-medium);
+        }
+
+        /* FLASH MESSAGES */
+        .message-container {
+            margin: 100px auto 10px; /* margin-top auf 100px wegen fixed header */
+            width: 90%;
+            max-width: 1200px;
+        }
+        .message { padding: 15px; border-radius: 10px; text-align: center; margin-bottom: 10px; }
+        .success { background-color: #c6f6d5; color: #22543d; }
+        .error { background-color: #fed7d7; color: #822727; }
+
+        /* CONTENT AREA */
+        .content-area {
+            padding: 20px;
+            margin-top: 80px; /* Platz für den fixierten Header */
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            box-sizing: border-box;
+        }
+    </style>
 </head>
 <body>
 
-<nav class="navbar">
-  <a href="{{ url_for('index') }}" class="nav-logo">MeineApp</a>
-  <div class="nav-links">
-    {% if current_user.is_authenticated %}
-      <span class="nav-user">👋 {{ current_user.username }}</span>
-      <a href="{{ url_for('dashboard') }}">Dashboard</a>
-      <a href="{{ url_for('logout') }}" class="btn-outline">Logout</a>
-    {% else %}
-      <a href="{{ url_for('login') }}">Login</a>
-      <a href="{{ url_for('register') }}" class="btn-primary">Registrieren</a>
-    {% endif %}
-  </div>
-</nav>
+    <header class="header">
+        <div class="logo-area">
+            <div class="logo-square">Σ</div>
+            <div class="logo-text">AlgebraLernen</div>
+        </div>
 
-<main>
-  {% with messages = get_flashed_messages(with_categories=true) %}
-    {% if messages %}
-      <div class="flash-container">
-        {% for category, message in messages %}
-          <div class="flash flash-{{ category }}">{{ message }}</div>
-        {% endfor %}
-      </div>
-    {% endif %}
-  {% endwith %}
+        <div class="user-stats">
+            {% if current_user.is_authenticated %}
+                <div class="stat-pill orange">
+                    🔥 {{ current_user.streak }}
+                </div>
+                <div class="stat-pill">
+                    ✨ {{ current_user.xp }}
+                </div>
+                
+                <div class="avatar-area">
+                    <a href="{{ url_for('logout') }}" style="text-decoration: none; color: var(--text-medium); font-size: 0.9rem;">Logout</a>
+                </div>
+            {% else %}
+                <a href="{{ url_for('login') }}" style="text-decoration: none; color: var(--main-blue); font-weight: 600;">Login</a>
+            {% endif %}
+        </div>
+    </header>
 
-  {% block content %}{% endblock %}
-</main>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="message-container">
+          {% for category, message in messages %}
+            <div class="message {{ category }}">{{ message }}</div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
 
-<footer>
-  <p>Maturaarbeit 2025 · Gebaut mit Flask &amp; PostgreSQL</p>
-</footer>
+    <main class="content-area">
+        <div class="container">
+            {% block content %}
+            {% endblock %}
+        </div>
+    </main>
 
 </body>
 </html>
