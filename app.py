@@ -6,8 +6,17 @@ import os
 import random
 
 app = Flask(__name__)
-app.config["SECRET_KEY"] = "dev-secret-matura-2024"
-app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///local.db"
+
+# ── SVE-Konfiguration (Render & Lokal kompatibel) ──────────────────────────────
+# Holt den Secret Key von Render, nutzt lokal den Fallback
+app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "dev-secret-matura-2024")
+
+# Verarbeitet die Datenbank-URL (behebt das "postgres://" vs "postgresql://" Problem bei SQLAlchemy)
+database_url = os.environ.get("DATABASE_URL", "sqlite:///local.db")
+if database_url.startswith("postgres://"):
+    database_url = database_url.replace("postgres://", "postgresql://", 1)
+
+app.config["SQLALCHEMY_DATABASE_URI"] = database_url
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 db = SQLAlchemy(app)
@@ -39,7 +48,8 @@ class Progress(db.Model):
 
 @login_manager.user_loader
 def load_user(user_id):
-    return User.query.get(int(user_id))
+    # Verwendung von session.get() statt query.get(), da query.get() veraltet ist
+    return db.session.get(User, int(user_id))
 
 def generate_math_task(chapter, level):
     span = 10 if level == "A" else 50 if level == "B" else 100
@@ -172,5 +182,6 @@ def logout():
     return redirect(url_for("index"))
 
 if __name__ == "__main__":
-    with app.app_context(): db.create_all()
+    with app.app_context(): 
+        db.create_all()
     app.run(debug=True)
