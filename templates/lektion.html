@@ -105,48 +105,121 @@
     .btn-check:active { transform: scale(0.98); }
 
     .is-correct { border: 3px solid #48BB78 !important; background-color: #F0FFF4 !important; }
-    .is-wrong { border: 3px solid #F56565 !important; background-color: #FFF5F5 !important; }
+    .is-wrong   { border: 3px solid #F56565 !important; background-color: #FFF5F5 !important; }
+
+    /* Fortschrittsbalken */
+    .progress-bar-wrapper {
+        width: 100%;
+        max-width: 600px;
+        margin-bottom: 20px;
+    }
+
+    .progress-meta {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.8rem;
+        color: #A0AEC0;
+        margin-bottom: 6px;
+    }
+
+    .progress-bar-bg {
+        background: #EDF2F7;
+        border-radius: 10px;
+        height: 8px;
+        overflow: hidden;
+    }
+
+    .progress-bar-fill {
+        height: 100%;
+        border-radius: 10px;
+        background: linear-gradient(135deg, #667EEA, #764BA2);
+        transition: width 0.4s ease;
+    }
+
+    /* Hinweis-Box */
+    .hint-box {
+        background: #FFFBEB;
+        border: 2px solid #F6E05E;
+        border-radius: 20px;
+        padding: 20px 25px;
+        margin-top: 25px;
+        text-align: left;
+    }
+
+    .hint-box-title {
+        font-weight: 700;
+        color: #744210;
+        margin-bottom: 8px;
+        font-size: 1rem;
+    }
+
+    .hint-box-text {
+        color: #975A16;
+        font-size: 0.95rem;
+        line-height: 1.5;
+    }
 </style>
 
 <div class="lektion-wrapper">
-    <div class="task-card">
-        <div class="level-indicator">
-            {{ current_user.current_level if current_user.is_authenticated else '1' }}
+
+    <!-- Fortschrittsbalken -->
+    <div class="progress-bar-wrapper">
+        <div class="progress-meta">
+            <span>Aufgaben gelöst: {{ geloest }} / {{ min_questions }}</span>
+            <span>Quote: {{ quote }}%</span>
         </div>
+        <div class="progress-bar-bg">
+            <div class="progress-bar-fill" style="width: {{ [geloest / min_questions * 100, 100] | min }}%;"></div>
+        </div>
+    </div>
+
+    <div class="task-card">
+        <div class="level-indicator">{{ level }}</div>
 
         <div class="task-header">
-            <div class="chapter-info">Kapitel {{ chapter|default('1') }}</div>
+            <div class="chapter-info">Kapitel {{ chapter }}</div>
             <div class="task-instruction">Löse die Aufgabe</div>
         </div>
 
-        <div class="math-expression">
-            {{ frage|default('0 + 0') }}
-        </div>
+        <div class="math-expression">{{ frage }}</div>
 
         <form action="{{ url_for('check') }}" method="POST">
-            <input type="text" 
+            <input type="text"
                    id="antwort-input"
-                   name="antwort" 
+                   name="antwort"
                    inputmode="decimal"
-                   placeholder="Antwort..." 
+                   placeholder="Antwort..."
                    class="answer-input"
                    autocomplete="off"
-                   autofocus 
+                   autofocus
                    required>
-            
+
             <input type="hidden" name="chapter" value="{{ chapter }}">
-            
+
             <div class="button-row">
                 <button type="submit" class="btn-check">Prüfen</button>
             </div>
         </form>
+
+        <!-- Hinweis-Box: erscheint nach 2 Fehlern in Folge -->
+        {% if show_hint %}
+        <div class="hint-box">
+            <div class="hint-box-title">💡 Tipp</div>
+            <div class="hint-box-text">
+                Schau dir die Vorzeichen genau an.<br>
+                Beispiel: <strong>3 + (−5)</strong> bedeutet du gehst von 3 um 5 nach links → Ergebnis: <strong>−2</strong><br>
+                <em>Merksatz: Plus und Minus ergibt Minus.</em>
+            </div>
+        </div>
+        {% endif %}
+
     </div>
 </div>
 
 <script>
 document.addEventListener("DOMContentLoaded", function() {
     const inputField = document.getElementById("antwort-input");
-    
+
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
             {% for category, message in messages %}
