@@ -1,3 +1,32 @@
-node_modules/
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+
+# Virtuelle Umgebungen
+.venv/
+venv/
+env/
+
+# Flask / Datenbanken
+instance/
+*.db
+*.sqlite
+*.sqlite3
+
+# Umgebungsvariablen
 .env
 .env.local
+
+# Node
+node_modules/
+
+# IDE / Editor
+.vscode/
+.idea/
+
+# Betriebssystem
+.DS_Store
+Thumbs.db
