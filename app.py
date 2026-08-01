@@ -4,6 +4,7 @@ from flask_login import LoginManager, UserMixin, login_user, logout_user, login_
 from werkzeug.security import generate_password_hash, check_password_hash
 import os
 import random
+from datetime import datetime
 
 app = Flask(__name__)
 
@@ -45,13 +46,96 @@ class User(UserMixin, db.Model):
 
 
 class Progress(db.Model):
-    id              = db.Column(db.Integer, primary_key=True)
-    user_id         = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
-    chapter         = db.Column(db.String(10))
-    level           = db.Column(db.String(1))
-    correct_cnt     = db.Column(db.Integer, default=0)
-    total_cnt       = db.Column(db.Integer, default=0)
-    consecutive_err = db.Column(db.Integer, default=0)  # Fehler in Folge
+    id = db.Column(db.Integer, primary_key=True)
+
+    user_id = db.Column(
+        db.Integer,
+        db.ForeignKey("user.id"),
+        nullable=False
+    )
+
+    chapter = db.Column(db.String(10))
+    level = db.Column(db.String(1))
+
+    correct_cnt = db.Column(db.Integer, default=0)
+    total_cnt = db.Column(db.Integer, default=0)
+
+    consecutive_err = db.Column(db.Integer, default=0)
+
+
+
+class TaskAttempt(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+
+    user_id = db.Column(
+        db.Integer,
+        db.ForeignKey("user.id"),
+        nullable=False
+    )
+
+    chapter = db.Column(db.String(10), nullable=False)
+    level = db.Column(db.String(1), nullable=False)
+
+    question = db.Column(
+        db.String(255),
+        nullable=False
+    )
+
+    correct_solution = db.Column(
+        db.Float,
+        nullable=False
+    )
+
+    user_answer = db.Column(
+        db.Float,
+        nullable=False
+    )
+
+    correct = db.Column(
+        db.Boolean,
+        nullable=False
+    )
+
+    created_at = db.Column(
+        db.DateTime,
+        default=datetime.utcnow
+    )
+
+
+
+class MarkedTask(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+
+    user_id = db.Column(
+        db.Integer,
+        db.ForeignKey("user.id"),
+        nullable=False
+    )
+
+    question = db.Column(
+        db.String(255),
+        nullable=False
+    )
+
+    solution = db.Column(
+        db.Float,
+        nullable=False
+    )
+
+    chapter = db.Column(
+        db.String(10),
+        nullable=False
+    )
+
+    level = db.Column(
+        db.String(1),
+        nullable=False
+    )
+
+    created_at = db.Column(
+        db.DateTime,
+        default=datetime.utcnow
+    )
 
 
 @login_manager.user_loader
@@ -139,10 +223,23 @@ def lektion(chapter):
     correct = prog.correct_cnt or 0
     quote   = int((correct / total) * 100) if total > 0 else 0
 
-    # Aufgabe generieren & Lösung in Session speichern
-    frage, loesung = generate_math_task(chapter, current_user.current_level)
-    session["current_solution"] = loesung
+    # Aufgabe generieren oder alte Aufgabe wieder anzeigen
+if session.get("show_same_task"):
 
+    frage = session.get("current_question")
+    loesung = session.get("current_solution")
+
+    session["show_same_task"] = False
+
+else:
+
+    frage, loesung = generate_math_task(
+        chapter,
+        current_user.current_level
+    )
+
+    session["current_question"] = frage
+    session["current_solution"] = loesung
     # Theorie-Hinweis anzeigen wenn 2 Fehler in Folge
     show_hint = prog.consecutive_err >= CONSECUTIVE_ERR
 
@@ -161,89 +258,108 @@ def lektion(chapter):
 @app.route("/check", methods=["POST"])
 @login_required
 def check():
-    user_input        = request.form.get("antwort", "").strip().replace(",", ".")
-    korrekte_loesung  = session.get("current_solution")
-    chapter           = request.form.get("chapter", "1.3")
+
+    user_input = request.form.get("antwort", "").strip().replace(",", ".")
+
+    korrekte_loesung = session.get(
+        "current_solution"
+    )
+
+    frage = session.get(
+        "current_question"
+    )
+
+    chapter = request.form.get(
+        "chapter",
+        "1.3"
+    )
+
 
     try:
         user_val = float(user_input)
+
     except ValueError:
-        flash("Ungültige Eingabe – bitte eine Zahl eingeben.", "error")
-        return redirect(url_for("lektion", chapter=chapter))
+        flash(
+            "Ungültige Eingabe – bitte eine Zahl eingeben.",
+            "error"
+        )
 
-    prog = get_or_create_progress(current_user.id, chapter, current_user.current_level)
+        return redirect(
+            url_for(
+                "lektion",
+                chapter=chapter
+            )
+        )
 
-    # ── Antwort auswerten ──────────────────────────────────────────────────────
-    if abs(user_val - float(korrekte_loesung)) < 0.0001:
-        prog.correct_cnt     += 1
-        prog.consecutive_err  = 0
-        current_user.xp       = (current_user.xp or 0) + 10
-        flash("✅ Richtig!", "success")
+
+    prog = get_or_create_progress(
+        current_user.id,
+        chapter,
+        current_user.current_level
+    )
+
+
+    richtig = abs(
+        user_val - float(korrekte_loesung)
+    ) < 0.0001
+
+
+
+    # Aufgabe speichern für Auswertung
+    attempt = TaskAttempt(
+        user_id=current_user.id,
+        chapter=chapter,
+        level=current_user.current_level,
+        question=frage,
+        correct_solution=float(korrekte_loesung),
+        user_answer=user_val,
+        correct=richtig
+    )
+
+    db.session.add(attempt)
+
+
+
+    if richtig:
+
+        prog.correct_cnt += 1
+        prog.consecutive_err = 0
+
+        current_user.xp = (
+            current_user.xp or 0
+        ) + 10
+
+        flash(
+            "✅ Richtig!",
+            "success"
+        )
+
+
     else:
-        prog.consecutive_err += 1
-        flash(f"❌ Falsch! Richtige Lösung: {int(korrekte_loesung) if korrekte_loesung == int(korrekte_loesung) else korrekte_loesung}", "error")
+
+    prog.consecutive_err += 1
+
+    # gleiche Aufgabe behalten
+    session["show_same_task"] = True
+
+    flash(
+        "❌ Falsch! Schau dir den Tipp an oder markiere die Aufgabe.",
+        "error"
+    )
+
 
     prog.total_cnt += 1
+
+
     db.session.commit()
 
-    # ── Levelwechsel erst nach MIN_QUESTIONS Aufgaben ─────────────────────────
-    if prog.total_cnt >= MIN_QUESTIONS:
-        rate      = prog.correct_cnt / prog.total_cnt
-        old_level = current_user.current_level
 
-        # ── AUFSTIEG ──────────────────────────────────────────────────────────
-        if rate >= RATE_UP:
-            reset_progress(prog)
-
-            if old_level == "A":
-                current_user.current_level = "B"
-                db.session.commit()
-                return redirect(url_for("levelup_a_b", chapter=chapter))
-
-            elif old_level == "B":
-                current_user.current_level = "C"
-                db.session.commit()
-                return redirect(url_for("levelup_b_c", chapter=chapter))
-
-            elif old_level == "C":
-                # Kapitel abgeschlossen → nächstes Kapitel, zurück auf A
-                current_user.current_level = "A"
-                try:
-                    p1, p2 = chapter.split(".")
-                    next_chapter = f"{p1}.{int(p2) + 1}"
-                except Exception:
-                    next_chapter = "1.4"
-                current_user.current_chapter = next_chapter
-                db.session.commit()
-                return redirect(url_for("kapitel_abgeschlossen", chapter=chapter, next_chapter=next_chapter))
-
-        # ── ABSTIEG ───────────────────────────────────────────────────────────
-        elif rate < RATE_DOWN:
-            reset_progress(prog)
-
-            if old_level == "C":
-                current_user.current_level = "B"
-                db.session.commit()
-                flash("⬇️ Abstieg zu Level B – weiter üben!", "warning")
-
-            elif old_level == "B":
-                current_user.current_level = "A"
-                db.session.commit()
-                flash("⬇️ Abstieg zu Level A – Grundlagen wiederholen!", "warning")
-
-            # Bei Level A bleibt man, Theorie-Hinweis wird in lektion() angezeigt
-            db.session.commit()
-
-        # ── STABIL (60–79 %) → weiter üben ───────────────────────────────────
-        else:
-            # Kein Levelwechsel, aber Zähler zurücksetzen damit es nicht ewig weiterläuft
-            reset_progress(prog)
-            db.session.commit()
-            flash("➡️ Weiter so – noch mehr üben für den Aufstieg!", "info")
-
-    return redirect(url_for("lektion", chapter=chapter))
-
-
+    return redirect(
+        url_for(
+            "lektion",
+            chapter=chapter
+        )
+    )
 # ── Level-Up Seiten ────────────────────────────────────────────────────────────
 
 @app.route("/levelup_a_b")
