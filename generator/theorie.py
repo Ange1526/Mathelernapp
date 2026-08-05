@@ -34,6 +34,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
+from .anzeige import MINUS
+
 
 @dataclass
 class Schritt:
@@ -197,7 +199,69 @@ PUNKT_VOR_STRICH = Animation(
              "gleichartige Glieder zusammenfassen.",
 )
 
-#: S7 · Potenzgesetze
+#: S22 · Was eine Potenz ist — Lektionen 7.1 und 7.2.
+WAS_IST_POTENZ = Animation(
+    titel="Was eine Potenz ist",
+    schritte=[
+        S("Eine Potenz ist eine Abkürzung.",
+          ("2", "mark", "b"), ("³", "mark", "e")),
+        S("Die kleine Zahl sagt, wie oft die grosse dasteht — hier dreimal.",
+          ("2", "", "b"), ("³", "mark", "e")),
+        S("Ausgeschrieben heisst das 2 · 2 · 2.",
+          ("2 · 2 · 2", "neu", "b")),
+        S("Jetzt einfach ausrechnen: 2 · 2 = 4, mal 2 = 8.",
+          ("8", "neu", "b")),
+        S("6 wäre falsch — das käme vom Malnehmen der beiden Zahlen.",
+          ("2 · 3 = 6", "weg", "falsch")),
+    ],
+    merksatz="Eine Potenz ist eine Abkürzung für ein Produkt gleicher "
+             "Faktoren. Der Exponent sagt, wie oft die Basis vorkommt — er "
+             "wird nicht mit ihr multipliziert.",
+)
+
+#: S23 · Klammer vor Potenz vor Punkt vor Strich — Lektionen 7.3 und 7.4.
+#: Der Unterschied zwischen −7² und (−7)² ist der Kern von 7.4.
+POTENZ_VORZEICHEN = Animation(
+    titel="Minus vor der Potenz",
+    schritte=[
+        S("Hier steht ein Minus vor einer Potenz.",
+          (MINUS, "mark", "op"), ("7", "", "b"), ("²", "", "e")),
+        S("Ohne Klammer gehört das Minus NICHT zur Basis.",
+          (MINUS, "mark", "op"), ("7", "mark", "b"), ("²", "", "e")),
+        S("Zuerst die Potenz: 7² ist 49.",
+          (MINUS, "", "op"), ("49", "neu", "b")),
+        S("Erst dann kommt das Minus dazu.",
+          (MINUS + "49", "neu", "op")),
+        S("Mit Klammer wäre es anders: dort gehört das Minus zur Basis.",
+          ("(" + MINUS + "7)² = +49", "weg", "falsch")),
+    ],
+    merksatz="Klammer vor Potenz vor Punkt vor Strich. Ein Minus ohne "
+             "Klammer gehört nicht zur Basis: −7² ist −49, aber (−7)² "
+             "ist +49.",
+)
+
+#: S25 · Potenz eines Produkts — Lektionen 7.9 und 7.10, Vorstufe zu 3e.
+PRODUKT_POTENZ = Animation(
+    titel="Potenz eines Produkts",
+    schritte=[
+        S("In der Klammer stehen zwei Faktoren: die 5 und das a.",
+          ("(", "", "k1"), ("5", "mark", "z"), ("a", "mark", "v"),
+          (")", "", "k2"), ("²", "", "e")),
+        S("Die Hochzahl gilt für BEIDE — für die Zahl und für den Buchstaben.",
+          ("5² · a²", "neu", "z")),
+        S("5² ist 25, a² bleibt a².",
+          ("25a²", "neu", "z")),
+        S("Rückwärts geht es genauso: aus 25a² wird wieder (5a)².",
+          ("25a² = (5a)²", "mark", "z")),
+        S("Das braucht man beim Wurzelziehen: √(25a²) ist 5a.",
+          ("√(25a²) = 5a", "neu", "z")),
+    ],
+    merksatz="Eine Potenz eines Produkts gilt für jeden Faktor darin: (2ab)² "
+             "ist 4a²b². Rückwärts heisst das: bei der Zahl die Wurzel "
+             "ziehen, bei jeder Variablen die Hochzahl halbieren.",
+)
+
+#: S24 · Potenzgesetze — Lektionen 7.5 bis 7.8.
 POTENZEN = Animation(
     titel="Potenzen multiplizieren",
     schritte=[
@@ -467,7 +531,10 @@ FUER_KAPITEL: dict[str, Animation] = {
     "4.9": PRODUKTE,
     "6.1": PUNKT_ZUERST,
     "6.5": PUNKT_VOR_STRICH,
-    "7.1": POTENZEN,
+    "7.1": WAS_IST_POTENZ,
+    "7.3": POTENZ_VORZEICHEN,
+    "7.5": POTENZEN,
+    "7.9": PRODUKT_POTENZ,
     "8.1": WURZEL,
     "8.3": WURZEL_SUMME,
     "8.4": WURZELGESETZE,

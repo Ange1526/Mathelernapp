@@ -59,10 +59,15 @@ SCHABLONE_FUER: dict[str, str] = {
     "4.2": "4.2", "4.3": "4.2", "4.4": "4.2", "4.5": "4.2",
     "4.6": "4.2", "4.8": "4.2",
     "4.9": "4.9",
-    # Potenzen — 7.10 ist das dritte haeufige Ruecksprungziel
-    "7.1": "7.1", "7.2": "7.1", "7.3": "7.1", "7.4": "7.1", "7.5": "7.1",
-    "7.6": "7.1", "7.7": "7.1", "7.8": "7.1", "7.9": "7.1", "7.10": "7.1",
-    "7.11": "7.1",
+    # Kapitel 7 — vier Schablonen statt einer. S22 deckt 7.1 und 7.2 ab,
+    # S23 die Lektionen 7.3 und 7.4 (Erhebung 3c), S24 die Potenzgesetze
+    # 7.5 bis 7.8 und S25 die Lektionen 7.9 und 7.10 — letztere ist das
+    # dritte haeufige Ruecksprungziel im Netz.
+    # 7.11 «Gemischt» bleibt offen, wie 4.10, 5.9, 6.8 und 8.10.
+    "7.1": "7.1", "7.2": "7.1",
+    "7.3": "7.3", "7.4": "7.3",
+    "7.5": "7.5", "7.6": "7.5", "7.7": "7.5", "7.8": "7.5",
+    "7.9": "7.9", "7.10": "7.9",
     # Kapitel 8 Wurzeln — vier Schablonen, S26 bis S29.
     # 8.10 «Gemischt» bleibt bewusst offen: keine der vier Schablonen baut
     # Aufgaben, die alle Formen des Kapitels mischen.

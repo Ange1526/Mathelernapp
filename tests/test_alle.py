@@ -12,7 +12,7 @@ import test_s3
 import test_s5
 import test_s16
 import test_s20
-import test_s7
+import test_s22
 import test_s8
 
 if __name__ == "__main__":
@@ -20,8 +20,7 @@ if __name__ == "__main__":
     for name, modul in (("S2 Grundoperationen", test_s2),
                         ("S4 Faktorisieren", test_s4),
                         ("S10 Klammern", test_s10),
-                        ("S16 Gleichartige Terme", test_s16),
-                        ("S7 Potenzen", test_s7)):
+                        ("S16 Gleichartige Terme", test_s16)):
         print(f"\n{'=' * 96}\n{name}\n{'=' * 96}")
         fehler += modul.lauf()
 
@@ -37,6 +36,10 @@ if __name__ == "__main__":
     for S in (test_s15.S15, test_s15.S17):
         print(f"\n{'=' * 96}\n{S.nr}  ·  {S.titel}\n{'=' * 96}")
         fehler += test_s15.lauf(S)
+
+    for S in (test_s22.S22, test_s22.S23, test_s22.S24, test_s22.S25):
+        print(f"\n{'=' * 96}\n{S.nr}  ·  {S.titel}\n{'=' * 96}")
+        fehler += test_s22.lauf(S)
 
     for S in (test_s20.S20, test_s20.S21):
         print(f"\n{'=' * 96}\n{S.nr}  ·  {S.titel}\n{'=' * 96}")

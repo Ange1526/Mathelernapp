@@ -28,10 +28,11 @@ from .s16_gleichartig import S16
 from .s15_s17_sorten import S15, S17
 from .s3_terme import S12, S13, S14
 from .s5_produkte import S18, S19
-from .s7_potenzen import S7
 from .s2_grundoperationen import S2
 from .s4_faktorisieren import S4
 from .s6_punktrechnung import S20, S21
+from .s22_s23_potenzen import S22, S23
+from .s24_s25_potenzgesetze import S24, S25
 
 #: Kapitelnummer in der App  ->  Schablone
 #: Die Nummern folgen deiner Lektionslandkarte.
@@ -53,7 +54,12 @@ KAPITEL = {
     "4.1": S15,     # Sorten erkennen        4.1 · 4.7
     "4.2": S16,     # Zusammenfassen         4.2 – 4.6 · 4.8 — Ruecksprungziel
     "4.9": S17,     # Produkte als Sorten    4.9 — Erhebung 2a
-    "7.1": S7,      # Potenzen           — Erhebung 3c, Ruecksprungziel 7.10
+    # Kapitel 7 — S22 bis S25 haben S7 abgeloest. 7.10 ist das dritte
+    # haeufige Ruecksprungziel im Netz und liegt jetzt bei S25.
+    "7.1": S22,     # Potenzen verstehen            7.1 – 7.2
+    "7.3": S23,     # Potenz vor Punkt vor Strich   7.3 – 7.4 — Erhebung 3c
+    "7.5": S24,     # Potenzgesetze                 7.5 – 7.8
+    "7.9": S25,     # Potenz eines Produkts         7.9 – 7.10 — Vorstufe 3e
     "10.1": S10,    # Klammern           — Vorstufe zu 2b und 3d
     "12.1": S4,     # Faktorisieren    — Erhebung 4a bis 4d
     # Kapitel 8 Wurzeln — bringt die Erhebungsteilaufgaben 3a, 3b und 3e.

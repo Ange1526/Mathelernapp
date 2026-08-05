@@ -1,5 +1,14 @@
 # -*- coding: utf-8 -*-
 """
+ABGELOEST. Diese Schablone haengt seit Runde K7 an keiner Lektion mehr —
+S22 bis S25 in `s22_s23_potenzen.py` und `s24_s25_potenzgesetze.py` haben
+Kapitel 7 uebernommen. Grund: die Levelachse war hier numerisch, A, B und C
+hatten denselben Aufbau und nur groessere Zahlen.
+
+Die Datei bleibt vorerst liegen, damit sich die alten Aufgaben mit den neuen
+vergleichen lassen. Sie ist in `anbindung.py` und `netz.py` nicht mehr
+eingetragen und wird von der App nicht mehr aufgerufen.
+
 Potenzen       (Lektionen 7.1 – 7.11, Erhebung 3c und Vorstufe zu 3e, 2c)
 
     «Rechne aus.»  /  «Fasse zusammen.»
