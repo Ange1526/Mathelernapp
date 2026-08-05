@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="task-card">
+  <h2>Einstufung fertig</h2>
+  {% if bericht %}
+  <p>Du hast {{ bericht.gestellt }} Aufgaben gelöst.
+     <strong>{{ bericht.sicher_anzahl }} von {{ bericht.ziel_anzahl }}</strong>
+     Lektionen sitzen bereits ({{ bericht.prozent }} %).</p>
+  <p>Du beginnst bei: <strong>{{ bericht.start_name }}</strong></p>
+  <p>Ab hier bekommst du deinen eigenen Weg. Du musst nichts auswählen —
+     die App zeigt dir immer, was als Nächstes dran ist.</p>
+  {% endif %}
+  <a href="{{ url_for('lernen') }}" class="btn-primary">Losgehen</a>
+</div>
+{% endblock %}

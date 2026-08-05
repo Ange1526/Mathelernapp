@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="lektion-wrapper">
+  <h2>Stand</h2>
+  <p><strong>{{ sicher }} von {{ gesamt }}</strong> Lektionen sitzen ({{ prozent }} %).</p>
+
+  <h3>Erhebungsprüfung</h3>
+  <ul>{% for a, ok in erhebung.items() %}<li>{{ a }} {{ "geübt" if ok else "noch nicht" }}</li>{% endfor %}</ul>
+
+  {% if uebersprungen %}
+  <div class="hint-box">
+    <div class="hint-box-title">Noch nicht übbar</div>
+    <div class="hint-box-text">
+      Für {{ uebersprungen|length }} Lektionen gibt es noch keine Aufgaben.
+      Sie zählen <strong>nicht</strong> als sicher:
+      <ul>{% for nr, name in uebersprungen %}<li>{{ nr }} {{ name }}</li>{% endfor %}</ul>
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

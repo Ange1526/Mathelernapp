@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="lektion-wrapper">
+  <div class="task-card">
+    <h2>Probe-Erhebung ausgewertet</h2>
+    <p><strong>{{ bericht.richtig }} von {{ bericht.gesamt }}</strong> richtig
+       ({{ bericht.quote }} %).</p>
+
+    {% if bericht.fehlerfrei %}
+      <div class="loesung-box">
+        <div class="loesung-text">Fehlerfrei — genau das ist das Ziel.</div>
+      </div>
+    {% else %}
+      <h3>Da hat es noch geklemmt</h3>
+      <ul>{% for nr, name in bericht.fehlerhafte %}<li>{{ nr }} · {{ name }}</li>{% endfor %}</ul>
+      <p>Diese Aufgabenarten kommen jetzt nochmals dran.</p>
+    {% endif %}
+
+    {% if bericht.nicht_geprueft %}
+    <div class="hint-box">
+      <div class="hint-box-title">Nicht geprüft</div>
+      <div class="hint-box-text">
+        {{ bericht.nicht_geprueft }} Teilaufgaben konnten nicht gestellt werden,
+        weil es dafür noch keine Aufgaben gibt. Sie zählen nicht als bestanden.
+      </div>
+    </div>
+    {% endif %}
+
+    <a href="{{ url_for('vertiefung') }}" class="btn-star">Weiter</a>
+  </div>
+</div>
+{% endblock %}

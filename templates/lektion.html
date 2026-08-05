@@ -104,8 +104,116 @@
 
     .btn-check:active { transform: scale(0.98); }
 
-    .is-correct { border: 3px solid #48BB78 !important; background-color: #F0FFF4 !important; }
-    .is-wrong   { border: 3px solid #F56565 !important; background-color: #FFF5F5 !important; }
+    /* Zurück-Link und Stern */
+    .top-row {
+        width: 100%;
+        max-width: 600px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 14px;
+    }
+
+    .back-link {
+        color: #718096;
+        text-decoration: none;
+        font-size: 0.9rem;
+        font-weight: 600;
+    }
+
+    .back-link:hover { color: #667EEA; }
+
+    .btn-star {
+        margin-top: 15px;
+        background: white;
+        color: #667EEA;
+        border: 2px solid #667EEA;
+        padding: 12px 25px;
+        border-radius: 15px;
+        font-weight: 600;
+        cursor: pointer;
+        font-size: 1rem;
+    }
+
+    .btn-star:hover { background: #F4F7FA; }
+
+    .star-form {
+        margin-top: 35px;
+        padding-top: 28px;
+        border-top: 1px solid #EDF2F7;
+    }
+
+    .notiz-label {
+        display: block;
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #718096;
+        margin-bottom: 8px;
+        text-align: center;
+    }
+
+    .notiz-label span { color: #A0AEC0; font-weight: 400; }
+
+    .notiz-feld {
+        width: 100%;
+        max-width: 380px;
+        border: 2px solid #EDF2F7;
+        border-radius: 12px;
+        padding: 12px 14px;
+        font-size: 0.92rem;
+        font-family: inherit;
+        color: #2D3748;
+        outline: none;
+        resize: vertical;
+        background-color: #F7FAFC;
+        box-sizing: border-box;
+    }
+
+    .notiz-feld:focus { border-color: #667EEA; background-color: #fff; }
+
+    .loesung-box {
+        background: #F0FFF4;
+        border: 2px solid #9AE6B4;
+        border-radius: 20px;
+        padding: 20px 25px;
+        margin-top: 20px;
+    }
+
+    .loesung-text { color: #22543D; font-weight: 700; font-size: 1.1rem; }
+
+    .btn-weiter {
+        margin-top: 14px;
+        background: #48BB78;
+        color: white;
+        border: none;
+        padding: 12px 28px;
+        border-radius: 15px;
+        font-weight: 600;
+        cursor: pointer;
+        font-size: 1rem;
+    }
+
+    .is-correct  { border: 3px solid #48BB78 !important; background-color: #F0FFF4 !important; }
+    .is-wrong    { border: 3px solid #F56565 !important; background-color: #FFF5F5 !important; }
+    .is-unfertig { border: 3px solid #ECC94B !important; background-color: #FFFFF0 !important; }
+
+    /* Rückmeldung zur konkreten Antwort. Steht direkt unter dem Eingabefeld,
+       nicht oben in der Flash-Leiste — dort landet sie bei dieser hohen Karte
+       ausserhalb des Sichtfelds. */
+    .rueckmeldung {
+        max-width: 380px;
+        margin: 18px auto 0;
+        padding: 14px 18px;
+        border-radius: 15px;
+        font-size: 1rem;
+        font-weight: 600;
+        line-height: 1.45;
+        text-align: left;
+    }
+
+    .rueckmeldung.success { background: #F0FFF4; border: 2px solid #9AE6B4; color: #22543D; }
+    .rueckmeldung.error   { background: #FFF5F5; border: 2px solid #FEB2B2; color: #822727; }
+    .rueckmeldung.warning { background: #FFFFF0; border: 2px solid #F6E05E; color: #744210; }
 
     /* Fortschrittsbalken */
     .progress-bar-wrapper {
@@ -162,14 +270,21 @@
 
 <div class="lektion-wrapper">
 
+    <div class="top-row">
+        <a href="{{ url_for('dashboard') }}" class="back-link">← Zurück zum Dashboard</a>
+        <a href="{{ url_for('markierte') }}" class="back-link">
+            ⭐ Meine Fragen{% if offene_fragen %} ({{ offene_fragen }}){% endif %}
+        </a>
+    </div>
+
     <!-- Fortschrittsbalken -->
     <div class="progress-bar-wrapper">
         <div class="progress-meta">
-            <span>Aufgaben gelöst: {{ geloest }} / {{ min_questions }}</span>
-            <span>Quote: {{ quote }}%</span>
+            <span>{% if chapter in generator_kapitel %}Aufgabenarten sicher{% else %}Aufgaben gelöst{% endif %}: {{ geloest }} / {{ min_questions }}</span>
+            <span>{{ quote }}%</span>
         </div>
         <div class="progress-bar-bg">
-            <div class="progress-bar-fill" style="width: {{ [geloest / min_questions * 100, 100] | min }}%;"></div>
+            <div class="progress-bar-fill" style="width: {{ [geloest / (min_questions or 1) * 100, 100] | min }}%;"></div>
         </div>
     </div>
 
@@ -177,9 +292,16 @@
         <div class="level-indicator">{{ level }}</div>
 
         <div class="task-header">
-            <div class="chapter-info">Kapitel {{ chapter }}</div>
-            <div class="task-instruction">Löse die Aufgabe</div>
+            <div class="chapter-info">Kapitel {{ chapter }}{% if chapter_name %} · {{ chapter_name }}{% endif %}</div>
+            <div class="task-instruction">{{ anleitung or "Löse die Aufgabe" }}</div>
         </div>
+
+        {% if kernidee %}
+        <div class="hint-box" style="border-color:#B794F4; background:#FAF5FF; margin-bottom:20px;">
+            <div class="hint-box-title" style="color:#553C9A;">Darum geht es</div>
+            <div class="hint-box-text" style="color:#6B46C1;">{{ kernidee }}</div>
+        </div>
+        {% endif %}
 
         <div class="math-expression">{{ frage }}</div>
 
@@ -201,15 +323,55 @@
             </div>
         </form>
 
-        <!-- Hinweis-Box: erscheint nach 2 Fehlern in Folge -->
+        <!-- Konkrete Rueckmeldung zur letzten Antwort -->
+        {% if antwort_text %}
+        <div class="rueckmeldung {{ antwort_status }}">
+            {% if antwort_status == 'success' %}✅{% elif antwort_status == 'warning' %}🟡{% else %}❌{% endif %}
+            {{ antwort_text }}
+        </div>
+        {% endif %}
+
+        <!-- Eigenes Formular, sonst blockiert das required im Antwortfeld -->
+        <form action="{{ url_for('markieren') }}" method="POST" class="star-form">
+            <input type="hidden" name="chapter" value="{{ chapter }}">
+
+            <label class="notiz-label" for="notiz">
+                Was ist unklar? <span>(optional, hilft dir später)</span>
+            </label>
+            <textarea id="notiz" name="notiz" class="notiz-feld" maxlength="500" rows="2"
+                      placeholder="z.B. Ich verstehe nicht, warum das Minus wegfällt"></textarea>
+
+            <button type="submit" class="btn-star">⭐ Frage für die Lehrperson merken</button>
+        </form>
+
+        <!-- Luecke: Hinweis auf das vorausgesetzte Kapitel -->
+        {% if luecke %}
+        <div class="hint-box" style="border-color:#90CDF4; background:#EBF8FF;">
+            <div class="hint-box-title" style="color:#2A4365;">Vielleicht fehlt etwas davor</div>
+            <div class="hint-box-text" style="color:#2C5282;">{{ luecke.text }}</div>
+            <form action="{{ url_for('luecke_schliessen') }}" method="POST" style="margin-top:12px;">
+                <input type="hidden" name="ziel" value="{{ luecke.kapitel }}">
+                <button type="submit" class="btn-star">Zuerst {{ luecke.name }} ueben</button>
+            </form>
+        </div>
+        {% endif %}
+
+        <!-- Hinweis-Box: erst nach mehreren Fehlern in Folge -->
         {% if show_hint %}
         <div class="hint-box">
             <div class="hint-box-title">💡 Tipp</div>
-            <div class="hint-box-text">
-                Schau dir die Vorzeichen genau an.<br>
-                Beispiel: <strong>3 + (−5)</strong> bedeutet du gehst von 3 um 5 nach links → Ergebnis: <strong>−2</strong><br>
-                <em>Merksatz: Plus und Minus ergibt Minus.</em>
-            </div>
+            <div class="hint-box-text">{{ hint_text | safe }}</div>
+        </div>
+        {% endif %}
+
+        <!-- Nach mehreren Versuchen die Lösung zeigen -->
+        {% if zeige_loesung %}
+        <div class="loesung-box">
+            <div class="loesung-text">Lösung: {{ loesung }}</div>
+            <form action="{{ url_for('naechste') }}" method="POST">
+                <input type="hidden" name="chapter" value="{{ chapter }}">
+                <button type="submit" class="btn-weiter">Weiter zur nächsten Aufgabe</button>
+            </form>
         </div>
         {% endif %}
 
@@ -219,23 +381,27 @@
 <script>
 document.addEventListener("DOMContentLoaded", function() {
     const inputField = document.getElementById("antwort-input");
+    if (!inputField) return;
 
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            {% for category, message in messages %}
-                if ("{{ category }}" === "success") {
-                    inputField.classList.add("is-correct");
-                } else if ("{{ category }}" === "error") {
-                    inputField.classList.add("is-wrong");
-                    setTimeout(() => {
-                        inputField.classList.remove("is-wrong");
-                        inputField.value = "";
-                        inputField.focus();
-                    }, 1200);
-                }
-            {% endfor %}
-        {% endif %}
-    {% endwith %}
+    const status = "{{ antwort_status or '' }}";
+
+    if (status === "success") {
+        inputField.classList.add("is-correct");
+        setTimeout(() => inputField.classList.remove("is-correct"), 1200);
+    } else if (status === "warning") {
+        // "unfertig": richtig gerechnet, nur noch nicht fertig geschrieben.
+        // Darum wird das Feld NICHT geleert, sondern markiert.
+        inputField.classList.add("is-unfertig");
+        setTimeout(() => inputField.classList.remove("is-unfertig"), 1500);
+        inputField.select();
+    } else if (status === "error") {
+        inputField.classList.add("is-wrong");
+        setTimeout(() => {
+            inputField.classList.remove("is-wrong");
+            inputField.value = "";
+            inputField.focus();
+        }, 1200);
+    }
 });
 </script>
 {% endblock %}

@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="lektion-wrapper">
+  <div class="task-card">
+    <h2>Du bist durch</h2>
+    <p>Alle Lektionen sitzen. Damit du bis zum Schluss dranbleibst, geht es so weiter:</p>
+
+    {% if probe_gemacht %}
+      <p>Deine letzte Probe-Erhebung: <strong>{{ probe_quote }} %</strong></p>
+    {% endif %}
+
+    <div class="hint-box" style="border-color:#9AE6B4; background:#F0FFF4;">
+      <div class="hint-box-title" style="color:#22543D;">{{ titel[modus] }}</div>
+      <div class="hint-box-text" style="color:#276749;">{{ beschreibung[modus] }}</div>
+      {% if modus == 'probe' %}
+        <a href="{{ url_for('probe') }}" class="btn-star">Probe-Erhebung starten</a>
+      {% else %}
+        <a href="{{ url_for('wiederholen', modus=modus) }}" class="btn-star">Loslegen</a>
+      {% endif %}
+    </div>
+
+    {% if schwach %}
+    <h3>Deine Wackelkandidaten</h3>
+    <ul>
+      {% for kap, lvl, bf, fehler, name in schwach %}
+      <li>{{ name }} · Level {{ lvl }} · {{ bf }} — {{ fehler }} Fehlversuche</li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+
+    <p style="margin-top:20px;">
+      <a href="{{ url_for('probe') }}" class="back-link">Probe-Erhebung</a> ·
+      <a href="{{ url_for('wiederholen', modus='schwach') }}" class="back-link">Wackelkandidaten</a> ·
+      <a href="{{ url_for('wiederholen', modus='level_c') }}" class="back-link">Alles auf Level C</a> ·
+      <a href="{{ url_for('ziel_erreicht') }}" class="back-link">Stand</a>
+    </p>
+  </div>
+</div>
+{% endblock %}

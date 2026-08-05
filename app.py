@@ -8,6 +8,21 @@ import os
 import random
 import secrets
 
+from korrektur import auswerten, aufgabe_aus_generator, Status
+from generator.anbindung import (KAPITEL, KAPITEL_NAMEN, aufgabe_aus_session,
+                                 kernidee, neue_aufgabe)
+from generator.lernstand import (LEVELS, MASTERY, Ziehung, bewerten,
+                                 fortschritt, naechstes_level, vorheriges_level)
+from generator.netz import (ALLE, KLARTEXT, SCHABLONE_FUER, ZIEL,
+                            erhebung_abgedeckt, naechste_lektion, restaufwand,
+                            rueckwaerts_gutschreiben, rueckwaerts_zu,
+                            voraussetzungen, zielmenge)
+from generator.netz import fortschritt as netz_fortschritt
+from generator.einstufung import Einstufung
+from generator.vertiefung import (LEVEL_C, MODI, PROBE_ERHEBUNG, SCHWACHSTELLEN,
+                                  BESCHREIBUNG, Probelauf, TITEL as VTITEL,
+                                  naechster_modus, schwachstellen)
+
 app = Flask(__name__)
 
 # ── Konfiguration ──────────────────────────────────────────────────────────────
@@ -40,6 +55,7 @@ CHAPTER_NAMES = {
     "1.6": "Addition negativ",
     "1.7": "Subtraktion negativ",
 }
+CHAPTER_NAMES.update(KAPITEL_NAMEN)
 
 # Hinweistext pro Kapitel, erscheint nach einer falschen Antwort
 HINTS = {
@@ -62,6 +78,12 @@ HINTS = {
 
 
 def get_hint(chapter):
+    """Bei Generatorkapiteln kommt der Tipp aus der Schablone — er passt damit
+    zur konkreten Bauform, nicht nur zum Kapitel."""
+    if chapter in KAPITEL:
+        tipps = (session.get("aufgabe") or {}).get("tipps") or []
+        if len(tipps) >= 2:
+            return tipps[1]
     return HINTS.get(chapter, HINTS["1.3"])
 
 # ── Modelle ────────────────────────────────────────────────────────────────────
@@ -99,12 +121,122 @@ class TaskAttempt(db.Model):
     level = db.Column(db.String(1), nullable=False)
 
     question = db.Column(db.String(255), nullable=False)
-    correct_solution = db.Column(db.Float, nullable=False)
-    user_answer = db.Column(db.Float, nullable=False)
+
+    # Text statt Float: Loesungen sind neu auch Brueche und Terme
+    correct_solution = db.Column(db.String(255), nullable=False)
+
+    # Rohtext der Schuelerin, unveraendert. Das ist das Studienmaterial --
+    # daraus werden spaeter die Fehlerkataloge nachgeschaerft.
+    user_answer = db.Column(db.String(255), nullable=False)
 
     correct = db.Column(db.Boolean, nullable=False)
 
+    # richtig | unfertig | falsch | eingabefehler | zeitlimit
+    status = db.Column(db.String(20))
+
+    # None | Katalogschluessel | "unbekannt"
+    # Nur "unbekannt" geht spaeter an den KI-Fallback.
+    fehlerschluessel = db.Column(db.String(50))
+
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+
+class BauformStand(db.Model):
+    """FEHLER 1 · Mastery pro Bauform statt Quote über die Lektion.
+
+    Bisher entschied «10 Aufgaben, 80 % richtig» über den Aufstieg. Damit
+    konnte jemand aufsteigen, der ausgerechnet eine Aufgabenart nie beherrscht
+    hat — die Lücke blieb bis zur Prüfung bestehen.
+
+    Neu hat jede Bauform ihr eigenes Häkchen. Das Level gilt erst als fertig,
+    wenn alle Bauformen sitzen. Wer eine nicht kann, bekommt genau die wieder —
+    nicht irgendeine.
+    """
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+
+    chapter = db.Column(db.String(10), nullable=False)
+    level = db.Column(db.String(1), nullable=False)
+    bauform = db.Column(db.String(10), nullable=False)
+
+    treffer = db.Column(db.Integer, default=0)      # richtige Antworten in Folge
+    fehler = db.Column(db.Integer, default=0)       # Fehlversuche insgesamt
+    gemeistert = db.Column(db.Boolean, default=False)
+
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+
+class KapitelStand(db.Model):
+    """FEHLER 2 · Ein Level pro Kapitel statt eines pro Schüler.
+
+    `User.current_level` galt für alles. Wer bei Brüchen schwach und beim
+    Faktorisieren stark ist, bekam für beides dasselbe Niveau — einmal
+    Überforderung, einmal Langeweile.
+
+    `User.current_level` bleibt bestehen (die alten Kapitel benutzen es
+    weiter), wird für Generatorkapitel aber nicht mehr gelesen.
+    """
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+
+    chapter = db.Column(db.String(10), nullable=False)
+    level = db.Column(db.String(1), default="A")
+    abgeschlossen = db.Column(db.Boolean, default=False)
+
+    #: Reihenfolge der noch nicht gezogenen Bauformen dieser Runde, als Text.
+    #: Muss gespeichert werden, sonst stimmt die Reihum-Ziehung nach einer
+    #: Unterbrechung nicht mehr.
+    offen = db.Column(db.String(255), default="")
+
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+
+class Lernweg(db.Model):
+    """Der persoenliche Weg EINES Schuelers durch das Netz.
+
+    Der Schueler waehlt kein Kapitel mehr. Nach dem Einstufungstest sagt die
+    App bei jedem Oeffnen, was jetzt dran ist — vorwaerts, wenn eine Lektion
+    sitzt, rueckwaerts zu genau der Voraussetzung, auf die ein Fehler deutet.
+    """
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False, unique=True)
+
+    #: Lektionen, die als sicher gelten — kommagetrennt, z.B. "1.9,1.19,3.11"
+    sicher = db.Column(db.Text, default="")
+
+    #: Woran er gerade arbeitet
+    aktuelle_lektion = db.Column(db.String(10))
+
+    #: Wohin er zurueckkehrt, wenn die Luecke geschlossen ist
+    zurueck_zu = db.Column(db.String(10))
+
+    #: Lektionen, die uebersprungen wurden, WEIL es noch keinen Generator gibt.
+    #: Sie gelten NICHT als sicher — sonst waere die Lueckenfreiheit eine Luege.
+    #: Sobald der Generator da ist, fallen sie in den Weg zurueck.
+    uebersprungen = db.Column(db.Text, default="")
+
+    eingestuft = db.Column(db.Boolean, default=False)
+
+    #: Ist der Weg durch? Dann laeuft die Vertiefung.
+    durchgelaufen = db.Column(db.Boolean, default=False)
+    probe_gemacht = db.Column(db.Boolean, default=False)
+    probe_quote = db.Column(db.Integer)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def sichere_menge(self):
+        return {l for l in (self.sicher or "").split(",") if l}
+
+    def setze_sicher(self, menge):
+        self.sicher = ",".join(sorted(menge))
+
+    def uebersprungene_menge(self):
+        return {l for l in (self.uebersprungen or "").split(",") if l}
+
+    def merke_uebersprungen(self, lektion):
+        m = self.uebersprungene_menge()
+        m.add(lektion)
+        self.uebersprungen = ",".join(sorted(m))
+
 
 class MarkedTask(db.Model):
     """Aufgabe, die der Lernende spaeter mit der Lehrperson anschauen will."""
@@ -141,6 +273,12 @@ class PasswordReset(db.Model):
 @login_manager.user_loader
 def load_user(user_id):
     return db.session.get(User, int(user_id))
+
+
+@app.context_processor
+def inject_generator_kapitel():
+    """Damit das Template weiss, ob der Balken Aufgaben oder Aufgabenarten zaehlt."""
+    return {"generator_kapitel": set(KAPITEL)}
 
 
 @app.context_processor
@@ -182,6 +320,114 @@ def generate_math_task(chapter, level):
 
     # Standardfall: Subtraktion (z.B. Kapitel 1.4)
     return f"{a} - ({b})", float(a - b)
+
+
+def neue_aufgabe_fuer(chapter, level, bauform=None):
+    """Aufgabe als Session-Dictionary — mitsamt Zielform und Fehlerkatalog.
+
+    Ohne die beiden koennte check() eine Faktorisieraufgabe nicht auf ihre
+    Form pruefen und wuerde 2az + 3a durchwinken, wo a(2z + 3) verlangt ist.
+    """
+    if chapter in KAPITEL:
+        return neue_aufgabe(chapter, level, bauform)
+    frage, loesung = generate_math_task(chapter, level)
+    return {"schablone": chapter, "bauform": "-", "level": level,
+            "anleitung": "Loese die Aufgabe", "frage": frage,
+            "loesung": str(loesung), "loesung_text": fmt_zahl(loesung),
+            "zielform": "beliebig", "fehler": [], "tipps": [], "schritte": []}
+
+
+# ── Der persoenliche Weg ──────────────────────────────────────────────────────
+
+def lernweg():
+    lw = Lernweg.query.filter_by(user_id=current_user.id).first()
+    if not lw:
+        lw = Lernweg(user_id=current_user.id, sicher="", eingestuft=False)
+        db.session.add(lw)
+        db.session.commit()
+    return lw
+
+
+def lektion_fertig_melden(lw, lektion):
+    """Lektion sitzt: gutschreiben und schauen, was als Naechstes kommt."""
+    menge = lw.sichere_menge()
+    menge.add(lektion)
+    lw.setze_sicher(menge)
+    # Wenn er wegen einer Luecke hier war, geht es zurueck zur urspruenglichen
+    # Lektion — nicht irgendwohin.
+    if lw.zurueck_zu:
+        ziel, lw.zurueck_zu = lw.zurueck_zu, None
+        lw.aktuelle_lektion = ziel
+    else:
+        lw.aktuelle_lektion = naechste_lektion(
+            lw.sichere_menge() | lw.uebersprungene_menge())
+    lw.updated_at = datetime.utcnow()
+    db.session.commit()
+
+
+def zurueckspringen(lw, ziel_lektion):
+    """Ein Fehler zeigt, dass etwas darunter fehlt. Genau dorthin."""
+    if lw.zurueck_zu is None:
+        lw.zurueck_zu = lw.aktuelle_lektion
+    lw.aktuelle_lektion = ziel_lektion
+    lw.updated_at = datetime.utcnow()
+    db.session.commit()
+
+
+def kapitel_fuer_lektion(lektion):
+    """Welche Schablone uebt diese Lektion? None = noch kein Generator da."""
+    return SCHABLONE_FUER.get(lektion)
+
+
+# ── Lernstand: Level pro Kapitel, Mastery pro Bauform ─────────────────────────
+
+def kapitel_stand(chapter):
+    """Der Stand DIESES Schülers in DIESEM Kapitel."""
+    ks = KapitelStand.query.filter_by(user_id=current_user.id, chapter=chapter).first()
+    if not ks:
+        ks = KapitelStand(user_id=current_user.id, chapter=chapter, level="A", offen="")
+        db.session.add(ks)
+        db.session.commit()
+    return ks
+
+
+def aktuelles_level(chapter):
+    """FEHLER 2 · Generatorkapitel haben ihr eigenes Level."""
+    if chapter in KAPITEL:
+        return kapitel_stand(chapter).level
+    return current_user.current_level
+
+
+def bauform_stand(chapter, level, bauform):
+    bs = BauformStand.query.filter_by(
+        user_id=current_user.id, chapter=chapter, level=level, bauform=bauform).first()
+    if not bs:
+        bs = BauformStand(user_id=current_user.id, chapter=chapter, level=level,
+                          bauform=bauform, treffer=0, fehler=0, gemeistert=False)
+        db.session.add(bs)
+    return bs
+
+
+def gemeisterte(chapter, level):
+    return {b.bauform for b in BauformStand.query.filter_by(
+        user_id=current_user.id, chapter=chapter, level=level, gemeistert=True)}
+
+
+def alle_bauformen(chapter, level):
+    schablone = KAPITEL[chapter]
+    return [b.nr for b in schablone.bauformen_fuer(level)]
+
+
+def naechste_bauform(chapter, level):
+    """FEHLER 1 · Reihum ziehen, gemeisterte überspringen."""
+    ks = kapitel_stand(chapter)
+    alle = alle_bauformen(chapter, level)
+    offen = [b for b in (ks.offen or "").split(",") if b]
+    z = Ziehung(alle, gemeisterte(chapter, level), offen)
+    nr = z.naechste()
+    ks.offen = ",".join(z.offen)
+    db.session.commit()
+    return nr
 
 
 # ── Hilfsfunktion: Progress laden oder erstellen ───────────────────────────────
@@ -226,94 +472,222 @@ def index():
 @app.route("/dashboard")
 @login_required
 def dashboard():
-    chapters = ["1.3", "1.4", "1.5", "1.6", "1.7"]
-    progress_map = {}
+    prog_rows = Progress.query.filter_by(user_id=current_user.id).all()
+    progress_map = {p.chapter: p for p in prog_rows}
+    lw = lernweg()
+    sicher = lw.sichere_menge()
+    uebersprungen = lw.uebersprungene_menge()
+    bekannt = sicher | uebersprungen
 
-    for ch in chapters:
-        progs = Progress.query.filter_by(
-            user_id=current_user.id,
-            chapter=ch
-        ).all()
+    # ── Alle Lektionen, nach Kapiteln gruppiert ─────────────────────────────
+    # Sichtbar ist alles. Anklickbar nur, was freigeschaltet ist: eine Lektion
+    # ist frei, wenn alle ihre Voraussetzungen sitzen. Der Rest bleibt
+    # ausgegraut mit Schloss — sichtbar, damit der Weg als Ganzes erkennbar
+    # bleibt, aber nicht anklickbar, damit niemand Lueckenspringt.
+    kapitel_liste = []
+    for knr in sorted({l.split(".")[0] for l in ALLE}, key=int):
+        lektionen = [l for l in ALLE if l.split(".")[0] == knr]
+        eintraege = []
+        for l in lektionen:
+            uebbar = kapitel_fuer_lektion(l)
+            if l in sicher:
+                zustand = "fertig"
+            elif l == lw.aktuelle_lektion:
+                zustand = "aktuell"
+            elif l in uebersprungen:
+                zustand = "keine_aufgaben"
+            elif all(v in bekannt for v in voraussetzungen(l)):
+                zustand = "frei" if uebbar else "keine_aufgaben"
+            else:
+                zustand = "gesperrt"
+            eintraege.append({
+                "nr": l,
+                "titel": KLARTEXT.get(l, l),
+                "zustand": zustand,
+                "kapitel": uebbar,          # Kapitelnummer der Schablone oder None
+            })
+        kapitel_liste.append({
+            "nummer": knr,
+            "lektionen": eintraege,
+            "fertig": sum(1 for e in eintraege if e["zustand"] == "fertig"),
+            "gesamt": len(eintraege),
+        })
 
-        if progs:
-            total_correct = sum(p.correct_cnt or 0 for p in progs)
-            total_done = sum(p.total_cnt or 0 for p in progs)
-
-            done = any(
-                p.level == "C" and (p.correct_cnt or 0) >= 8
-                for p in progs
-            )
-
-            progress_map[ch] = {
-                "done": done,
-                "progress_pct": min(
-                    int((total_correct / total_done) * 100),
-                    100
-                ) if total_done > 0 else 0
-            }
+    g, ges, pct = netz_fortschritt(sicher)
+    rest = restaufwand(sicher)
 
     return render_template(
         "dashboard.html",
-        user=current_user,
-        progress_map=progress_map
+        progress_map=progress_map,
+        kapitel_liste=kapitel_liste,
+        lernweg_stand=lw,
+        aktuelle_lektion=lw.aktuelle_lektion,
+        aktuelle_lektion_name=KLARTEXT.get(lw.aktuelle_lektion, ""),
+        sicher_anzahl=g, ziel_anzahl=ges, prozent=pct,
+        rest=rest,
+        gemischt_moeglich=bool(gemischte_kapitel(lw)),
     )
+
+
+def gemischte_kapitel(lw):
+    """Kapitel, die der Schueler schon hatte — Grundlage fuer gemischte Aufgaben.
+
+    Nur Themen, die er bereits durchlaufen hat. Sonst waere es kein
+    Wiederholen, sondern ein Vorgriff.
+    """
+    raus = []
+    for lektion in lw.sichere_menge():
+        kap = kapitel_fuer_lektion(lektion)
+        if kap and kap not in raus:
+            raus.append(kap)
+    return raus
+
+
+@app.route("/gemischt")
+@login_required
+def gemischt():
+    """Gemischte Aufgaben ueber alles, was bisher dran war.
+
+    Zieht reihum ueber die Kapitel, nicht zufaellig — sonst kaeme dasselbe
+    Thema mehrfach hintereinander.
+    """
+    lw = lernweg()
+    kapitel = gemischte_kapitel(lw)
+    if not kapitel:
+        flash("Fuer gemischte Aufgaben musst du zuerst eine Lektion abschliessen.",
+              "info")
+        return redirect(url_for("dashboard"))
+
+    # Reihum durch die bekannten Kapitel
+    zuletzt = session.get("gemischt_zuletzt")
+    if zuletzt in kapitel and len(kapitel) > 1:
+        i = (kapitel.index(zuletzt) + 1) % len(kapitel)
+    else:
+        i = 0
+    kap = kapitel[i]
+    session["gemischt_zuletzt"] = kap
+    session["gemischt_modus"] = True
+    close_task()
+    return redirect(url_for("lektion", chapter=kap))
 
 
 @app.route("/lektion/<chapter>")
 @login_required
 def lektion(chapter):
-    prog    = get_or_create_progress(current_user.id, chapter, current_user.current_level)
+    level = aktuelles_level(chapter)
+    prog  = get_or_create_progress(current_user.id, chapter, level)
     db.session.commit()
 
-    total   = prog.total_cnt   or 0
-    correct = prog.correct_cnt or 0
-    quote   = int((correct / total) * 100) if total > 0 else 0
-
-    # Die laufende Aufgabe bleibt in der Session stehen, solange sie offen ist.
-    # Nur so bleibt bei einer falschen Antwort dieselbe Rechnung sichtbar.
     passend = (
         session.get("task_open")
         and session.get("task_chapter") == chapter
-        and session.get("task_level") == current_user.current_level
+        and session.get("task_level") == level
+        and session.get("aufgabe")
     )
 
     if passend:
-        frage   = session["current_question"]
-        loesung = session["current_solution"]
+        daten = session["aufgabe"]
     else:
-        frage, loesung = generate_math_task(chapter, current_user.current_level)
-        session["current_question"] = frage
-        session["current_solution"] = loesung
+        bauform = naechste_bauform(chapter, level) if chapter in KAPITEL else None
+        if chapter in KAPITEL and bauform is None:
+            # Alle Bauformen dieses Levels sitzen -> Level fertig
+            return redirect(url_for("level_fertig", chapter=chapter))
+        if session.get("kernidee_kapitel") != chapter:
+            session["kernidee_zeigen"] = True
+            session["kernidee_kapitel"] = chapter
+        daten = neue_aufgabe_fuer(chapter, level, bauform)
+        session["aufgabe"]          = daten
+        session["current_question"] = daten["frage"]
+        session["current_solution"] = daten["loesung"]
         session["task_chapter"]     = chapter
-        session["task_level"]       = current_user.current_level
+        session["task_level"]       = level
         session["task_open"]        = True
         session["task_tries"]       = 0
         session["last_wrong"]       = False
 
-    # Hinweis nach einer falschen Antwort oder nach 2 Fehlern in Folge
-    show_hint = session.get("last_wrong", False) or prog.consecutive_err >= CONSECUTIVE_ERR
+    # ── Fortschritt: bei Generatorkapiteln zaehlen die Bauformen, nicht die
+    #    Aufgaben. «7 von 12 Aufgabenarten sitzen» sagt mehr als «8 von 10
+    #    Aufgaben geloest», weil es die Luecken sichtbar macht.
+    if chapter in KAPITEL:
+        alle = alle_bauformen(chapter, level)
+        g, ges, pct = fortschritt(alle, gemeisterte(chapter, level))
+        geloest, min_questions, quote = g, ges, pct
+    else:
+        total   = prog.total_cnt   or 0
+        correct = prog.correct_cnt or 0
+        geloest, min_questions = total, MIN_QUESTIONS
+        quote = int((correct / total) * 100) if total > 0 else 0
 
-    # Nach mehreren Versuchen die Lösung verraten, damit niemand feststeckt
-    versuche = session.get("task_tries", 0)
+    show_hint     = prog.consecutive_err >= CONSECUTIVE_ERR
+    versuche      = session.get("task_tries", 0)
     zeige_loesung = versuche >= MAX_TRIES
 
     return render_template(
         "lektion.html",
-        frage=frage,
+        frage=daten["frage"],
         chapter=chapter,
         quote=quote,
-        geloest=total,
-        level=current_user.current_level,
+        geloest=geloest,
+        level=level,
         show_hint=show_hint,
-        min_questions=MIN_QUESTIONS,
+        min_questions=min_questions,
         hint_text=get_hint(chapter),
         zeige_loesung=zeige_loesung,
-        loesung=fmt_zahl(loesung) if zeige_loesung else None,
+        loesung=daten["loesung_text"] if zeige_loesung else None,
         versuche=versuche,
         chapter_name=CHAPTER_NAMES.get(chapter, ""),
-        # base.html verbraucht die Flash-Meldungen, darum eigener Status
+        anleitung=daten.get("anleitung", "Loese die Aufgabe"),
         antwort_status=session.pop("antwort_status", None),
+        antwort_text=session.pop("antwort_text", None),
+        luecke=session.pop("luecke", None),
+        # Teil 6 der Schablone, einmal beim Einstieg. Auch wer das Level
+        # ueberspringt, soll die Regel gelesen haben.
+        kernidee=(kernidee(chapter)
+                  if session.pop("kernidee_zeigen", False) else None),
     )
+
+
+@app.route("/level-fertig/<chapter>")
+@login_required
+def level_fertig(chapter):
+    """FEHLER 1 · Aufstieg erst, wenn JEDE Bauform sitzt — nicht bei 80 %."""
+    ks    = kapitel_stand(chapter)
+    alt   = ks.level
+    neu   = naechstes_level(alt)
+    ks.offen = ""
+    close_task()
+
+    if neu:
+        ks.level = neu
+        db.session.commit()
+        flash(f"Alle Aufgabenarten von Level {alt} sitzen. Weiter mit Level {neu}.",
+              "success")
+    else:
+        ks.abgeschlossen = True
+        db.session.commit()
+        # Alle Lektionen, die diese Schablone uebt, gelten jetzt als sicher.
+        lw = lernweg()
+        for lek, kap in SCHABLONE_FUER.items():
+            if kap == chapter:
+                lektion_fertig_melden(lw, lek)
+        flash("Geschafft — jede Aufgabenart sitzt auf allen drei Levels.", "success")
+        return redirect(url_for("start"))
+    return redirect(url_for("lektion", chapter=chapter))
+
+
+@app.route("/luecke-schliessen", methods=["POST"])
+@login_required
+def luecke_schliessen():
+    """FEHLER 3 · Zum Kapitel wechseln, das die Luecke enthaelt."""
+    ziel = request.form.get("ziel")
+    close_task()
+    if not ziel:
+        return redirect(url_for("start"))
+    lw = lernweg()
+    zurueckspringen(lw, ziel)
+    flash(f"Wir schauen zuerst «{KLARTEXT.get(ziel, ziel)}» an. "
+          f"Danach geht es hier weiter.", "info")
+    return redirect(url_for("lernen"))
 
 
 def fmt_zahl(wert):
@@ -325,82 +699,144 @@ def fmt_zahl(wert):
     return str(int(f)) if f == int(f) else str(f)
 
 
+def _als_float(wert):
+    try:
+        return float(wert)
+    except (TypeError, ValueError):
+        return None
+
+
 def close_task():
     """Aktuelle Aufgabe abschliessen, beim naechsten Laden kommt eine neue."""
     session["task_open"]  = False
     session["last_wrong"] = False
     session["task_tries"] = 0
+    session.pop("aufgabe", None)
+    session.pop("aufgabe", None)
 
 
 @app.route("/check", methods=["POST"])
 @login_required
 def check():
-    user_input        = request.form.get("antwort", "").strip().replace(",", ".")
-    korrekte_loesung  = session.get("current_solution")
-    frage              = session.get("current_question")
-    chapter            = request.form.get("chapter", "1.3")
+    user_input = request.form.get("antwort", "")
+    daten      = session.get("aufgabe")
+    chapter    = request.form.get("chapter", "1.3")
 
-    try:
-        user_val = float(user_input)
-    except ValueError:
-        flash("Ungültige Eingabe – bitte eine Zahl eingeben.", "error")
+    if not daten:
         return redirect(url_for("lektion", chapter=chapter))
 
-    prog = get_or_create_progress(current_user.id, chapter, current_user.current_level)
+    frage   = daten["frage"]
+    level   = daten.get("level") or aktuelles_level(chapter)
+    bauform = daten.get("bauform", "-")
+    prog    = get_or_create_progress(current_user.id, chapter, level)
 
-    # ── Antwort auswerten ──────────────────────────────────────────────────────
-    richtig = abs(user_val - float(korrekte_loesung)) < 0.0001
+    # ── Antwort auswerten ────────────────────────────────────────────────────
+    # Die ganze Aufgabe kommt aus der Session, mitsamt Zielform und
+    # Fehlerkatalog. Aus dem blossen Loesungswert liesse sich beides nicht
+    # rekonstruieren.
+    aufgabe = aufgabe_aus_session(daten)
+    a = auswerten(user_input, aufgabe)
 
-    if richtig:
-        prog.correct_cnt     += 1
-        prog.consecutive_err  = 0
-        current_user.xp       = (current_user.xp or 0) + 10
-        close_task()                     # erst jetzt kommt eine neue Aufgabe
+    # Tippfehler zaehlen nicht als Versuch.
+    if a.status in (Status.EINGABEFEHLER, Status.ZEITLIMIT):
+        session["antwort_status"] = "error"
+        session["antwort_text"]   = a.text
+        return redirect(url_for("lektion", chapter=chapter))
+
+    if a.zaehlt_als_richtig:
+        prog.correct_cnt    += 1
+        prog.consecutive_err = 0
+        current_user.xp      = (current_user.xp or 0) + 10
+        close_task()
         session["antwort_status"] = "success"
-        flash("✅ Richtig!", "success")
+        session["antwort_text"]   = a.text
+
+    elif a.status is Status.UNFERTIG:
+        # Rechnung stimmt, nur die Form ist noch nicht fertig.
+        # Kein Wissensfehler: Aufgabe bleibt offen, nichts wird gezaehlt.
+        session["last_wrong"] = True
+        session["task_tries"] = session.get("task_tries", 0) + 1
+        session["antwort_status"] = "warning"
+        session["antwort_text"]   = a.text
+
     else:
         prog.consecutive_err += 1
-        session["last_wrong"] = True     # loest die Hinweis-Box aus
+        session["last_wrong"] = True
         session["task_tries"] = session.get("task_tries", 0) + 1
-        # Aufgabe bleibt offen -> dieselbe Rechnung wird nochmals angezeigt
         session["antwort_status"] = "error"
-        flash("❌ Falsch – schau dir den Tipp an und versuch es nochmal.", "error")
+        session["antwort_text"]   = a.text
+
+    db.session.add(TaskAttempt(
+        user_id=current_user.id, chapter=chapter, level=level,
+        question=frage, correct_solution=str(daten["loesung"]),
+        user_answer=user_input, correct=a.zaehlt_als_richtig,
+        status=a.status.value, fehlerschluessel=a.fehlerschluessel,
+    ))
+
+    if not a.zaehlt_als_geloest:
+        # UNFERTIG: die Rechnung stimmt, nur die Form fehlt noch. Die Aufgabe
+        # bleibt offen, damit der Schueler sie fertigschreiben kann.
+        db.session.commit()
+        return redirect(url_for("lektion", chapter=chapter))
 
     prog.total_cnt += 1
-    attempt = TaskAttempt(
-        user_id=current_user.id,
-        chapter=chapter,
-        level=current_user.current_level,
-        question=frage,
-        correct_solution=float(korrekte_loesung),
-        user_answer=user_val,
-        correct=richtig
-    )
 
-    db.session.add(attempt)
+    # ── FEHLER 1 · Mastery pro Bauform statt Quote ───────────────────────────
+    if chapter in KAPITEL:
+        bs = bauform_stand(chapter, level, bauform)
+        bs.treffer, bs.fehler, bs.gemeistert = bewerten(
+            bs.treffer or 0, bs.fehler or 0, a.zaehlt_als_richtig)
+        bs.updated_at = datetime.utcnow()
+
+        # ── Luecke suchen: WOHIN genau? ──────────────────────────────────────
+        # Nicht «irgendeine Voraussetzung», sondern die, auf die DIESER Fehler
+        # deutet. Bei einer Bruchgleichung kann derselbe falsche Wert von der
+        # Minusklammer, vom Hauptnenner oder von der Gleichungsumformung
+        # kommen — der Fehlerschluessel sagt, welche es war.
+        if not a.zaehlt_als_richtig:
+            ziel = rueckwaerts_zu(daten.get("schablone", ""), bauform,
+                                  a.fehlerschluessel)
+            if ziel and (bs.fehler or 0) >= 2:
+                lw = lernweg()
+                if ziel not in lw.sichere_menge():
+                    session["luecke"] = {
+                        "kapitel": ziel,
+                        "name": KLARTEXT.get(ziel, ziel),
+                        "text": (f"Der Fehler deutet auf «{KLARTEXT.get(ziel, ziel)}» "
+                                 f"hin. Das ist die Voraussetzung fuer diese "
+                                 f"Aufgabenart. Zuerst dort nochmals ueben?"),
+                    }
+
+        db.session.commit()
+
+        # Nur wenn die Antwort richtig war, ist die Aufgabe erledigt. Bei
+        # einem Fehler bleibt sie offen — der Schueler bekommt die Hinweisbox
+        # und darf es nochmals versuchen, genau wie in den alten Kapiteln.
+        if a.zaehlt_als_richtig:
+            alle = alle_bauformen(chapter, level)
+            if set(alle) <= gemeisterte(chapter, level):
+                return redirect(url_for("level_fertig", chapter=chapter))
+
+        return redirect(url_for("lektion", chapter=chapter))
+
+    # ── Alte Zahlenkapitel: Quotenlogik wie bisher ──────────────────────────
     db.session.commit()
 
-    # ── Levelwechsel erst nach MIN_QUESTIONS Aufgaben ─────────────────────────
     if prog.total_cnt >= MIN_QUESTIONS:
         rate      = prog.correct_cnt / prog.total_cnt
         old_level = current_user.current_level
 
-        # ── AUFSTIEG ──────────────────────────────────────────────────────────
         if rate >= RATE_UP:
             reset_progress(prog)
-
             if old_level == "A":
                 current_user.current_level = "B"
                 db.session.commit()
                 return redirect(url_for("levelup_a_b", chapter=chapter))
-
             elif old_level == "B":
                 current_user.current_level = "C"
                 db.session.commit()
                 return redirect(url_for("levelup_b_c", chapter=chapter))
-
             elif old_level == "C":
-                # Kapitel abgeschlossen → nächstes Kapitel, zurück auf A
                 current_user.current_level = "A"
                 try:
                     p1, p2 = chapter.split(".")
@@ -409,33 +845,312 @@ def check():
                     next_chapter = "1.4"
                 current_user.current_chapter = next_chapter
                 db.session.commit()
-                return redirect(url_for("kapitel_abgeschlossen", chapter=chapter, next_chapter=next_chapter))
+                return redirect(url_for("kapitel_abgeschlossen",
+                                        chapter=chapter, next_chapter=next_chapter))
 
-        # ── ABSTIEG ───────────────────────────────────────────────────────────
         elif rate < RATE_DOWN:
             reset_progress(prog)
-
             if old_level == "C":
                 current_user.current_level = "B"
-                db.session.commit()
-                flash("⬇️ Abstieg zu Level B – weiter üben!", "warning")
-
+                flash("Abstieg zu Level B - weiter ueben!", "warning")
             elif old_level == "B":
                 current_user.current_level = "A"
-                db.session.commit()
-                flash("⬇️ Abstieg zu Level A – Grundlagen wiederholen!", "warning")
-
-            # Bei Level A bleibt man, Theorie-Hinweis wird in lektion() angezeigt
+                flash("Abstieg zu Level A - Grundlagen wiederholen!", "warning")
             db.session.commit()
 
-        # ── STABIL (60–79 %) → weiter üben ───────────────────────────────────
         else:
-            # Kein Levelwechsel, aber Zähler zurücksetzen damit es nicht ewig weiterläuft
             reset_progress(prog)
             db.session.commit()
-            flash("➡️ Weiter so – noch mehr üben für den Aufstieg!", "info")
+            flash("Weiter so - noch mehr ueben fuer den Aufstieg!", "info")
 
     return redirect(url_for("lektion", chapter=chapter))
+
+
+
+# ── Einstufungstest und personalisierter Weg ─────────────────────────────────
+
+@app.route("/start")
+@login_required
+def start():
+    """Die einzige Tuer. Von hier wird der Schueler weitergeleitet —
+    zum Einstufungstest, wenn er noch nicht eingestuft ist, sonst zu der
+    Lektion, die jetzt dran ist."""
+    lw = lernweg()
+    if not lw.eingestuft:
+        return redirect(url_for("einstufung"))
+    if not lw.aktuelle_lektion:
+        lw.aktuelle_lektion = naechste_lektion(lw.sichere_menge())
+        db.session.commit()
+    if lw.aktuelle_lektion is None:
+        return redirect(url_for("vertiefung"))
+    return redirect(url_for("lernen"))
+
+
+@app.route("/einstufung")
+@login_required
+def einstufung():
+    """Der Einstufungstest. Zwoelf Leitaufgaben, binaere Suche durchs Netz.
+
+    Wer eine loest, bekommt alle Vorstufen gutgeschrieben — sonst braeuchte
+    der Test 41 Aufgaben statt zwoelf.
+    """
+    lw = lernweg()
+    e = Einstufung.aus_dict(session.get("einstufung") or {})
+
+    # Lektionen ohne Generator ueberspringen — in einer Schleife, nicht ueber
+    # Redirects. Sonst laeuft der Browser bei zehn fehlenden Generatoren in
+    # eine Weiterleitungsschleife.
+    lektion = e.naechste()
+    while lektion is not None and kapitel_fuer_lektion(lektion) is None:
+        e.antwort(lektion, False)
+        lektion = e.naechste()
+    session["einstufung"] = e.als_dict()
+
+    if lektion is None:
+        lw.setze_sicher(e.sicher)
+        lw.eingestuft = True
+        lw.aktuelle_lektion = naechste_lektion(e.sicher)
+        db.session.commit()
+        session.pop("einstufung", None)
+        session["einstufung_bericht"] = e.bericht()
+        return redirect(url_for("einstufung_fertig"))
+
+    kapitel = kapitel_fuer_lektion(lektion)
+    level = "B"          # Leitaufgaben auf mittlerem Niveau
+    daten = neue_aufgabe_fuer(kapitel, level)
+    daten["einstufung_lektion"] = lektion
+    session["aufgabe"] = daten
+    session["task_open"] = True
+    session["task_chapter"] = kapitel
+    session["task_level"] = level
+    session["task_tries"] = 0
+
+    return render_template(
+        "einstufung.html",
+        frage=daten["frage"],
+        anleitung=daten.get("anleitung", "Loese die Aufgabe"),
+        lektion=lektion,
+        lektion_name=KLARTEXT.get(lektion, lektion),
+        nummer=e.gestellt + 1,
+        gesamt=len(e.offen) + e.gestellt,
+        antwort_text=session.pop("antwort_text", None),
+        antwort_status=session.pop("antwort_status", None),
+    )
+
+
+@app.route("/einstufung/pruefen", methods=["POST"])
+@login_required
+def einstufung_pruefen():
+    daten = session.get("aufgabe") or {}
+    lektion = daten.get("einstufung_lektion")
+    if not lektion:
+        return redirect(url_for("einstufung"))
+
+    a = auswerten(request.form.get("antwort", ""), aufgabe_aus_session(daten))
+
+    # Tippfehler zaehlen nicht — sonst stuft ein Vertipper den Schueler
+    # zu tief ein und er muss vier Wochen Bekanntes wiederholen.
+    if a.status in (Status.EINGABEFEHLER, Status.ZEITLIMIT):
+        session["antwort_status"] = "error"
+        session["antwort_text"] = a.text
+        return redirect(url_for("einstufung"))
+
+    db.session.add(TaskAttempt(
+        user_id=current_user.id, chapter="einstufung",
+        level=daten.get("level", "B"), question=daten["frage"],
+        correct_solution=str(daten["loesung"]),
+        user_answer=request.form.get("antwort", ""),
+        correct=a.zaehlt_als_richtig, status=a.status.value,
+        fehlerschluessel=a.fehlerschluessel))
+    db.session.commit()
+
+    e = Einstufung.aus_dict(session.get("einstufung") or {})
+    e.antwort(lektion, a.zaehlt_als_richtig)
+    session["einstufung"] = e.als_dict()
+    session.pop("aufgabe", None)
+    return redirect(url_for("einstufung"))
+
+
+@app.route("/einstufung/fertig")
+@login_required
+def einstufung_fertig():
+    return render_template("einstufung_fertig.html",
+                           bericht=session.pop("einstufung_bericht", None))
+
+
+@app.route("/lernen")
+@login_required
+def lernen():
+    """Die Lektion, die JETZT dran ist. Ohne Kapitelauswahl."""
+    lw = lernweg()
+    if not lw.eingestuft:
+        return redirect(url_for("einstufung"))
+    if lw.aktuelle_lektion is None:
+        return redirect(url_for("vertiefung"))
+
+    # Lektionen ohne Generator ueberspringen — in einer Schleife, nicht ueber
+    # Redirects, sonst laeuft der Browser in eine Weiterleitungsschleife.
+    # Sobald ein Generator dazukommt, faellt die Lektion von selbst wieder
+    # in den Weg zurueck.
+    # Ohne Generator kann die Lektion nicht geuebt werden. Sie wird
+    # uebersprungen, aber NICHT als sicher verbucht — sonst behauptet die App
+    # Lueckenfreiheit, wo keine ist. Sie steht in einer eigenen Liste und
+    # faellt in den Weg zurueck, sobald der Generator existiert.
+    sprung = []
+    while lw.aktuelle_lektion and kapitel_fuer_lektion(lw.aktuelle_lektion) is None:
+        lw.merke_uebersprungen(lw.aktuelle_lektion)
+        sprung.append(lw.aktuelle_lektion)
+        lw.aktuelle_lektion = naechste_lektion(
+            lw.sichere_menge() | lw.uebersprungene_menge())
+        db.session.commit()
+        if len(sprung) > 400:          # Notbremse gegen Endlosschleifen
+            break
+
+    if sprung:
+        app.logger.info("Ohne Generator uebersprungen: %s", ", ".join(sprung))
+
+    kapitel = kapitel_fuer_lektion(lw.aktuelle_lektion) if lw.aktuelle_lektion else None
+    if kapitel is None:
+        # Nichts mehr uebbar — entweder ist der Weg durch, oder es fehlen
+        # schlicht die Generatoren. Beides fuehrt in die Vertiefung, die den
+        # Unterschied benennt.
+        return redirect(url_for("vertiefung"))
+
+    return redirect(url_for("lektion", chapter=kapitel))
+
+
+@app.route("/vertiefung")
+@login_required
+def vertiefung():
+    """Wer vor Ablauf der vier Wochen durch ist, hoert nicht auf.
+
+    Ohne Anschluss wuerde er die restliche Studienzeit nichts tun — und das
+    verzerrt den Vergleich mit der Kontrollgruppe, die weiterarbeitet.
+    """
+    lw = lernweg()
+    lw.durchgelaufen = True
+    db.session.commit()
+
+    schwach = schwachstellen(BauformStand.query.filter_by(user_id=current_user.id).all())
+    modus = naechster_modus(lw.probe_gemacht, bool(schwach))
+
+    return render_template(
+        "vertiefung.html",
+        modus=modus, titel=VTITEL, beschreibung=BESCHREIBUNG,
+        schwach=[(k, l, b, f, KLARTEXT.get(k, k)) for k, l, b, f in schwach],
+        probe_gemacht=lw.probe_gemacht, probe_quote=lw.probe_quote,
+    )
+
+
+@app.route("/probe")
+@login_required
+def probe():
+    """Probe-Erhebung: 19 Aufgaben, eine pro Teilaufgabe, in Pruefungsform."""
+    p = Probelauf.aus_dict(session.get("probe") or {}) if session.get("probe") \
+        else Probelauf.neu()
+
+    # Teilaufgaben ohne Generator ueberspringen — ehrlicher, als sie als
+    # bestanden zu zaehlen. Sie erscheinen im Bericht als "nicht geprueft".
+    while not p.fertig() and kapitel_fuer_lektion(p.lektion()) is None:
+        p.uebersprungen()
+    session["probe"] = p.als_dict()
+
+    if p.fertig():
+        lw = lernweg()
+        b = p.bericht()
+        lw.probe_gemacht = True
+        lw.probe_quote = b["quote"]
+        db.session.commit()
+        session.pop("probe", None)
+        return render_template("probe_fertig.html", bericht=b)
+
+    kapitel = kapitel_fuer_lektion(p.lektion())
+    daten = neue_aufgabe_fuer(kapitel, "C")
+    daten["probe_teilaufgabe"] = p.aktuelle()
+    session["aufgabe"] = daten
+
+    return render_template(
+        "probe.html", frage=daten["frage"],
+        anleitung=daten.get("anleitung", "Loese die Aufgabe"),
+        teilaufgabe=p.aktuelle(), nummer=p.position + 1,
+        gesamt=len(p.reihenfolge),
+        antwort_text=session.pop("antwort_text", None),
+        antwort_status=session.pop("antwort_status", None),
+    )
+
+
+@app.route("/probe/pruefen", methods=["POST"])
+@login_required
+def probe_pruefen():
+    daten = session.get("aufgabe") or {}
+    if "probe_teilaufgabe" not in daten:
+        return redirect(url_for("probe"))
+    a = auswerten(request.form.get("antwort", ""), aufgabe_aus_session(daten))
+
+    # In der Pruefung zaehlt auch der Tippfehler nicht als Rechenfehler.
+    if a.status in (Status.EINGABEFEHLER, Status.ZEITLIMIT):
+        session["antwort_status"] = "error"
+        session["antwort_text"] = a.text
+        return redirect(url_for("probe"))
+
+    db.session.add(TaskAttempt(
+        user_id=current_user.id, chapter="probe", level="C",
+        question=daten["frage"], correct_solution=str(daten["loesung"]),
+        user_answer=request.form.get("antwort", ""),
+        correct=a.zaehlt_als_richtig, status=a.status.value,
+        fehlerschluessel=a.fehlerschluessel))
+    db.session.commit()
+
+    p = Probelauf.aus_dict(session.get("probe") or {})
+    p.antwort(a.zaehlt_als_richtig)
+    session["probe"] = p.als_dict()
+    session.pop("aufgabe", None)
+    return redirect(url_for("probe"))
+
+
+@app.route("/wiederholen/<modus>")
+@login_required
+def wiederholen(modus):
+    """Schwachstellen oder Level C — beides fuehrt in die normale Lektion,
+    nur mit anderer Auswahl."""
+    if modus == SCHWACHSTELLEN:
+        schwach = schwachstellen(
+            BauformStand.query.filter_by(user_id=current_user.id).all(), 1)
+        if not schwach:
+            return redirect(url_for("vertiefung"))
+        kapitel, level, bauform, _ = schwach[0]
+        # Haekchen entfernen, damit die Bauform wieder gezogen wird
+        bs = bauform_stand(kapitel, level, bauform)
+        bs.gemeistert = False
+        bs.treffer = 0
+        db.session.commit()
+        close_task()
+        return redirect(url_for("lektion", chapter=kapitel))
+
+    if modus == LEVEL_C:
+        # Alle Kapitel mit Generator auf C stellen. Auch die, bei denen der
+        # Schueler ueber den Levelsprung eingestiegen ist und C nie sah.
+        for kapitel in KAPITEL:
+            ks = kapitel_stand(kapitel)
+            ks.level = "C"
+            ks.abgeschlossen = False
+            ks.offen = ""
+        db.session.commit()
+        close_task()
+        return redirect(url_for("lektion", chapter=list(KAPITEL)[0]))
+
+    return redirect(url_for("vertiefung"))
+
+
+@app.route("/ziel-erreicht")
+@login_required
+def ziel_erreicht():
+    lw = lernweg()
+    g, ges, pct = netz_fortschritt(lw.sichere_menge())
+    fehlend = sorted(lw.uebersprungene_menge())
+    return render_template("ziel_erreicht.html", sicher=g, gesamt=ges, prozent=pct,
+                           erhebung=erhebung_abgedeckt(lw.sichere_menge()),
+                           uebersprungen=[(l, KLARTEXT.get(l, l)) for l in fehlend])
 
 
 # ── Markierte Aufgaben ─────────────────────────────────────────────────────────
@@ -445,8 +1160,9 @@ def check():
 def markieren():
     """Stern beim Ueben: Aufgabe fuer die Lehrperson merken und ueberspringen."""
     chapter = request.form.get("chapter", "1.3")
-    frage   = session.get("current_question")
-    loesung = session.get("current_solution")
+    daten   = session.get("aufgabe") or {}
+    frage   = daten.get("frage") or session.get("current_question")
+    loesung = daten.get("loesung")
 
     if not frage:
         return redirect(url_for("lektion", chapter=chapter))
@@ -459,9 +1175,11 @@ def markieren():
         db.session.add(MarkedTask(
             user_id=current_user.id,
             chapter=chapter,
-            level=current_user.current_level,
+            level=aktuelles_level(chapter),
             question=frage,
-            solution=float(loesung) if loesung is not None else None,
+            # Float-Spalte: Terme wie "a*(2*z + 3)" passen nicht hinein.
+            # Die Frage im Wortlaut steht ohnehin daneben.
+            solution=_als_float(loesung),
             note=(request.form.get("notiz") or "").strip() or None,
         ))
         db.session.commit()
@@ -556,4 +1274,114 @@ def login():
 def register():
     if request.method == "POST":
         # Prüfen ob E-Mail bereits existiert
-        existing =
+        existing = User.query.filter_by(email=request.form.get("email")).first()
+        if existing:
+            flash("Diese E-Mail ist bereits registriert.", "error")
+            return render_template("register.html")
+
+        u = User(
+            username=request.form.get("username"),
+            email=request.form.get("email"),
+        )
+        u.set_password(request.form.get("password"))
+        db.session.add(u)
+        db.session.commit()
+        login_user(u)
+        return redirect(url_for("dashboard"))
+    return render_template("register.html")
+
+
+@app.route("/logout")
+@login_required
+def logout():
+    logout_user()
+    return redirect(url_for("index"))
+
+
+# ── Passwort ───────────────────────────────────────────────────────────────────
+
+@app.route("/passwort-vergessen", methods=["GET", "POST"])
+def passwort_vergessen():
+    reset_link = None
+
+    if request.method == "POST":
+        email = (request.form.get("email") or "").strip().lower()
+        u = User.query.filter(db.func.lower(User.email) == email).first()
+
+        if u:
+            eintrag = PasswordReset(
+                user_id=u.id,
+                token=secrets.token_urlsafe(32),
+                expires_at=datetime.utcnow() + timedelta(minutes=RESET_MINUTES),
+            )
+            db.session.add(eintrag)
+            db.session.commit()
+
+            reset_link = url_for("passwort_neu", token=eintrag.token, _external=True)
+            # Ohne Mailserver wird der Link im Terminal ausgegeben.
+            print(f"\n[Passwort-Link fuer {u.email}] {reset_link}\n")
+
+        # Gleiche Meldung fuer alle: sonst koennte man Konten erraten.
+        flash("Falls die E-Mail bei uns registriert ist, wurde ein Link erstellt.", "success")
+
+    return render_template("passwort_vergessen.html",
+                           reset_link=reset_link,
+                           debug=app.debug)
+
+
+@app.route("/passwort-neu/<token>", methods=["GET", "POST"])
+def passwort_neu(token):
+    eintrag = PasswordReset.query.filter_by(token=token).first()
+
+    if not eintrag or not eintrag.is_valid:
+        flash("Dieser Link ist abgelaufen oder wurde schon benutzt.", "error")
+        return redirect(url_for("passwort_vergessen"))
+
+    if request.method == "POST":
+        pw1 = request.form.get("password", "")
+        pw2 = request.form.get("password2", "")
+
+        if len(pw1) < 6:
+            flash("Das Passwort braucht mindestens 6 Zeichen.", "error")
+        elif pw1 != pw2:
+            flash("Die beiden Passwörter stimmen nicht überein.", "error")
+        else:
+            u = db.session.get(User, eintrag.user_id)
+            u.set_password(pw1)
+            eintrag.used = True
+            db.session.commit()
+            flash("Passwort geändert – du kannst dich jetzt anmelden.", "success")
+            return redirect(url_for("login"))
+
+    return render_template("passwort_neu.html", token=token)
+
+
+@app.route("/passwort-aendern", methods=["GET", "POST"])
+@login_required
+def passwort_aendern():
+    if request.method == "POST":
+        alt = request.form.get("old_password", "")
+        pw1 = request.form.get("password", "")
+        pw2 = request.form.get("password2", "")
+
+        if not current_user.check_password(alt):
+            flash("Das bisherige Passwort stimmt nicht.", "error")
+        elif len(pw1) < 6:
+            flash("Das neue Passwort braucht mindestens 6 Zeichen.", "error")
+        elif pw1 != pw2:
+            flash("Die beiden Passwörter stimmen nicht überein.", "error")
+        else:
+            current_user.set_password(pw1)
+            db.session.commit()
+            flash("Passwort geändert.", "success")
+            return redirect(url_for("dashboard"))
+
+    return render_template("passwort_aendern.html")
+
+
+# ── Start ──────────────────────────────────────────────────────────────────────
+with app.app_context():
+    db.create_all()
+
+if __name__ == "__main__":
+    app.run(debug=True)

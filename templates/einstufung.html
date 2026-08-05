@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="task-card">
+  <div class="task-header">
+    <span class="task-chapter">Einstufung · Aufgabe {{ nummer }}</span>
+    <span class="task-level">{{ lektion_name }}</span>
+  </div>
+  <div class="task-instruction">{{ anleitung }}</div>
+  <div class="task-question">{{ frage }}</div>
+  {% if antwort_text %}<div class="rueckmeldung {{ antwort_status }}">{{ antwort_text }}</div>{% endif %}
+  <form action="{{ url_for('einstufung_pruefen') }}" method="POST">
+    <input type="text" name="antwort" autocomplete="off" autofocus placeholder="Deine Antwort">
+    <button type="submit" class="btn-primary">Weiter</button>
+  </form>
+  <p class="hinweis">Wenn du eine Aufgabe nicht kannst, lass das Feld leer und
+     klick auf Weiter. Der Test findet heraus, wo du einsteigst — es geht nicht
+     um eine Note.</p>
+</div>
+{% endblock %}

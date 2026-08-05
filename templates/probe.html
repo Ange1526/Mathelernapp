@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="lektion-wrapper">
+  <div class="progress-bar-wrapper">
+    <div class="progress-meta">
+      <span>Probe-Erhebung · Aufgabe {{ nummer }} von {{ gesamt }}</span>
+      <span>Teilaufgabe {{ teilaufgabe }}</span>
+    </div>
+    <div class="progress-bar-bg">
+      <div class="progress-bar-fill" style="width: {{ (nummer / gesamt * 100) | round }}%;"></div>
+    </div>
+  </div>
+  <div class="task-card">
+    <div class="task-header">
+      <div class="chapter-info">Wie in der richtigen Prüfung</div>
+      <div class="task-instruction">{{ anleitung }}</div>
+    </div>
+    <div class="math-expression">{{ frage }}</div>
+    {% if antwort_text %}<div class="rueckmeldung {{ antwort_status }}">{{ antwort_text }}</div>{% endif %}
+    <form action="{{ url_for('probe_pruefen') }}" method="POST">
+      <input type="text" name="antwort" class="answer-input" autocomplete="off" autofocus placeholder="Antwort...">
+      <div class="button-row"><button type="submit" class="btn-check">Weiter</button></div>
+    </form>
+    <p class="notiz-label" style="margin-top:20px;">
+      Hier gibt es keine Tipps und keine zweite Chance — wie in der Prüfung.
+      Wenn du etwas nicht weisst, lass das Feld leer.
+    </p>
+  </div>
+</div>
+{% endblock %}
