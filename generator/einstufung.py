@@ -37,6 +37,7 @@ LEITAUFGABEN: list[str] = [
     "4.8",    # gleichartige Terme
     "6.7",    # ausrechnen und zusammenfassen
     "7.10",   # Potenzen mit mehreren Variablen
+    "8.8",    # Wurzelgesetz bei Produkten — Erhebung 3a
     "9.6",    # Division in längeren Termen
     "10.6",   # Minus vor der Klammer
     "11.8",   # negativer Faktor mal Klammer

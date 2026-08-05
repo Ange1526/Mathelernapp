@@ -3,7 +3,7 @@ from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
-from datetime import timedelta
+from datetime import timedelta, date
 import os
 import random
 import secrets
@@ -11,6 +11,7 @@ import secrets
 from korrektur import auswerten, aufgabe_aus_generator, Status
 from generator.anbindung import (KAPITEL, KAPITEL_NAMEN, aufgabe_aus_session,
                                  kernidee, neue_aufgabe)
+from generator import theorie as theorie_modul
 from generator.lernstand import (LEVELS, MASTERY, Ziehung, bewerten,
                                  fortschritt, naechstes_level, vorheriges_level)
 from generator.netz import (ALLE, KLARTEXT, SCHABLONE_FUER, ZIEL,
@@ -57,6 +58,26 @@ CHAPTER_NAMES = {
 }
 CHAPTER_NAMES.update(KAPITEL_NAMEN)
 
+# Obertitel der 16 Kapitel — steht ueber den Lektionskarten im Dashboard.
+KAPITEL_TITEL = {
+    "1":  "Zahlen und Vorzeichen",
+    "2":  "Brüche",
+    "3":  "Variablen und Terme",
+    "4":  "Gleichartige Terme",
+    "5":  "Multiplikation von Termen",
+    "6":  "Gemischte Operationen",
+    "7":  "Potenzen",
+    "8":  "Wurzeln",
+    "9":  "Division von Termen",
+    "10": "Klammern",
+    "11": "Distributivgesetz",
+    "12": "Faktorisieren",
+    "13": "Gleichungen",
+    "14": "Bruchterme",
+    "15": "Bruchgleichungen",
+    "16": "Vermischtes",
+}
+
 # Hinweistext pro Kapitel, erscheint nach einer falschen Antwort
 HINTS = {
     "1.3": ("Schau dir die Vorzeichen genau an.<br>"
@@ -95,6 +116,15 @@ class User(UserMixin, db.Model):
     xp              = db.Column(db.Integer, default=0)
     current_level   = db.Column(db.String(1),  default="A")   # Start immer auf A
     current_chapter = db.Column(db.String(10), default="1.3")
+
+    # ── Taegliche Serie (die Flamme im Header) ────────────────────────────────
+    # streak      = Anzahl Tage hintereinander, an denen geuebt wurde
+    # last_active = der letzte Tag, an dem eine Antwort abgeschickt wurde
+    # bester_streak bleibt stehen, auch wenn die Serie reisst — sonst waere ein
+    # einziger verpasster Tag ein Totalverlust, und das entmutigt.
+    streak          = db.Column(db.Integer, default=0)
+    bester_streak   = db.Column(db.Integer, default=0)
+    last_active     = db.Column(db.Date)
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -279,6 +309,54 @@ def load_user(user_id):
 def inject_generator_kapitel():
     """Damit das Template weiss, ob der Balken Aufgaben oder Aufgabenarten zaehlt."""
     return {"generator_kapitel": set(KAPITEL)}
+
+
+def streak_aktualisieren():
+    """Die Flamme im Header: Tage hintereinander, an denen geuebt wurde.
+
+    Wird bei jeder abgeschickten Antwort gerufen. Massgebend ist der Tag,
+    nicht die Aufgabenzahl — eine einzige Aufgabe haelt die Serie am Leben.
+    Das ist Absicht: die Huerde soll klein sein.
+
+    - gleicher Tag        -> nichts aendert sich
+    - gestern zuletzt     -> Serie waechst um eins
+    - laenger her (oder nie) -> Serie beginnt neu bei eins
+    """
+    heute = date.today()
+    letzter = current_user.last_active
+
+    if letzter == heute:
+        return
+
+    if letzter == heute - timedelta(days=1):
+        current_user.streak = (current_user.streak or 0) + 1
+    else:
+        current_user.streak = 1
+
+    current_user.last_active = heute
+    if (current_user.streak or 0) > (current_user.bester_streak or 0):
+        current_user.bester_streak = current_user.streak
+
+
+@app.context_processor
+def inject_streak():
+    """Die Flamme zeigt 0, sobald ein Tag ausgelassen wurde.
+
+    Ohne das wuerde die alte Zahl stehen bleiben, bis wieder geuebt wird —
+    die Serie waere dann laenger, als sie ist.
+    """
+    if not current_user.is_authenticated:
+        return {"streak_aktuell": 0}
+
+    heute = date.today()
+    letzter = current_user.last_active
+    if letzter in (heute, heute - timedelta(days=1)):
+        aktuell = current_user.streak or 0
+    else:
+        aktuell = 0
+    return {"streak_aktuell": aktuell,
+            "streak_heute": letzter == heute,
+            "streak_bester": current_user.bester_streak or 0}
 
 
 @app.context_processor
@@ -508,6 +586,7 @@ def dashboard():
             })
         kapitel_liste.append({
             "nummer": knr,
+            "titel": KAPITEL_TITEL.get(knr, ""),
             "lektionen": eintraege,
             "fertig": sum(1 for e in eintraege if e["zustand"] == "fertig"),
             "gesamt": len(eintraege),
@@ -642,6 +721,21 @@ def lektion(chapter):
         luecke=session.pop("luecke", None),
         # Teil 6 der Schablone, einmal beim Einstieg. Auch wer das Level
         # ueberspringt, soll die Regel gelesen haben.
+        # Die Theorie wird VORGEFUEHRT, nicht beschrieben: eine
+        # Beispielaufgabe formt sich in drei bis fuenf Schritten selbst um.
+        # Wo noch keine Animation existiert, erscheint wie bisher der
+        # Textkasten mit Teil 6 der Schablone.
+        # Die Theorie erscheint bei JEDEM Aufruf der Lektionsseite.
+        #
+        # Vorher hing sie an `kernidee_zeigen`, das nur beim allerersten
+        # Betreten eines Kapitels gesetzt wurde. Wer die Lektion schon einmal
+        # offen hatte, bekam sie nie wieder zu sehen — auch nicht nach dem
+        # Einbau einer neuen Fassung. Genau daran ist das Ausprobieren
+        # gescheitert.
+        #
+        # Sie steht oben, laeuft von selbst und laesst sich mit einem Klick
+        # ausblenden. Das ist zumutbar; unsichtbare Theorie ist es nicht.
+        theorie=theorie_modul.fuer(chapter),
         kernidee=(kernidee(chapter)
                   if session.pop("kernidee_zeigen", False) else None),
     )
@@ -736,6 +830,10 @@ def check():
     # rekonstruieren.
     aufgabe = aufgabe_aus_session(daten)
     a = auswerten(user_input, aufgabe)
+
+    # Die Flamme zaehlt Tage, nicht Treffer — auch eine falsche Antwort ist
+    # geuebt. Sonst wuerde ausgerechnet an schweren Tagen die Serie reissen.
+    streak_aktualisieren()
 
     # Tippfehler zaehlen nicht als Versuch.
     if a.status in (Status.EINGABEFEHLER, Status.ZEITLIMIT):
@@ -886,6 +984,97 @@ def start():
     return redirect(url_for("lernen"))
 
 
+def einstiegslevel_anwenden(niveaus, sicher=None):
+    """Das Ergebnis des Einstufungstests in die Kapitelstände schreiben.
+
+    `einstufung.py` rechnet aus, wer wo auf Level B einsteigen darf: wer eine
+    Leitaufgabe auf B loest, kann die folgenden Lektionen nicht auf Level A
+    ueben muessen — das waere Unterforderung und kostet in einer vierwoechigen
+    Studie rund zwei Drittel der Zeit.
+
+    Bisher wurde dieser Wert berechnet und dann weggeworfen. Jedes Kapitel
+    startete bei A, fuer alle. Hier landet er endlich im `KapitelStand`.
+
+    ZWEI REGELN führen zu Level B:
+
+    1  Nachfolgerregel (aus `einstufung.py`): wer die Leitaufgabe geloest hat,
+       steigt in den FOLGENDEN Lektionen bei B ein.
+
+    2  Kapitelregel: gilt auch nur EINE Lektion eines Kapitels bereits als
+       sicher, dann beherrscht der Schueler die Grundform dieses Kapitels.
+       Level A ist die Einstiegsstufe fuer jemanden, der das Kapitel noch
+       nie gesehen hat — fuer ihn ist sie Unterforderung.
+
+       Ohne diese zweite Regel griff der Levelsprung fast nie: die Kapitel,
+       in denen noch Arbeit ansteht, sind meist gar keine Nachfolger der
+       geloesten Leitaufgabe.
+
+    Angehoben wird nur, wo noch NICHTS geuebt wurde. Wer in einem Kapitel
+    schon Haekchen gesammelt hat, behaelt seinen Stand — sonst wuerde ein
+    spaeterer Aufruf die Arbeit von gestern verwerfen.
+    """
+    ziel_level = {}
+
+    for lektion, level in (niveaus or {}).items():
+        if level in LEVELS and level != "A":
+            kap = kapitel_fuer_lektion(lektion)
+            if kap:
+                ziel_level[kap] = level
+
+    for lektion in (sicher or ()):
+        kap = kapitel_fuer_lektion(lektion)
+        if kap:
+            ziel_level.setdefault(kap, "B")
+
+    for kap, level in ziel_level.items():
+        if kap not in KAPITEL:
+            continue
+
+        ks = kapitel_stand(kap)
+        if ks.abgeschlossen or ks.level != "A":
+            continue
+
+        schon_geuebt = BauformStand.query.filter_by(
+            user_id=current_user.id, chapter=kap).first()
+        if schon_geuebt:
+            continue
+
+        ks.level = level
+        ks.offen = ""                 # Ziehungsreihenfolge gilt je Level
+        ks.updated_at = datetime.utcnow()
+
+    db.session.commit()
+
+
+def _ratbar(daten):
+    """Kann man diese Aufgabe ohne Rechnen treffen?
+
+    Zwei Faelle, beide legitime Aufgabenarten im Ueben, aber untauglich als
+    LEITAUFGABE — im Einstufungstest schreibt eine einzige richtige Antwort
+    bis zu 34 Lektionen gut:
+
+    - Loesung ist 0 (Bauform «das Ergebnis ist null»). Wer blind 0 tippt,
+      wird zu hoch eingestuft und ueberspringt Stoff, den er nicht kann.
+    - Loesung ist die Frage selbst (Bauform «nichts laesst sich
+      zusammenfassen»). Wer die Aufgabe abschreibt, kommt durch.
+    """
+    loesung = (daten.get("loesung_text") or "").replace(" ", "")
+    frage = (daten.get("frage") or "").replace(" ", "")
+    return loesung in ("0", "-0", "−0") or (loesung and loesung == frage)
+
+
+def leitaufgabe(kapitel, level, versuche=30):
+    """Eine Aufgabe fuer den Einstufungstest, ohne ratbare Sonderfaelle."""
+    daten = neue_aufgabe_fuer(kapitel, level)
+    for _ in range(versuche):
+        if not _ratbar(daten):
+            return daten
+        daten = neue_aufgabe_fuer(kapitel, level)
+    # Alle Bauformen dieses Kapitels sind Sonderfaelle — dann lieber eine
+    # ratbare Aufgabe als gar keine Einstufung.
+    return daten
+
+
 @app.route("/einstufung")
 @login_required
 def einstufung():
@@ -911,13 +1100,16 @@ def einstufung():
         lw.eingestuft = True
         lw.aktuelle_lektion = naechste_lektion(e.sicher)
         db.session.commit()
+        # Der Levelsprung: wer die Leitaufgabe auf B geloest hat, faengt in
+        # den folgenden Kapiteln bei B an statt bei A.
+        einstiegslevel_anwenden(e.einstiegslevel, e.sicher)
         session.pop("einstufung", None)
         session["einstufung_bericht"] = e.bericht()
         return redirect(url_for("einstufung_fertig"))
 
     kapitel = kapitel_fuer_lektion(lektion)
     level = "B"          # Leitaufgaben auf mittlerem Niveau
-    daten = neue_aufgabe_fuer(kapitel, level)
+    daten = leitaufgabe(kapitel, level)
     daten["einstufung_lektion"] = lektion
     session["aufgabe"] = daten
     session["task_open"] = True
@@ -944,6 +1136,20 @@ def einstufung_pruefen():
     daten = session.get("aufgabe") or {}
     lektion = daten.get("einstufung_lektion")
     if not lektion:
+        return redirect(url_for("einstufung"))
+
+    # «Kann ich nicht» — zaehlt als nicht geloest und bringt den Test weiter.
+    #
+    # Vorher gab es diesen Knopf nicht, und der Hinweis lautete «lass das Feld
+    # leer und klick auf Weiter». Das funktionierte nicht: eine leere Eingabe
+    # kommt als EINGABEFEHLER zurueck, wird bewusst NICHT gezaehlt (damit ein
+    # Vertipper niemanden zu tief einstuft) — und dieselbe Aufgabe erschien
+    # wieder. Wer eine Aufgabe nicht konnte, kam nicht mehr weiter.
+    if request.form.get("kannnicht"):
+        e = Einstufung.aus_dict(session.get("einstufung") or {})
+        e.antwort(lektion, False)
+        session["einstufung"] = e.als_dict()
+        session.pop("aufgabe", None)
         return redirect(url_for("einstufung"))
 
     a = auswerten(request.form.get("antwort", ""), aufgabe_aus_session(daten))
@@ -1273,17 +1479,32 @@ def login():
 @app.route("/register", methods=["GET", "POST"])
 def register():
     if request.method == "POST":
+        benutzername = (request.form.get("username") or "").strip()
+        mail = (request.form.get("email") or "").strip()
+        passwort = request.form.get("password") or ""
+
         # Prüfen ob E-Mail bereits existiert
-        existing = User.query.filter_by(email=request.form.get("email")).first()
+        existing = User.query.filter_by(email=mail).first()
         if existing:
             flash("Diese E-Mail ist bereits registriert.", "error")
             return render_template("register.html")
 
+        # Der Benutzername ist in der Datenbank eindeutig. Ohne diese Pruefung
+        # bricht das Speichern mit einem Datenbankfehler ab, und die Schuelerin
+        # sieht eine weisse Fehlerseite statt eines Hinweises.
+        if User.query.filter_by(username=benutzername).first():
+            flash("Dieser Benutzername ist schon vergeben.", "error")
+            return render_template("register.html")
+
+        if len(passwort) < 6:
+            flash("Das Passwort braucht mindestens 6 Zeichen.", "error")
+            return render_template("register.html")
+
         u = User(
-            username=request.form.get("username"),
-            email=request.form.get("email"),
+            username=benutzername,
+            email=mail,
         )
-        u.set_password(request.form.get("password"))
+        u.set_password(passwort)
         db.session.add(u)
         db.session.commit()
         login_user(u)

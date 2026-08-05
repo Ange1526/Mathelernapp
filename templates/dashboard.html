@@ -118,18 +118,40 @@
     }
 
     /* Kapitelueberschrift ueber den Lektionskarten. Nutzt die Farben, die
-       oben schon definiert sind — kein neues Aussehen. */
+       oben schon definiert sind — kein neues Aussehen.
+
+       Frueher stand hier `grid-column: 1 / -1` und `margin-bottom: -10px`.
+       Beides war falsch: die Ueberschrift liegt gar nicht im Grid, also
+       wirkte `grid-column` nicht, und der negative Abstand hat die Karten
+       um 10px nach oben gezogen — sie lagen auf dem Titel. */
     .kapitel-titel {
-        grid-column: 1 / -1;
-        margin: 35px 0 -10px;
-        font-size: 0.85rem;
+        margin: 34px 0 16px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid #EDEDF2;
+        display: flex;
+        align-items: baseline;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+    .kapitel-titel:first-of-type { margin-top: 8px; }
+    .kapitel-nummer {
+        font-size: 0.72rem;
         font-weight: 700;
         color: #A3A3A3;
         text-transform: uppercase;
-        letter-spacing: 1px;
+        letter-spacing: 1.2px;
     }
-    .kapitel-titel:first-of-type { margin-top: 0; }
-    .kapitel-zaehler { color: #CBD5E0; font-weight: 400; letter-spacing: 0; }
+    .kapitel-name {
+        font-size: 1.05rem;
+        font-weight: 600;
+        color: #2D3748;
+    }
+    .kapitel-zaehler {
+        margin-left: auto;
+        color: #A3A3A3;
+        font-weight: 400;
+        font-size: 0.8rem;
+    }
 
     /* Kleinere Karten, weil es viele sind. Sonst alles wie gehabt. */
     .chapters-grid.fein { grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 16px; }
@@ -168,8 +190,9 @@
 
         {% for kap in kapitel_liste %}
         <div class="kapitel-titel">
-            Kapitel {{ kap.nummer }}
-            <span class="kapitel-zaehler">· {{ kap.fertig }} von {{ kap.gesamt }}</span>
+            <span class="kapitel-nummer">Kapitel {{ kap.nummer }}</span>
+            <span class="kapitel-name">{{ kap.titel }}</span>
+            <span class="kapitel-zaehler">{{ kap.fertig }} von {{ kap.gesamt }} sicher</span>
         </div>
         <div class="chapters-grid fein">
             {% for lek in kap.lektionen %}

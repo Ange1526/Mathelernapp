@@ -1,0 +1,22 @@
+Fehlerkataloge nachgetragen
+============================
+
+Zwei Dateien:
+  generator\s3_terme.py         ersetzen
+  generator\s15_s17_sorten.py   ersetzen
+
+ZIP direkt ueber den Projektordner entpacken:
+  Expand-Archive "$HOME\Downloads\runde3_fehlerkataloge.zip" -DestinationPath . -Force
+
+Keine Datenbankaenderung. Keine neuen Lektionen.
+
+Was sich aendert: In Kapitel 3 und in Lektion 4.9 nennt die App jetzt
+deutlich haeufiger, WELCHER Denkfehler vorliegt, statt nur "falsch".
+
+  S12   1.00  ->  1.65 Fehlereintraege je Aufgabe
+  S13   1.00  ->  2.12
+  S14   1.06  ->  1.66
+  S15   1.61  ->  2.08
+  S17   1.00  ->  1.92
+
+Testlauf: alle 16 Schablonen bestanden.

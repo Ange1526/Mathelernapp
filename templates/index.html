@@ -1,19 +1,93 @@
 {% extends "base.html" %}
 {% block title %}Willkommen{% endblock %}
 {% block content %}
-<section class="hero">
-  <div class="hero-content">
-    <h1>Deine App<br><span class="accent">beginnt hier.</span></h1>
-    <p>Ein sauberer Startpunkt mit Login, Datenbank und allem was du brauchst.</p>
-    <div class="hero-actions">
-      <a href="{{ url_for('register') }}" class="btn-primary btn-large">Jetzt starten</a>
-      <a href="{{ url_for('login') }}" class="btn-ghost">Einloggen →</a>
+
+<style>
+    .start-banner {
+        background: linear-gradient(135deg, #7F73CF 0%, #B885DC 100%);
+        color: white;
+        padding: 70px 60px;
+        border-radius: 40px;
+        margin-top: 40px;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    }
+    .start-banner::after {
+        content: 'Σ';
+        position: absolute;
+        right: 40px; bottom: -60px;
+        font-size: 16rem; font-weight: 800;
+        color: rgba(255,255,255,0.1);
+    }
+    .start-inhalt { position: relative; z-index: 2; max-width: 620px; }
+    .start-banner h1 { font-size: 3rem; margin: 0 0 18px; line-height: 1.15; }
+    .start-banner p { font-size: 1.1rem; opacity: 0.92; margin: 0 0 34px; }
+    .start-knoepfe { display: flex; gap: 14px; flex-wrap: wrap; }
+    .knopf-hell {
+        background: white; color: #7F73CF;
+        padding: 15px 32px; border-radius: 100px;
+        font-weight: 600; text-decoration: none;
+        display: inline-block; transition: transform 0.2s;
+    }
+    .knopf-hell:hover { transform: scale(1.05); }
+    .knopf-rand {
+        background: rgba(255,255,255,0.2); color: white;
+        padding: 15px 32px; border-radius: 100px;
+        font-weight: 600; text-decoration: none;
+        display: inline-block; transition: transform 0.2s;
+    }
+    .knopf-rand:hover { transform: scale(1.05); }
+
+    .punkte {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 20px;
+        margin: 30px 0 60px;
+    }
+    .punkt {
+        background: white;
+        padding: 30px;
+        border-radius: 24px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+    }
+    .punkt .zeichen { font-size: 2rem; display: block; margin-bottom: 12px; }
+    .punkt h3 { margin: 0 0 8px; font-size: 1.05rem; color: #2D3748; }
+    .punkt p { margin: 0; font-size: 0.92rem; color: #718096; line-height: 1.55; }
+</style>
+
+<div class="start-banner">
+    <div class="start-inhalt">
+        <h1>Algebra üben,<br>bis es wirklich sitzt.</h1>
+        <p>Jede Aufgabe wird neu erzeugt und passt sich deinem Stand an.
+           Wenn etwas nicht klappt, zeigt dir die App, woran es liegt —
+           und wo du nachschauen solltest.</p>
+        <div class="start-knoepfe">
+            <a href="{{ url_for('register') }}" class="knopf-hell">Loslegen</a>
+            <a href="{{ url_for('login') }}" class="knopf-rand">Einloggen →</a>
+        </div>
     </div>
-  </div>
-  <div class="hero-visual">
-    <div class="card-float card-1">✓ Login &amp; Registrierung</div>
-    <div class="card-float card-2">✓ PostgreSQL Datenbank</div>
-    <div class="card-float card-3">✓ Sicher &amp; deployed</div>
-  </div>
-</section>
+</div>
+
+<div class="punkte">
+    <div class="punkt">
+        <span class="zeichen">🎯</span>
+        <h3>Dein eigener Weg</h3>
+        <p>Ein kurzer Einstufungstest sagt, wo du stehst. Was du schon kannst,
+           überspringst du.</p>
+    </div>
+    <div class="punkt">
+        <span class="zeichen">🔍</span>
+        <h3>Fehler mit Ursache</h3>
+        <p>Die App erkennt nicht nur, dass etwas falsch ist, sondern welcher
+           Denkfehler dahintersteckt.</p>
+    </div>
+    <div class="punkt">
+        <span class="zeichen">🔥</span>
+        <h3>Dranbleiben</h3>
+        <p>Eine Aufgabe pro Tag hält die Serie am Leben. Mehr braucht es
+           nicht, um vorwärtszukommen.</p>
+    </div>
+</div>
+
 {% endblock %}

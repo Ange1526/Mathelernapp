@@ -266,6 +266,126 @@
         font-size: 0.95rem;
         line-height: 1.5;
     }
+
+    /* ── Theorie am Lektionsanfang ───────────────────────────────────────
+       OHNE JavaScript. Ein verstecktes Radiofeld je Schritt merkt sich, wo
+       man ist; die Knoepfe sind Labels, die auf das naechste Radiofeld
+       zeigen. Ein Klick wechselt also den Schritt, ganz ohne Skript.
+
+       Eine Checkbox blendet den ganzen Block aus — und derselbe Schalter
+       holt ihn jederzeit wieder zurueck. */
+
+    .th-schalter { position: absolute; opacity: 0; pointer-events: none; }
+
+    .th-oeffnen {
+        display: none;
+        cursor: pointer;
+        background: #F0EDFA; color: #7F73CF;
+        padding: 10px 20px; border-radius: 100px;
+        font-size: 0.85rem; font-weight: 600;
+        margin-bottom: 20px;
+    }
+    .th-oeffnen:hover { background: #E6E1F7; }
+    #th-zu:checked ~ .th-oeffnen { display: inline-block; }
+    #th-zu:checked ~ .theorie { display: none; }
+
+    .theorie {
+        background: linear-gradient(135deg, #7F73CF 0%, #9B7FD4 100%);
+        color: white;
+        border-radius: 28px;
+        padding: 24px 28px 18px;
+        margin-bottom: 26px;
+        box-shadow: 0 8px 24px rgba(127,115,207,0.25);
+    }
+    .theorie-kopf {
+        display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap;
+    }
+    .theorie-label {
+        font-size: 0.68rem; font-weight: 700; letter-spacing: 1.4px;
+        text-transform: uppercase; opacity: 0.75;
+    }
+    .theorie-titel { font-size: 1.05rem; font-weight: 600; }
+    .th-schliessen {
+        margin-left: auto; cursor: pointer;
+        opacity: 0.6; font-size: 1.1rem; line-height: 1;
+        padding: 4px 8px; border-radius: 8px;
+    }
+    .th-schliessen:hover { opacity: 1; background: rgba(255,255,255,0.15); }
+
+    /* Alle Schritte liegen uebereinander; sichtbar ist der gewaehlte. */
+    .theorie-buehne {
+        position: relative;
+        background: rgba(255,255,255,0.14);
+        border-radius: 18px;
+        margin: 16px 0 12px;
+        height: 92px;
+    }
+    .th-zeile {
+        position: absolute; inset: 0;
+        display: flex; align-items: center; justify-content: center;
+        flex-wrap: wrap; gap: 2px;
+        font-size: 1.9rem; font-weight: 600;
+        font-family: 'Courier New', monospace;
+        opacity: 0; transform: translateY(10px);
+        transition: opacity 0.4s ease, transform 0.4s ease;
+    }
+    .th-teil {
+        display: inline-block; padding: 3px 6px; border-radius: 8px;
+        transition: background 0.3s ease, color 0.3s ease,
+                    box-shadow 0.3s ease, opacity 0.3s ease;
+    }
+    .th-mark {
+        background: rgba(255,255,255,0.3);
+        box-shadow: 0 0 0 4px rgba(255,255,255,0.3);
+    }
+    .th-neu { color: #FFE79A; }
+    .th-weg { opacity: 0.4; }
+
+    .theorie-saetze { position: relative; height: 50px; }
+    .th-satz {
+        position: absolute; inset: 0;
+        font-size: 1rem; line-height: 1.45;
+        opacity: 0; transform: translateY(8px);
+        transition: opacity 0.4s ease, transform 0.4s ease;
+    }
+
+    .theorie-fuss {
+        display: flex; align-items: center; justify-content: space-between;
+        gap: 16px; margin-top: 10px; flex-wrap: wrap;
+    }
+    .theorie-punkte { display: flex; gap: 8px; }
+    .th-punkt {
+        width: 10px; height: 10px; border-radius: 50%;
+        background: rgba(255,255,255,0.3);
+        cursor: pointer;
+        transition: all 0.25s ease;
+    }
+    .th-punkt:hover { background: rgba(255,255,255,0.6); }
+
+    /* Nur das Knopfpaar des aktuellen Schritts wird eingeblendet. */
+    .theorie-knoepfe { position: relative; }
+    .th-nav { display: none; gap: 10px; align-items: center; }
+    .th-knopf {
+        cursor: pointer; font-family: inherit;
+        padding: 11px 22px; border-radius: 100px;
+        font-size: 0.9rem; font-weight: 600;
+        display: inline-block; white-space: nowrap;
+        transition: transform 0.15s ease;
+    }
+    .th-knopf:hover { transform: scale(1.04); }
+    .th-grau { background: rgba(255,255,255,0.2); color: white; }
+    .th-lila { background: white; color: #7F73CF; }
+
+    .theorie-merksatz {
+        margin-top: 14px; padding-top: 12px;
+        border-top: 1px solid rgba(255,255,255,0.25);
+        font-size: 0.9rem; line-height: 1.55; opacity: 0.9;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .th-zeile, .th-satz, .th-teil { transition: none; }
+    }
+
 </style>
 
 <div class="lektion-wrapper">
@@ -296,7 +416,84 @@
             <div class="task-instruction">{{ anleitung or "Löse die Aufgabe" }}</div>
         </div>
 
-        {% if kernidee %}
+        {% if theorie %}
+        {% set n = theorie.schritte|length %}
+
+        <style>
+        {% for schritt in theorie.schritte %}
+            #th-s{{ loop.index }}:checked ~ .theorie .th-zeile:nth-of-type({{ loop.index }}),
+            #th-s{{ loop.index }}:checked ~ .theorie .th-satz:nth-of-type({{ loop.index }}) {
+                opacity: 1; transform: none; z-index: 2;
+            }
+            #th-s{{ loop.index }}:checked ~ .theorie .th-punkt:nth-of-type({{ loop.index }}) {
+                background: #ffffff; transform: scale(1.5);
+            }
+            #th-s{{ loop.index }}:checked ~ .theorie .th-nav:nth-of-type({{ loop.index }}) {
+                display: flex;
+            }
+        {% endfor %}
+        </style>
+
+        {% for schritt in theorie.schritte %}
+        <input type="radio" name="th-schritt" id="th-s{{ loop.index }}"
+               class="th-schalter"{% if loop.first %} checked{% endif %}>
+        {% endfor %}
+        <input type="checkbox" id="th-zu" class="th-schalter">
+
+        <label for="th-zu" class="th-oeffnen">Theorie nochmals ansehen</label>
+
+        <div class="theorie">
+            <div class="theorie-kopf">
+                <span class="theorie-label">Darum geht es</span>
+                <span class="theorie-titel">{{ theorie.titel }}</span>
+                <label for="th-zu" class="th-schliessen" title="Ausblenden">✕</label>
+            </div>
+
+            <div class="theorie-buehne">
+                {% for schritt in theorie.schritte %}
+                <div class="th-zeile">
+                    {% for teil in schritt.teile %}
+                    <span class="th-teil{% if teil.s %} th-{{ teil.s }}{% endif %}">{{ teil.t }}</span>
+                    {% endfor %}
+                </div>
+                {% endfor %}
+            </div>
+
+            <div class="theorie-saetze">
+                {% for schritt in theorie.schritte %}
+                <div class="th-satz">{{ schritt.text }}</div>
+                {% endfor %}
+            </div>
+
+            <div class="theorie-fuss">
+                <div class="theorie-punkte">
+                    {% for schritt in theorie.schritte %}
+                    <label for="th-s{{ loop.index }}" class="th-punkt"></label>
+                    {% endfor %}
+                </div>
+
+                {# Pro Schritt ein eigenes Knopfpaar. Sichtbar ist immer nur
+                   das des aktuellen Schritts — so braucht es kein Skript. #}
+                <div class="theorie-knoepfe">
+                    {% for schritt in theorie.schritte %}
+                    <span class="th-nav">
+                        {% if not loop.first %}
+                        <label for="th-s{{ loop.index0 }}" class="th-knopf th-grau">Zurück</label>
+                        {% endif %}
+                        {% if loop.last %}
+                        <label for="th-zu" class="th-knopf th-lila">Los geht's</label>
+                        {% else %}
+                        <label for="th-s{{ loop.index + 1 }}" class="th-knopf th-lila">Weiter →</label>
+                        {% endif %}
+                    </span>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="theorie-merksatz">{{ theorie.merksatz }}</div>
+        </div>
+
+        {% elif kernidee %}
         <div class="hint-box" style="border-color:#B794F4; background:#FAF5FF; margin-bottom:20px;">
             <div class="hint-box-title" style="color:#553C9A;">Darum geht es</div>
             <div class="hint-box-text" style="color:#6B46C1;">{{ kernidee }}</div>

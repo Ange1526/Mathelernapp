@@ -1,0 +1,167 @@
+{% extends "base.html" %}
+{% block title %}Meine Fragen{% endblock %}
+{% block content %}
+
+<style>
+    .fragen-kopf {
+        background: linear-gradient(135deg, #7F73CF 0%, #B885DC 100%);
+        color: white;
+        padding: 40px 50px;
+        border-radius: 30px;
+        margin: 40px 0 30px;
+        position: relative;
+        overflow: hidden;
+    }
+    .fragen-kopf::after {
+        content: '⭐';
+        position: absolute;
+        right: 40px;
+        bottom: -30px;
+        font-size: 9rem;
+        opacity: 0.12;
+    }
+    .fragen-kopf h1 { margin: 0 0 10px; font-size: 2.2rem; }
+    .fragen-kopf p { margin: 0; opacity: 0.9; max-width: 640px; }
+
+    .frage-karte {
+        background: white;
+        border-radius: 20px;
+        padding: 24px 28px;
+        margin-bottom: 16px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+        display: flex;
+        align-items: flex-start;
+        gap: 20px;
+        flex-wrap: wrap;
+    }
+    .frage-karte.erledigt { opacity: 0.55; }
+    .frage-inhalt { flex: 1; min-width: 240px; }
+    .frage-meta {
+        font-size: 0.75rem;
+        color: #A3A3A3;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 8px;
+    }
+    .frage-text {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #2D3748;
+        font-family: 'Courier New', monospace;
+    }
+    .frage-karte.erledigt .frage-text { text-decoration: line-through; }
+    .frage-notiz {
+        margin-top: 10px;
+        font-size: 0.9rem;
+        color: #718096;
+        background: #FBFBFF;
+        padding: 10px 14px;
+        border-radius: 12px;
+        border-left: 3px solid #B885DC;
+    }
+    .frage-aktionen { display: flex; gap: 10px; align-items: center; }
+    .knopf-klein {
+        border: none;
+        cursor: pointer;
+        padding: 9px 16px;
+        border-radius: 100px;
+        font-size: 0.82rem;
+        font-weight: 600;
+        font-family: inherit;
+    }
+    .knopf-gruen { background: #E6FFFA; color: #2C7A7B; }
+    .knopf-grau  { background: #F3F3F3; color: #7F7F7F; }
+    .knopf-rot   { background: #FFF5F5; color: #C53030; }
+
+    .abschnitt-titel {
+        margin: 40px 0 16px;
+        font-size: 0.8rem;
+        font-weight: 700;
+        color: #A3A3A3;
+        text-transform: uppercase;
+        letter-spacing: 1.2px;
+    }
+    .leer-kasten {
+        background: white;
+        border-radius: 20px;
+        padding: 50px 30px;
+        text-align: center;
+        color: #A3A3A3;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+    }
+    .leer-kasten .gross { font-size: 3rem; display: block; margin-bottom: 14px; }
+    .zurueck {
+        display: inline-block;
+        margin-top: 30px;
+        color: #7F73CF;
+        text-decoration: none;
+        font-weight: 600;
+    }
+</style>
+
+<div class="fragen-kopf">
+    <h1>Meine Fragen</h1>
+    <p>Aufgaben, die du beim Üben markiert hast. Nimm sie in die nächste
+       Mathestunde mit — die Frage steht im Wortlaut da, du musst dich an
+       nichts erinnern.</p>
+</div>
+
+{% if offen %}
+    <div class="abschnitt-titel">Noch offen · {{ offen|length }}</div>
+    {% for m in offen %}
+    <div class="frage-karte">
+        <div class="frage-inhalt">
+            <div class="frage-meta">
+                {{ chapter_names.get(m.chapter, m.chapter) }}
+                {% if m.level %} · Level {{ m.level }}{% endif %}
+                · {{ m.created_at.strftime('%d.%m.%Y') }}
+            </div>
+            <div class="frage-text">{{ m.question }}</div>
+            {% if m.note %}<div class="frage-notiz">{{ m.note }}</div>{% endif %}
+        </div>
+        <div class="frage-aktionen">
+            <form method="POST" action="{{ url_for('markierung_erledigt', mid=m.id) }}">
+                <button type="submit" class="knopf-klein knopf-gruen">Verstanden</button>
+            </form>
+            <form method="POST" action="{{ url_for('markierung_loeschen', mid=m.id) }}">
+                <button type="submit" class="knopf-klein knopf-rot">Löschen</button>
+            </form>
+        </div>
+    </div>
+    {% endfor %}
+{% else %}
+    <div class="leer-kasten">
+        <span class="gross">⭐</span>
+        Du hast noch keine Aufgabe markiert.<br>
+        Beim Üben gibt es dafür den Stern-Knopf.
+    </div>
+{% endif %}
+
+{% if verstanden %}
+    <div class="abschnitt-titel">Schon geklärt · {{ verstanden|length }}</div>
+    {% for m in verstanden %}
+    <div class="frage-karte erledigt">
+        <div class="frage-inhalt">
+            <div class="frage-meta">
+                {{ chapter_names.get(m.chapter, m.chapter) }}
+                {% if m.level %} · Level {{ m.level }}{% endif %}
+                · {{ m.created_at.strftime('%d.%m.%Y') }}
+            </div>
+            <div class="frage-text">{{ m.question }}</div>
+            {% if m.note %}<div class="frage-notiz">{{ m.note }}</div>{% endif %}
+        </div>
+        <div class="frage-aktionen">
+            <form method="POST" action="{{ url_for('markierung_erledigt', mid=m.id) }}">
+                <button type="submit" class="knopf-klein knopf-grau">Doch noch offen</button>
+            </form>
+            <form method="POST" action="{{ url_for('markierung_loeschen', mid=m.id) }}">
+                <button type="submit" class="knopf-klein knopf-rot">Löschen</button>
+            </form>
+        </div>
+    </div>
+    {% endfor %}
+{% endif %}
+
+<a href="{{ url_for('dashboard') }}" class="zurueck">← Zurück zum Dashboard</a>
+
+{% endblock %}

@@ -44,17 +44,47 @@ SCHABLONE_FUER: dict[str, str] = {
     "10.1": "10.1", "10.2": "10.1", "10.3": "10.1", "10.4": "10.1",
     "10.5": "10.1", "10.6": "10.1", "10.7": "10.1", "10.8": "10.1",
     "10.9": "10.1", "10.10": "10.1", "10.11": "10.1",
-    # Gleichartige Terme — 4.8 ist eines der drei haeufigen Ruecksprungziele
-    "4.1": "4.1", "4.2": "4.1", "4.3": "4.1", "4.4": "4.1", "4.5": "4.1",
-    "4.6": "4.1", "4.7": "4.1", "4.8": "4.1", "4.9": "4.1", "4.10": "4.1",
+    # Gleichartige Terme — S16 deckt 4.2 bis 4.6 und 4.8 ab, mehr nicht.
+    # 4.1 und 4.7 sind Schablone S15, 4.9 ist S17, 4.10 ist die
+    # Gemischt-Lektion. Sie standen frueher faelschlich hier drin.
+    # Kapitel 3 — S12, S13, S14. 3.12 «Gemischt» bleibt offen.
+    "3.1": "3.1", "3.2": "3.1", "3.3": "3.1",
+    "3.4": "3.4", "3.5": "3.4", "3.6": "3.4", "3.7": "3.4",
+    "3.8": "3.4", "3.9": "3.4",
+    "3.10": "3.10", "3.11": "3.10",
+    # Kapitel 5 — S18 und S19. 5.9 «Gemischt» bleibt offen.
+    "5.1": "5.1", "5.2": "5.1", "5.3": "5.1", "5.4": "5.1",
+    "5.5": "5.5", "5.6": "5.5", "5.7": "5.5", "5.8": "5.5",
+    "4.1": "4.1", "4.7": "4.1",
+    "4.2": "4.2", "4.3": "4.2", "4.4": "4.2", "4.5": "4.2",
+    "4.6": "4.2", "4.8": "4.2",
+    "4.9": "4.9",
     # Potenzen — 7.10 ist das dritte haeufige Ruecksprungziel
     "7.1": "7.1", "7.2": "7.1", "7.3": "7.1", "7.4": "7.1", "7.5": "7.1",
     "7.6": "7.1", "7.7": "7.1", "7.8": "7.1", "7.9": "7.1", "7.10": "7.1",
     "7.11": "7.1",
-    # Grundoperationen
-    "6.5": "6.1", "6.6": "6.1", "6.7": "6.1",
-    # Faktorisieren
+    # Kapitel 8 Wurzeln — vier Schablonen, S26 bis S29.
+    # 8.10 «Gemischt» bleibt bewusst offen: keine der vier Schablonen baut
+    # Aufgaben, die alle Formen des Kapitels mischen.
+    "8.1": "8.1", "8.2": "8.1",
+    "8.3": "8.3", "8.7": "8.3",
+    "8.4": "8.4", "8.5": "8.4", "8.6": "8.4", "8.8": "8.4",
+    "8.9": "8.9",
+    # Grundoperationen — S2 baut immer mit zwei Variablen, deshalb erst ab 6.3.
+    # 6.1 und 6.2 (Reihenfolge erkennen, eine Variable) kann S2 nicht.
+    "6.3": "6.1", "6.4": "6.1", "6.5": "6.1", "6.6": "6.1", "6.7": "6.1",
+    # Division — BF3 dividiert Monome mit Potenzen, BF5 in Bruchschreibweise,
+    # BF6 ordnet die Division in einen laengeren Term ein. Das ist Erhebung 2c.
+    # 9.1 bis 9.3 fehlen weiterhin: dafuer braeuchte es eine nackte
+    # Monomdivision ohne Umgebung, die keine Bauform baut.
+    "9.4": "6.1", "9.5": "6.1", "9.6": "6.1",
+    # Faktorisieren — BF5 bringt Potenzen und zwei Variablen (12.5, 12.6),
+    # BF6 und BF7 die dreigliedrigen Terme (12.7), die Zielform FAKTORISIERT
+    # zusammen mit BF8 prueft die Vollstaendigkeit (12.8). Damit sind die
+    # Erhebungsteilaufgaben 4b, 4c und 4d abgedeckt.
     "12.1": "12.1", "12.2": "12.1", "12.3": "12.1", "12.4": "12.1",
+    "12.5": "12.1", "12.6": "12.1", "12.7": "12.1", "12.8": "12.1",
+    "12.9": "12.1",
 }
 
 

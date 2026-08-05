@@ -84,6 +84,10 @@
             color: #FF7043;
         }
 
+        /* Blass, solange heute noch nichts geloest wurde — die Serie steht
+           dann auf der Kippe. Sobald eine Aufgabe kommt, leuchtet sie. */
+        .stat-pill.orange.blass { opacity: 0.45; }
+
         .avatar-area {
             display: flex;
             align-items: center;
@@ -127,8 +131,9 @@
 
         <div class="user-stats">
             {% if current_user.is_authenticated %}
-                <div class="stat-pill orange">
-                    🔥 {{ current_user.streak }}
+                <div class="stat-pill orange {% if not streak_heute %}blass{% endif %}"
+                     title="{% if streak_aktuell %}{{ streak_aktuell }} Tag{{ 'e' if streak_aktuell != 1 }} hintereinander geübt{% else %}Heute noch keine Aufgabe gelöst{% endif %}{% if streak_bester %} · Bestwert {{ streak_bester }}{% endif %}">
+                    🔥 {{ streak_aktuell }}
                 </div>
                 <div class="stat-pill">
                     ✨ {{ current_user.xp }}
