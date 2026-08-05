@@ -154,9 +154,33 @@ GLEICHARTIGE = Animation(
              "addiert.",
 )
 
-#: S2 · Punkt vor Strich mit Variablen
+#: S20 · Punkt vor Strich mit Variablen — Lektionen 6.1 bis 6.4.
+#: Hier wird nur ausgerechnet. Was danach mit den Gliedern passiert, ist
+#: Lektion 6.5 und hat mit PUNKT_VOR_STRICH eine eigene Animation.
+PUNKT_ZUERST = Animation(
+    titel="Punkt vor Strich mit Variablen",
+    schritte=[
+        S("Geh den Term durch und such das Malzeichen.",
+          ("3x", "", "a"), ("+", "", "op"), ("2 · 4x", "mark", "p")),
+        S("Punkt vor Strich: das Mal wird zuerst gerechnet, auch mit Buchstaben.",
+          ("3x", "", "a"), ("+", "", "op"), ("2 · 4x", "mark", "p")),
+        S("Die Zahlen werden malgenommen: 2 · 4 = 8. Das x bleibt.",
+          ("3x", "", "a"), ("+", "", "op"), ("8x", "neu", "p")),
+        S("Jetzt steht nur noch ein Plus da.",
+          ("3x", "mark", "a"), ("+", "mark", "op"), ("8x", "mark", "p")),
+        S("3x und 8x sind gleichartig — beide haben genau ein x.",
+          ("3x", "mark", "a"), ("+", "", "op"), ("8x", "mark", "p")),
+        S("Zusammenzählen: 3 + 8 = 11. Fertig.",
+          ("11x", "neu", "a")),
+    ],
+    merksatz="Punkt vor Strich gilt auch mit Variablen: erst multiplizieren, "
+             "dann addieren oder subtrahieren.",
+)
+
+#: S21 · Ausrechnen und danach zusammenfassen — Lektionen 6.5 bis 6.7.
+#: Der Term ist Erhebungsaufgabe 2a.
 PUNKT_VOR_STRICH = Animation(
-    titel="Punkt vor Strich",
+    titel="Ausrechnen und dann zusammenfassen",
     schritte=[
         S("Suche zuerst das Mal- oder Geteiltzeichen.",
           ("5b ", ""), ("− 5b · 2c", "mark"), (" + 3bc", "")),
@@ -441,7 +465,8 @@ FUER_KAPITEL: dict[str, Animation] = {
     "4.1": SORTEN,
     "4.2": GLEICHARTIGE,
     "4.9": PRODUKTE,
-    "6.1": PUNKT_VOR_STRICH,
+    "6.1": PUNKT_ZUERST,
+    "6.5": PUNKT_VOR_STRICH,
     "7.1": POTENZEN,
     "8.1": WURZEL,
     "8.3": WURZEL_SUMME,

@@ -11,6 +11,7 @@ import test_s15
 import test_s3
 import test_s5
 import test_s16
+import test_s20
 import test_s7
 import test_s8
 
@@ -36,6 +37,10 @@ if __name__ == "__main__":
     for S in (test_s15.S15, test_s15.S17):
         print(f"\n{'=' * 96}\n{S.nr}  ·  {S.titel}\n{'=' * 96}")
         fehler += test_s15.lauf(S)
+
+    for S in (test_s20.S20, test_s20.S21):
+        print(f"\n{'=' * 96}\n{S.nr}  ·  {S.titel}\n{'=' * 96}")
+        fehler += test_s20.lauf(S)
 
     for S in (test_s8.S26, test_s8.S27, test_s8.S28, test_s8.S29):
         print(f"\n{'=' * 96}\n{S.nr}  ·  {S.titel}\n{'=' * 96}")

@@ -40,6 +40,7 @@ LUECKE_AB = 3
 #: Wer hier scheitert, hat die Lücke meist eine Stufe darunter.
 VORAUSSETZUNGEN = {
     "6.1":  ["5.7", "4.8"],     # Punkt vor Strich mit Variablen
+    "6.5":  ["6.1"],            # zuerst ausrechnen koennen, dann zusammenfassen
     "12.1": ["11.6"],           # Faktorisieren
 }
 
@@ -48,7 +49,8 @@ KAPITEL_KLARTEXT = {
     "4.8":  "Gleichartige Terme zusammenfassen",
     "5.7":  "Produkte vereinfachen",
     "11.6": "Ausmultiplizieren und zusammenfassen",
-    "6.1":  "Grundoperationen",
+    "6.1":  "Punkt vor Strich mit Variablen",
+    "6.5":  "Ausrechnen und danach zusammenfassen",
     "12.1": "Faktorisieren",
 }
 

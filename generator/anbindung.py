@@ -31,11 +31,17 @@ from .s5_produkte import S18, S19
 from .s7_potenzen import S7
 from .s2_grundoperationen import S2
 from .s4_faktorisieren import S4
+from .s6_punktrechnung import S20, S21
 
 #: Kapitelnummer in der App  ->  Schablone
 #: Die Nummern folgen deiner Lektionslandkarte.
 KAPITEL = {
-    "6.1": S2,      # Grundoperationen — Erhebung 2a, 2b, 2c
+    # Kapitel 6 — S20 und S21 haben S2 hier abgeloest.
+    "6.1": S20,     # Punkt vor Strich mit Variablen        6.1 – 6.4
+    "6.5": S21,     # Ausrechnen und zusammenfassen         6.5 – 6.7 — Erhebung 2a
+    #: S2 bleibt fuer die Division stehen, bis S30 und S31 gebaut sind.
+    #: Ohne diesen Eintrag waere Erhebungsteilaufgabe 2c nicht mehr uebbar.
+    "9.4": S2,      # Division in laengeren Termen  9.4 – 9.6 — Erhebung 2c
     # Kapitel 3 — das Fundament: 4.1 setzt 3.11 voraus.
     "3.1": S12,     # Zahlen einsetzen        3.1 – 3.3
     "3.4": S13,     # Variablen verknuepfen   3.4 – 3.9

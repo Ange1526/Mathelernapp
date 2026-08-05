@@ -70,14 +70,19 @@ SCHABLONE_FUER: dict[str, str] = {
     "8.3": "8.3", "8.7": "8.3",
     "8.4": "8.4", "8.5": "8.4", "8.6": "8.4", "8.8": "8.4",
     "8.9": "8.9",
-    # Grundoperationen — S2 baut immer mit zwei Variablen, deshalb erst ab 6.3.
-    # 6.1 und 6.2 (Reihenfolge erkennen, eine Variable) kann S2 nicht.
-    "6.3": "6.1", "6.4": "6.1", "6.5": "6.1", "6.6": "6.1", "6.7": "6.1",
-    # Division — BF3 dividiert Monome mit Potenzen, BF5 in Bruchschreibweise,
-    # BF6 ordnet die Division in einen laengeren Term ein. Das ist Erhebung 2c.
+    # Kapitel 6 — S20 deckt 6.1 bis 6.4 ab (Punkt vor Strich, eine und zwei
+    # Variablen, Vorzeichen), S21 die Lektionen 6.5 bis 6.7 (nach dem
+    # Ausrechnen zusammenfassen). Beide ersetzen S2, das hier auf allen drei
+    # Level denselben Aufbau hatte.
+    # 6.8 «Gemischt» bleibt offen — wie 4.10, 5.9 und 8.10 auch.
+    "6.1": "6.1", "6.2": "6.1", "6.3": "6.1", "6.4": "6.1",
+    "6.5": "6.5", "6.6": "6.5", "6.7": "6.5",
+    # Division — S2 bleibt hier stehen, bis S30 und S31 gebaut sind. BF3
+    # dividiert Monome mit Potenzen, BF5 in Bruchschreibweise, BF6 ordnet die
+    # Division in einen laengeren Term ein. Das ist Erhebung 2c.
     # 9.1 bis 9.3 fehlen weiterhin: dafuer braeuchte es eine nackte
-    # Monomdivision ohne Umgebung, die keine Bauform baut.
-    "9.4": "6.1", "9.5": "6.1", "9.6": "6.1",
+    # Monomdivision ohne Umgebung, die keine Bauform baut — das wird S30.
+    "9.4": "9.4", "9.5": "9.4", "9.6": "9.4",
     # Faktorisieren — BF5 bringt Potenzen und zwei Variablen (12.5, 12.6),
     # BF6 und BF7 die dreigliedrigen Terme (12.7), die Zielform FAKTORISIERT
     # zusammen mit BF8 prueft die Vollstaendigkeit (12.8). Damit sind die
