@@ -109,8 +109,13 @@ LAEUFE = [
     Lauf("K8", "generator.s8_wurzeln", "S27", "zahl"),
     Lauf("K8", "generator.s8_wurzeln", "S28", "zahl"),
     Lauf("K8", "generator.s8_wurzeln", "S29", "zahl"),
+    Lauf("K9", "generator.s9_division", "S30"),
+    Lauf("K9", "generator.s9_division", "S31"),
+    Lauf("K9", "generator.s9_division", "S32"),
     # ── noch im alten Format, numerische Levelachse ──────────────────────
-    Lauf("K9", "generator.s2_grundoperationen", "S2", "alt"),
+    #: S2 haengt an keiner Lektion mehr, wird aber weiter geprueft,
+    #: solange die Datei existiert.
+    Lauf("abgeloest", "generator.s2_grundoperationen", "S2", "alt"),
     Lauf("K10", "generator.s10_klammern", "S10", "alt"),
     Lauf("K12", "generator.s4_faktorisieren", "S4", "alt"),
 ]

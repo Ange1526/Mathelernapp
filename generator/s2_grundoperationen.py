@@ -1,5 +1,13 @@
 # -*- coding: utf-8 -*-
 """
+ABGELOEST. Diese Schablone haengt an keiner Lektion mehr: S20 und S21
+haben Kapitel 6 uebernommen, S30 bis S32 die Division in Kapitel 9.
+Grund: die Levelachse war numerisch — A, B und C hatten denselben
+Aufbau und nur groessere Zahlen.
+
+Die Datei bleibt zum Vergleichen liegen und ist in `anbindung.py`
+und `netz.py` nicht mehr eingetragen.
+
 Erhebungsaufgabe 2 · Grundoperationen    (Lektionen 6.1–6.7, 10.12–10.15, 9.4–9.6)
 
     «Vereinfache so viel wie möglich.»

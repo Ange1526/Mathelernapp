@@ -28,11 +28,11 @@ from .s16_gleichartig import S16
 from .s15_s17_sorten import S15, S17
 from .s3_terme import S12, S13, S14
 from .s5_produkte import S18, S19
-from .s2_grundoperationen import S2
 from .s4_faktorisieren import S4
 from .s6_punktrechnung import S20, S21
 from .s22_s23_potenzen import S22, S23
 from .s24_s25_potenzgesetze import S24, S25
+from .s9_division import S30, S31, S32
 
 #: Kapitelnummer in der App  ->  Schablone
 #: Die Nummern folgen deiner Lektionslandkarte.
@@ -40,9 +40,11 @@ KAPITEL = {
     # Kapitel 6 — S20 und S21 haben S2 hier abgeloest.
     "6.1": S20,     # Punkt vor Strich mit Variablen        6.1 – 6.4
     "6.5": S21,     # Ausrechnen und zusammenfassen         6.5 – 6.7 — Erhebung 2a
-    #: S2 bleibt fuer die Division stehen, bis S30 und S31 gebaut sind.
-    #: Ohne diesen Eintrag waere Erhebungsteilaufgabe 2c nicht mehr uebbar.
-    "9.4": S2,      # Division in laengeren Termen  9.4 – 9.6 — Erhebung 2c
+    # Kapitel 9 — S30, S31 und S32 haben S2 endgueltig abgeloest. Damit ist
+    # S2 an keiner Lektion mehr eingetragen.
+    "9.1": S30,     # Terme dividieren, einfache Faelle   9.1 – 9.3
+    "9.4": S31,     # Monome mit Potenzen dividieren      9.4 – 9.5 — Erhebung 2c
+    "9.6": S32,     # Division in laengeren Termen        9.6      — Erhebung 2c
     # Kapitel 3 — das Fundament: 4.1 setzt 3.11 voraus.
     "3.1": S12,     # Zahlen einsetzen        3.1 – 3.3
     "3.4": S13,     # Variablen verknuepfen   3.4 – 3.9

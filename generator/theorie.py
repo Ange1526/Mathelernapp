@@ -199,6 +199,76 @@ PUNKT_VOR_STRICH = Animation(
              "gleichartige Glieder zusammenfassen.",
 )
 
+#: S30 · Terme dividieren — Lektionen 9.1 bis 9.3.
+DIVIDIEREN = Animation(
+    titel="Terme dividieren",
+    schritte=[
+        S("Oben steht 12ab, unten 4a. Schau beides getrennt an.",
+          ("12ab", "mark", "o"), (" : ", "", "op"), ("(4a)", "mark", "u")),
+        S("Zuerst die Zahlen: 12 : 4 ergibt 3.",
+          ("3", "neu", "o"), (" · ", "", "op"), ("ab : a", "", "u")),
+        S("Jetzt jede Variable: steht sie oben UND unten?",
+          ("3", "", "o"), ("a", "mark", "u"), ("b", "", "b")),
+        S("Das a steht oben und unten — es fällt weg.",
+          ("3", "", "o"), ("a", "weg", "u"), ("b", "", "b")),
+        S("Das b steht nur oben und bleibt stehen. Fertig: 3b.",
+          ("3b", "neu", "o")),
+    ],
+    merksatz="Beim Dividieren werden die Zahlen geteilt, und jede Variable, "
+             "die oben und unten steht, fällt weg.",
+)
+
+#: S31 · Summe durch Monom — Lektionen 9.4 und 9.5.
+#: Das aufgehende Glied ist der gefaehrliche Punkt: dort bleibt eine 1.
+SUMME_TEILEN = Animation(
+    titel="Eine Summe dividieren",
+    schritte=[
+        S("Oben steht eine Summe aus drei Gliedern.",
+          ("(18u⁴ − 12u³ + 2u²)", "mark", "o"), (" : (2u²)", "", "u")),
+        S("Jedes Glied wird EINZELN geteilt, nicht die Summe als Ganzes.",
+          ("18u⁴ : 2u²", "neu", "g1"), ("−", "", "m"),
+          ("12u³ : 2u²", "neu", "g2"), ("+", "", "p"),
+          ("2u² : 2u²", "neu", "g3")),
+        S("Zahlen teilen, Hochzahlen subtrahieren: 4 − 2 = 2.",
+          ("9u²", "neu", "g1"), ("−", "", "m"), ("6u", "neu", "g2"),
+          ("+", "", "p"), ("2u² : 2u²", "", "g3")),
+        S("Das letzte Glied geht ganz auf — dort bleibt eine 1 stehen.",
+          ("9u²", "", "g1"), ("−", "", "m"), ("6u", "", "g2"),
+          ("+", "", "p"), ("1", "mark", "g3")),
+        S("Wer die 1 weglässt, verliert ein ganzes Glied.",
+          ("9u² − 6u", "weg", "falsch")),
+        S("Fertig: 9u² − 6u + 1.",
+          ("9u² − 6u + 1", "neu", "g1")),
+    ],
+    merksatz="Beim Dividieren werden die Zahlen geteilt und die Hochzahlen "
+             "subtrahiert. Steht im Zähler eine Summe, wird jedes Glied "
+             "einzeln geteilt — auch das, welches ganz aufgeht.",
+)
+
+#: S32 · Division in einem laengeren Term — Lektion 9.6, Erhebung 2c.
+DIVISION_IM_TERM = Animation(
+    titel="Wie weit die Division gilt",
+    schritte=[
+        S("Zwei Glieder sehen gleich aus — aber dazwischen steht ein Plus.",
+          ("12ab", "", "a"), (" + ", "mark", "op"), ("21ab : (7a)", "", "b")),
+        S("Die Division ist eine Punktrechnung und bindet stärker.",
+          ("12ab", "", "a"), (" + ", "", "op"),
+          ("21ab : (7a)", "mark", "b")),
+        S("Geteilt wird nur 21ab, nicht 12ab + 21ab.",
+          ("12ab", "weg", "a"), (" + ", "", "op"),
+          ("21ab : (7a)", "mark", "b")),
+        S("21ab : (7a) ergibt 3b. Das a fällt weg.",
+          ("12ab", "", "a"), (" + ", "", "op"), ("3b", "neu", "b")),
+        S("12ab hat ein a, 3b nicht — sie gehören nicht zusammen.",
+          ("12ab", "mark", "a"), (" + ", "", "op"), ("3b", "mark", "b")),
+        S("Fertig. 12ab + 3b ist die Antwort.",
+          ("12ab + 3b", "neu", "a")),
+    ],
+    merksatz="Eine Division ist eine Punktoperation und bindet stärker als "
+             "Plus und Minus. Ohne Klammer wird nur das Glied direkt davor "
+             "geteilt.",
+)
+
 #: S22 · Was eine Potenz ist — Lektionen 7.1 und 7.2.
 WAS_IST_POTENZ = Animation(
     titel="Was eine Potenz ist",
@@ -535,6 +605,9 @@ FUER_KAPITEL: dict[str, Animation] = {
     "7.3": POTENZ_VORZEICHEN,
     "7.5": POTENZEN,
     "7.9": PRODUKT_POTENZ,
+    "9.1": DIVIDIEREN,
+    "9.4": SUMME_TEILEN,
+    "9.6": DIVISION_IM_TERM,
     "8.1": WURZEL,
     "8.3": WURZEL_SUMME,
     "8.4": WURZELGESETZE,

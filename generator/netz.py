@@ -82,12 +82,13 @@ SCHABLONE_FUER: dict[str, str] = {
     # 6.8 «Gemischt» bleibt offen — wie 4.10, 5.9 und 8.10 auch.
     "6.1": "6.1", "6.2": "6.1", "6.3": "6.1", "6.4": "6.1",
     "6.5": "6.5", "6.6": "6.5", "6.7": "6.5",
-    # Division — S2 bleibt hier stehen, bis S30 und S31 gebaut sind. BF3
-    # dividiert Monome mit Potenzen, BF5 in Bruchschreibweise, BF6 ordnet die
-    # Division in einen laengeren Term ein. Das ist Erhebung 2c.
-    # 9.1 bis 9.3 fehlen weiterhin: dafuer braeuchte es eine nackte
-    # Monomdivision ohne Umgebung, die keine Bauform baut — das wird S30.
-    "9.4": "9.4", "9.5": "9.4", "9.6": "9.4",
+    # Kapitel 9 vollstaendig — drei Schablonen. S30 bringt die nackte
+    # Division ohne Potenzen (9.1 bis 9.3), S31 die Monome mit Potenzen und
+    # die Summe im Zaehler (9.4, 9.5), S32 die Einordnung in einen laengeren
+    # Term (9.6). 9.6 ist das Ziel von Erhebungsaufgabe 2c.
+    "9.1": "9.1", "9.2": "9.1", "9.3": "9.1",
+    "9.4": "9.4", "9.5": "9.4",
+    "9.6": "9.6",
     # Faktorisieren — BF5 bringt Potenzen und zwei Variablen (12.5, 12.6),
     # BF6 und BF7 die dreigliedrigen Terme (12.7), die Zielform FAKTORISIERT
     # zusammen mit BF8 prueft die Vollstaendigkeit (12.8). Damit sind die
