@@ -504,9 +504,10 @@ def bf5(p):
     """x geteilt durch eine Zahl:  x : 20 = 80"""
     a, b, vz = p["a"], p["b"], p["vz"]
     if p["extra"]:
-        #: x : 6 = 12 − 4
+        #: x : 6 = 12 − 4.  Beide Zahlen rechts muessen echt positiv sein,
+        #: sonst steht «7 − 0» da.
         links = ("+", (XD(b),))
-        rechts = ("+-", (Z(a), Z(a - b - 2)))
+        rechts = ("+-", (Z(a + b), Z(b)))
     else:
         links = ("+", (XD(b * vz),))
         rechts = ("+", (Z(a),))
