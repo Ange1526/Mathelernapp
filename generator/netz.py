@@ -41,11 +41,19 @@ ZIEL: dict[str, str] = {
 SCHABLONE_FUER: dict[str, str] = {
     # Klammern — deckt 10.1 bis 10.11 ab, darunter 10.6, das haeufigste
     # Ruecksprungziel im ganzen Netz.
-    "10.1": "10.1", "10.2": "10.1", "10.3": "10.1", "10.4": "10.1",
-    "10.5": "10.1", "10.6": "10.1", "10.7": "10.1", "10.8": "10.1",
-    "10.9": "10.1", "10.10": "10.1", "10.11": "10.1",
-    # 10.16 — S37. Das ist das Ziel von Erhebungsaufgabe 3d. Die
-    # Lektionen 10.12 bis 10.15 gehoeren zu S36 und fehlen noch.
+    # 10.1 — S33 · Klammern setzen und weglassen
+    "10.1": "10.1",
+    # 10.2 bis 10.6 — S34 · Strichoperation vor der Klammer.
+    # 10.6 ist das haeufigste Ruecksprungziel im ganzen Netz.
+    "10.2": "10.2", "10.3": "10.2", "10.4": "10.2",
+    "10.5": "10.2", "10.6": "10.2",
+    # 10.7 bis 10.11 — S35 · Punktoperation und Klammer
+    "10.7": "10.7", "10.8": "10.7",
+    "10.9": "10.7", "10.10": "10.7", "10.11": "10.7",
+    # 10.12 bis 10.15 — S36 · Klammern mit Variablen und gemischt
+    "10.12": "10.12", "10.13": "10.12",
+    "10.14": "10.12", "10.15": "10.12",
+    # 10.16 — S37. Das ist das Ziel von Erhebungsaufgabe 3d.
     "10.16": "10.16",
     # Gleichartige Terme — S16 deckt 4.2 bis 4.6 und 4.8 ab, mehr nicht.
     # 4.1 und 4.7 sind Schablone S15, 4.9 ist S17, 4.10 ist die

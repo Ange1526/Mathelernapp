@@ -128,6 +128,10 @@ LAEUFE = [
     Lauf("K15", "generator.s53_s54_bruchgleichungen", "S53"),
     Lauf("K15", "generator.s53_s54_bruchgleichungen", "S54"),
     Lauf("K15", "generator.s55_s57_bruchgleichungen", "S55"),
+    Lauf("K10", "generator.s10_klammern_neu", "S33"),
+    Lauf("K10", "generator.s34_s35_klammern", "S34"),
+    Lauf("K10", "generator.s34_s35_klammern", "S35"),
+    Lauf("K10", "generator.s36_klammern_variablen", "S36"),
     Lauf("K10", "generator.s37_klammer_potenz", "S37"),
     Lauf("K11", "generator.s11_ausmultiplizieren", "S38"),
     Lauf("K11", "generator.s39_s40_ausmultiplizieren", "S39"),
@@ -136,7 +140,8 @@ LAEUFE = [
     #: S2 haengt an keiner Lektion mehr, wird aber weiter geprueft,
     #: solange die Datei existiert.
     Lauf("abgeloest", "generator.s2_grundoperationen", "S2", "alt"),
-    Lauf("K10", "generator.s10_klammern", "S10", "alt"),
+    #: S10 haengt an keiner Lektion mehr — abgeloest durch S33, S34, S35.
+    Lauf("abgeloest", "generator.s10_klammern", "S10", "alt"),
     Lauf("K12", "generator.s4_faktorisieren", "S4", "alt"),
 ]
 
@@ -154,7 +159,7 @@ LAEUFE = [
 #: Teil 2 ihrer Schablone umzubauen.
 ALTBEFUNDE = set()
 
-#: Dasselbe für die Fehlerdichte. S10 wird in Runde K10 ersetzt, S18 hat
+#: Dasselbe für die Fehlerdichte. S10 ist abgelöst, S18 hat
 #: Bauformen ohne Katalogeintrag.
 ALTBEFUNDE_DICHTE = {"S10", "S18"}
 

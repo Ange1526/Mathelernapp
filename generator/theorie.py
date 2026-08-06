@@ -874,6 +874,72 @@ VORZEICHEN = Animation(
 #: Kapitelnummer in der App  ->  Animation.
 #: Was hier fehlt, faellt still auf den alten Textkasten zurueck — die
 #: Lektion laeuft also auch ohne Animation.
+#: S33 · Die Klammer zuerst — 10.1. Sie hebt die Punkt-vor-Strich-Regel auf.
+KLAMMER_ZUERST = Animation(
+    titel="Die Klammer kommt zuerst",
+    schritte=[
+        S("Ohne Klammer gilt Punkt vor Strich: erst mal, dann plus.",
+          ("2", "", "a"), ("+", "", "o1"), ("3", "", "b"),
+          ("·", "mark", "o2"), ("4", "", "c")),
+        S("3 · 4 ergibt 12.",
+          ("2", "", "a"), ("+", "", "o1"), ("12", "neu", "b")),
+        S("Also 14. Jetzt dieselben Zahlen — mit Klammer.",
+          ("14", "neu", "a")),
+        S("Die Klammer hat Vorrang. Sie wird immer zuerst gerechnet.",
+          ("(", "mark", "k1"), ("2", "", "a"), ("+", "", "o1"),
+          ("3", "", "b"), (")", "mark", "k2"), ("·", "", "o2"),
+          ("4", "", "c")),
+        S("2 + 3 ergibt 5.",
+          ("5", "neu", "a"), ("·", "", "o2"), ("4", "", "c")),
+        S("Und 5 · 4 ergibt 20. Dieselben Zahlen, ein anderes Ergebnis.",
+          ("20", "neu", "a")),
+    ],
+    merksatz="Eine Klammer sagt: das hier zuerst. Sie sticht Punkt vor Strich.")
+
+
+#: S35 · Faktor vor der Klammer — 10.7.
+MAL_KLAMMER = Animation(
+    titel="Eine Zahl mal eine Klammer",
+    schritte=[
+        S("Vor der Klammer steht ein Faktor.",
+          ("3", "mark", "f"), ("·", "", "o"), ("(", "", "k1"),
+          ("9", "", "a"), ("−", "", "o1"), ("5", "", "b"), (")", "", "k2")),
+        S("Trotzdem gilt: die Klammer zuerst. 9 − 5 ergibt 4.",
+          ("3", "", "f"), ("·", "", "o"), ("(", "mark", "k1"),
+          ("9", "mark", "a"), ("−", "", "o1"), ("5", "mark", "b"),
+          (")", "mark", "k2")),
+        S("Die Klammer ist erledigt, sie fällt weg.",
+          ("3", "", "f"), ("·", "", "o"), ("4", "neu", "a")),
+        S("Erst jetzt wird multipliziert: 3 · 4 = 12.",
+          ("12", "neu", "a")),
+    ],
+    merksatz="Auch wenn ein Faktor davorsteht: die Klammer wird zuerst "
+             "ausgerechnet, dann multipliziert.")
+
+
+#: S36 · Minus vor der Klammer, jetzt mit Variablen — 10.12.
+MINUS_KLAMMER_VARIABLE = Animation(
+    titel="Minus vor der Klammer, mit Variablen",
+    schritte=[
+        S("Auch hier gilt: das Minus gehört zur ganzen Klammer.",
+          ("5a", "", "a"), ("−", "mark", "op"), ("(", "", "k1"),
+          ("2a", "", "b"), ("−", "", "o1"), ("3", "", "c"), (")", "", "k2")),
+        S("Jedes Zeichen darin dreht sich um — auch das vor der 3.",
+          ("5a", "", "a"), ("−", "", "op"), ("(", "weg", "k1"),
+          ("2a", "mark", "b"), ("−", "mark", "o1"), ("3", "mark", "c"),
+          (")", "weg", "k2")),
+        S("Aus −2a wird −2a, aus −3 wird +3.",
+          ("5a", "", "a"), ("−", "neu", "op"), ("2a", "neu", "b"),
+          ("+", "neu", "o1"), ("3", "neu", "c")),
+        S("Jetzt nur noch Gleichartiges zusammenfassen: 5a − 2a = 3a.",
+          ("3a", "neu", "a"), ("+", "", "o1"), ("3", "", "c")),
+        S("Die 3 hat keine Variable — sie bleibt für sich stehen.",
+          ("3a", "", "a"), ("+", "", "o1"), ("3", "mark", "c")),
+    ],
+    merksatz="Ein Minus vor der Klammer dreht jedes Vorzeichen darin um. "
+             "Zusammenfassen darf man danach nur Gleichartiges.")
+
+
 FUER_KAPITEL: dict[str, Animation] = {
     "3.1": EINSETZEN,
     "3.4": VARIABLEN,
@@ -911,7 +977,12 @@ FUER_KAPITEL: dict[str, Animation] = {
     "8.3": WURZEL_SUMME,
     "8.4": WURZELGESETZE,
     "8.9": WURZEL_VARIABLE,
-    "10.1": MINUS_KLAMMER,
+    "10.1": KLAMMER_ZUERST,
+    #: Minus vor der Klammer sitzt bei S34 — 10.6 ist das
+    #: haeufigste Ruecksprungziel im ganzen Netz.
+    "10.2": MINUS_KLAMMER,
+    "10.7": MAL_KLAMMER,
+    "10.12": MINUS_KLAMMER_VARIABLE,
     "12.1": FAKTORISIEREN,
 }
 
