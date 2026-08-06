@@ -1936,6 +1936,42 @@ def spalten_nachziehen():
                 app.logger.warning("Spalte %s.%s nicht angelegt: %s",
                                    tabelle.name, spalte.name, fehler)
 
+        # ── Falscher Spaltentyp ──────────────────────────────────────────
+        # Zweiter Fall, der bei einer gewachsenen Datenbank auftritt: die
+        # Spalte IST da, hat aber noch den alten Typ. `correct_solution`
+        # war frueher eine Zahl, weil die Loesungen Zahlen waren. Seit es
+        # Terme gibt, steht dort «4*a**2 - 4*a» — und Postgres weist das
+        # zurueck: «invalid input syntax for type double precision».
+        # SQLite faellt das nie auf, weil es Typen nicht erzwingt.
+        #
+        # Umgewandelt wird NUR von Zahl nach Text, und das ist verlustfrei:
+        # jede Zahl laesst sich als Text schreiben. Der umgekehrte Weg
+        # waere gefaehrlich und wird darum gar nicht erst versucht.
+        bestand = {s["name"]: s for s in pruefer.get_columns(tabelle.name)}
+        for spalte in tabelle.columns:
+            alt = bestand.get(spalte.name)
+            if alt is None:
+                continue
+            ist_text_gewuenscht = spalte.type.__class__.__name__ in (
+                "String", "Text", "Unicode", "UnicodeText", "VARCHAR")
+            ist_zahl_in_db = alt["type"].__class__.__name__ in (
+                "FLOAT", "DOUBLE_PRECISION", "REAL", "NUMERIC", "INTEGER",
+                "BIGINT", "SMALLINT", "Float", "Numeric", "Integer")
+            if not (ist_text_gewuenscht and ist_zahl_in_db):
+                continue
+            typ = spalte.type.compile(dialect=db.engine.dialect)
+            befehl = (f'ALTER TABLE "{tabelle.name}" '
+                      f'ALTER COLUMN "{spalte.name}" TYPE {typ} '
+                      f'USING "{spalte.name}"::text')
+            try:
+                with db.engine.begin() as verbindung:
+                    verbindung.execute(_text(befehl))
+                app.logger.info("Spaltentyp korrigiert: %s.%s -> %s",
+                                tabelle.name, spalte.name, typ)
+            except Exception as fehler:           # noqa: BLE001
+                app.logger.warning("Spaltentyp %s.%s nicht geaendert: %s",
+                                   tabelle.name, spalte.name, fehler)
+
 
 with app.app_context():
     db.create_all()
