@@ -1632,12 +1632,30 @@ def probe():
             lw.aktuelle_lektion = sorted(
                 alle_falschen,
                 key=lambda l: [int(x) for x in l.split(".")])[0]
-        elif lw.aktuelle_lektion in lw.sichere_menge() or not lw.aktuelle_lektion:
-            # Alles richtig: die Stelle, an der er stand, sitzt jetzt.
-            lw.aktuelle_lektion = naechste_lektion(
-                lw.sichere_menge() | lw.uebersprungene_menge())
+        else:
+            # ── Fehlerfrei ───────────────────────────────────────────────
+            # Hier NICHT zur naechsten offenen Lektion schicken. Die Probe
+            # deckt neunzehn von hundertsiebenundsechzig Lektionen ab; was
+            # danach offen bleibt, ist grossteils Kapitel 1 — nicht weil er
+            # es nicht kann, sondern weil es nie geprueft wurde. Ihn
+            # ausgerechnet dorthin zu schicken, nachdem er neunzehn
+            # Pruefungsaufgaben fehlerfrei geloest hat, liest sich wie eine
+            # Strafe.
+            #
+            # Stattdessen bekommt er gesagt, dass er das Ziel erreicht hat,
+            # und die Wahl: Mischaufgaben, oder die restlichen Lektionen
+            # freiwillig. Das Feld `durchgelaufen` merkt sich das, damit die
+            # Abschlussseite nicht bei jedem Aufruf neu erscheint.
+            lw.durchgelaufen = True
+            if lw.aktuelle_lektion in lw.sichere_menge() or not lw.aktuelle_lektion:
+                lw.aktuelle_lektion = naechste_lektion(
+                    lw.sichere_menge() | lw.uebersprungene_menge())
         db.session.commit()
         session.pop("probe", None)
+        b["erhebung_geschafft"] = not p.falsche_lektionen()
+        b["offen_danach"] = len([l for l in SCHABLONE_FUER
+                                 if l not in lw.sichere_menge()
+                                 and l not in lw.uebersprungene_menge()])
         return render_template("probe_fertig.html", bericht=b)
 
     # Die drei Mischaufgaben am Schluss haben keine eigene Lektion: sie

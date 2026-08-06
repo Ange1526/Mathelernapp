@@ -6,9 +6,22 @@
     <p><strong>{{ bericht.richtig }} von {{ bericht.gesamt }}</strong> richtig
        ({{ bericht.quote }} %).</p>
 
-    {% if bericht.fehlerfrei %}
+    {% if bericht.erhebung_geschafft %}
       <div class="loesung-box">
         <div class="loesung-text">Fehlerfrei — genau das ist das Ziel.</div>
+      </div>
+      <p>Du hast alles gelöst, was die Erhebung prüft. Damit bist du für die
+         Prüfung bereit — mehr musst du nicht üben.</p>
+      {% if bericht.offen_danach %}
+      <p style="color:#718096; font-size:0.92rem;">
+         Im Lernweg sind noch {{ bericht.offen_danach }} Lektionen offen. Die
+         kommen in der Erhebung nicht vor; du kannst sie üben, musst aber
+         nicht.</p>
+      {% endif %}
+      <div style="display:flex; gap:12px; flex-wrap:wrap; margin-top:22px;">
+        <a href="{{ url_for('gemischt') }}" class="btn-star">Mischaufgaben üben</a>
+        <a href="{{ url_for('probe') }}" class="back-link">Probe wiederholen</a>
+        <a href="{{ url_for('dashboard') }}" class="back-link">Zur Lernreise</a>
       </div>
     {% else %}
       <h3>Da hat es noch geklemmt</h3>
@@ -26,7 +39,9 @@
     </div>
     {% endif %}
 
-    <a href="{{ url_for('vertiefung') }}" class="btn-star">Weiter</a>
+    {% if not bericht.erhebung_geschafft %}
+    <a href="{{ url_for('lernen') }}" class="btn-star">Zur ersten Lücke</a>
+    {% endif %}
   </div>
 </div>
 {% endblock %}
