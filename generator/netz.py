@@ -122,6 +122,8 @@ SCHABLONE_FUER: dict[str, str] = {
     # Erhebung 6a).
     "15.1": "15.1", "15.2": "15.1",
     "15.3": "15.3",
+    # 15.7 und 15.8 — S56 · Term im Nenner, x im Nenner
+    "15.7": "15.7", "15.8": "15.7",
     "15.4": "15.4", "15.5": "15.4",
     "15.6": "15.6",
     # Kapitel 11 — Ausmultiplizieren. S38 deckt 11.1 bis 11.4 ab, S39

@@ -964,6 +964,8 @@ FUER_KAPITEL: dict[str, Animation] = {
     "15.1": HAUPTNENNER,
     "11.9": BRUCH_KLAMMER,
     "15.6": BRUCH_KLAMMER,
+    "15.7": HAUPTNENNER,
+    "15.8": HAUPTNENNER,
     "15.3": JEDEN_SUMMANDEN,
     "15.4": TERM_IM_ZAEHLER,
     "14.1": ERWEITERN,

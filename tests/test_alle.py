@@ -134,6 +134,7 @@ LAEUFE = [
     Lauf("K10", "generator.s36_klammern_variablen", "S36"),
     Lauf("K10", "generator.s37_klammer_potenz", "S37"),
     Lauf("K14", "generator.s49b_ausklammern_kuerzen", "S49B"),
+    Lauf("K15", "generator.s56_x_im_nenner", "S56"),
     Lauf("K11", "generator.s41_bruch_klammer", "S41"),
     Lauf("K12", "generator.s42_s44_faktorisieren", "S42"),
     Lauf("K12", "generator.s42_s44_faktorisieren", "S43"),

@@ -41,6 +41,7 @@ from .s50_s51_bruchterme import S50, S51
 from .s15_bruchgleichungen import S52
 from .s53_s54_bruchgleichungen import S53, S54
 from .s55_s57_bruchgleichungen import S55
+from .s56_x_im_nenner import S56
 from .s10_klammern_neu import S33
 from .s34_s35_klammern import S34, S35
 from .s36_klammern_variablen import S36
@@ -91,11 +92,11 @@ M14 = mischung("M14", "Gemischt: Kapitel 14", "14.12",
                [S49, S49B, S50, S51],
                "Gekuerzt wird durch Faktoren, nie durch Summanden.")
 M15 = mischung("M15", "Gemischt: Kapitel 15", "15.9",
-               [S52, S53, S54, S55],
+               [S52, S53, S54, S55, S56],
                "Erst mit dem Hauptnenner durchmultiplizieren, dann wie eine "
                "gewoehnliche Gleichung loesen.")
 M16 = mischung("M16", "Gemischte Gleichungen", "16.2",
-               [S45, S46, S47, S52, S53, S54, S55],
+               [S45, S46, S47, S52, S53, S54, S55, S56],
                "Jede Gleichung zuerst anschauen: stehen Brueche darin oder "
                "nicht?")
 
@@ -144,6 +145,7 @@ KAPITEL = {
     "15.3": S53,    # Jeden Summanden malnehmen      15.3 — Erhebung 6b
     "15.4": S54,    # Term im Zaehler                15.4 – 15.5 — Erhebung 6a
     "15.6": S55,    # Bruch mal Klammer              15.6 — Erhebung 1b
+    "15.7": S56,    # Term im Nenner, x im Nenner    15.7 – 15.8
     # Kapitel 11 — Ausmultiplizieren. 11.9 (Bruch mal Klammer) und
     # 11.10 (Gemischt) bleiben offen; 11.9 waere S41, das nur in einer
     # Kurzfassung mit sechs Bauformen vorliegt.
@@ -230,6 +232,12 @@ def neue_aufgabe(kapitel: str, level: str, bauform: str | None = None) -> dict:
         "anleitung": e.anleitung,
         "frage": e.frage,
         "loesung": str(e.aufgabe.loesung.expr),
+        #: MUSS mit. Bei «keine Loesung» und «jede Zahl» ist `expr` None,
+        #: und `str(None)` ist "None" — daraus laesst sich die Loesung nicht
+        #: zurueckbauen. Ohne dieses Feld kaeme jede Sonderfall-Aufgabe aus
+        #: der Session als gewoehnliche Termaufgabe zurueck, und eine
+        #: richtige Antwort galte als falsch.
+        "art": e.aufgabe.loesung.art.value,
         "loesung_text": e.loesung_text,
         "zielform": e.aufgabe.zielform.value,
         "fehler": [[f.schluessel, str(f.ergebnis.expr), f.text]
@@ -252,8 +260,16 @@ def aufgabe_aus_session(daten: dict) -> Aufgabe:
     def lesen(text: str):
         return sympify(text, locals=umgebung)
 
+    art = daten.get("art", "expr")
+    if art == "keine_loesung":
+        loesung = Loesung.keine()
+    elif art == "alle_zahlen":
+        loesung = Loesung.alle()
+    else:
+        loesung = Loesung.zahl(lesen(daten["loesung"]))
+
     return Aufgabe(
-        loesung=Loesung.zahl(lesen(daten["loesung"])),
+        loesung=loesung,
         variablen=set(ALLE_VARIABLEN),
         zielform=Zielform(daten.get("zielform", "beliebig")),
         fehlerkatalog=[Fehler(s, Loesung.zahl(lesen(e)), t)
