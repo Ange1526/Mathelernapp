@@ -129,6 +129,8 @@ SCHABLONE_FUER: dict[str, str] = {
     "11.1": "11.1", "11.2": "11.1", "11.3": "11.1", "11.4": "11.1",
     "11.5": "11.5", "11.6": "11.5",
     "11.7": "11.7", "11.8": "11.7",
+    # 11.9 — S41 · Bruch mal Klammer, die letzte Zutat fuer 1b.
+    "11.9": "11.9",
     # Faktorisieren — BF5 bringt Potenzen und zwei Variablen (12.5, 12.6),
     # BF6 und BF7 die dreigliedrigen Terme (12.7), die Zielform FAKTORISIERT
     # zusammen mit BF8 prueft die Vollstaendigkeit (12.8). Damit sind die
@@ -237,6 +239,16 @@ RUECKSPRUNG: dict[str, str] = {
     "S36/*/ungleichartig":       "4.8",
     "S36/*/variable_bleibt":     "4.8",
     "S36/*/vorzeichen_gesamt":   "1.9",
+
+    # ── S41 Bruch mal Klammer ────────────────────────────────────────────────
+    "S41/*/nur_erstes":                 "11.4",
+    "S41/*/nur_letztes":                "11.4",
+    "S41/*/nenner_auch_multipliziert":  "2.9",
+    "S41/*/kehrwert":                   "2.9",
+    "S41/*/vorzeichen_glied":           "1.9",
+    "S41/*/vorzeichen_gesamt":          "1.9",
+    "S41/*/faktor_vergessen":           "11.4",
+    "S41/*/addiert":                    "11.4",
 }
 
 

@@ -44,6 +44,7 @@ from .s10_klammern_neu import S33
 from .s34_s35_klammern import S34, S35
 from .s36_klammern_variablen import S36
 from .s37_klammer_potenz import S37
+from .s41_bruch_klammer import S41
 from .s42_s44_faktorisieren import S42, S43, S44
 from .s11_ausmultiplizieren import S38
 from .s39_s40_ausmultiplizieren import S39, S40
@@ -98,6 +99,7 @@ KAPITEL = {
     "11.1": S38,    # Zahl bzw. Variable mal Klammer 11.1 – 11.4
     "11.5": S39,    # Ausmultiplizieren und zusammenfassen 11.5 – 11.6
     "11.7": S40,    # Negative Zahl, Minus vor der Variablen 11.7 – 11.8 — Erhebung 2b
+    "11.9": S41,    # Bruch mal Klammer                — Erhebung 1b
     "10.1": S33,    # Klammern setzen und weglassen
     "10.2": S34,    # Strichoperation vor der Klammer — enthaelt 10.6
     "10.7": S35,    # Punktoperation und Klammer
