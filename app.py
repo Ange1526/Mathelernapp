@@ -1593,9 +1593,21 @@ def probe():
         # ausgerechnet bei «Zahlen auf der Zahlengeraden». Die Probe ist eine
         # Lueckensuche — also gehoert er zu der Luecke, die sie gefunden hat.
         bekannt = lw.sichere_menge() | lw.uebersprungene_menge()
-        if verloren:
+
+        # ALLE falsch geloesten Teilaufgaben zaehlen, nicht nur die, die
+        # vorher schon als sicher galten. Sonst passiert Folgendes: wer die
+        # Probe mit 81 % besteht, aber vier Themen verfehlt, hatte diese
+        # vier nie gutgeschrieben — `verloren` bleibt leer, und die App
+        # schickt ihn zur kleinsten offenen Nummer, also nach 1.1. Er hat
+        # gerade neunzehn Pruefungsaufgaben geloest und landet bei «Zahlen
+        # auf der Zahlengeraden». Das ist die Rueckmeldung, die niemand
+        # versteht — und sie ist auch sachlich falsch: die Probe hat ihm
+        # genau gesagt, wo es hakt.
+        offene_luecken = [l for l in p.falsche_lektionen() if l not in bekannt]
+        ziel = verloren or offene_luecken
+        if ziel:
             lw.aktuelle_lektion = sorted(
-                verloren, key=lambda l: [int(x) for x in l.split(".")])[0]
+                ziel, key=lambda l: [int(x) for x in l.split(".")])[0]
         elif lw.aktuelle_lektion in lw.sichere_menge() or not lw.aktuelle_lektion:
             # Die Stelle, an der er stand, sitzt jetzt — dann die naechste.
             lw.aktuelle_lektion = naechste_lektion(bekannt)
