@@ -26,7 +26,7 @@ LEVELACHSE (Teil 2 der Schablone, wörtlich):
 Gesperrt bleibt die Rechenoperation: ob x addiert, abgezogen, malgenommen
 oder geteilt wird, trennt die Bauformen voneinander und ist kein Regler.
 
-STAND: BF1 bis BF3 gebaut (Portion 1). BF4 bis BF11 folgen.
+STAND: BF1 bis BF6 gebaut (Portionen 1 und 2). BF7 bis BF11 folgen.
 """
 from __future__ import annotations
 
@@ -108,6 +108,55 @@ class X:
         return 0
 
 
+@dataclass(frozen=True)
+class XD:
+    """x geteilt durch eine Zahl:  x : 20   ·   x : (−8)
+
+    Bleibt linear — der Anteil an x ist 1/nenner. Die Klammer um einen
+    negativen Nenner steht so in der Schablone.
+    """
+    nenner: int
+
+    @property
+    def text(self) -> str:
+        n = zeige(Integer(self.nenner))
+        return f"x : ({n})" if self.nenner < 0 else f"x : {n}"
+
+    @property
+    def anteil(self):
+        return Rational(1, self.nenner)
+
+    @property
+    def konstante(self) -> int:
+        return 0
+
+
+@dataclass(frozen=True)
+class ZD:
+    """Eine Zahl geteilt durch x:  80 : x
+
+    Die einzige Form der Schablone, bei der x im NENNER steht. Sie ist nicht
+    linear, darum rechnet ihre Bauform die Lösung selbst aus. Teil 1 sagt
+    dazu: sie gehört hierher, weil sie im Lehrmittel neben den anderen
+    Grundformen steht — und weil sie bei den Bruchgleichungen (15.8, S56)
+    wiederkommt.
+    """
+    zaehler: int
+
+    @property
+    def text(self) -> str:
+        z = zeige(Integer(self.zaehler))
+        return f"({z}) : x" if self.zaehler < 0 else f"{z} : x"
+
+    @property
+    def anteil(self) -> int:
+        return 0
+
+    @property
+    def konstante(self) -> int:
+        return 0
+
+
 def reihe(muster, glieder) -> str:
     """Eine Seite hinschreiben:  «50 − x − 12»"""
     teile = []
@@ -162,6 +211,12 @@ def kandidaten(links, rechts, loesung):
     ar, kr = _sammeln(mr, gr)
     diff = al - ar
     raus = []
+    if diff == 0:
+        #: x steht im Nenner (BF6). Alles hier unten teilt durch `diff` und
+        #: lieferte `zoo` — SymPys komplexe Unendlichkeit, die der Parser
+        #: nicht lesen kann. Solche Bauformen bringen ihren Katalog selbst
+        #: mit.
+        return raus
 
     # 1 · Vorzeichen beim Hinüberbringen:  20 = 80 − x  ->  x = −60
     raus.append(F("vorzeichen_hinueber", -loesung,
@@ -210,7 +265,28 @@ def kandidaten(links, rechts, loesung):
             f"{zeige(Integer(abs(kl)))} wird EINMAL auf beiden Seiten "
             f"weggerechnet, nicht zweimal auf derselben."))
 
-    # 8 · Die Differenz verkehrt herum gebildet
+    # 8 · Statt geteilt malgenommen — der Fehler aus Teil 5:
+    #     x : 20 = 80  ->  x = 4   und   20x = 80  ->  x = 1600
+    if abs(diff) != 1 and kr - kl != 0:
+        raus.append(F("mal_statt_geteilt", (kr - kl) * diff,
+            f"Vor dem x steht {zeige(diff)}. Zum Auflösen wird durch "
+            f"{zeige(diff)} GETEILT, nicht malgenommen — oder umgekehrt."))
+
+    # 9 · Zähler und Nenner vertauscht
+    if abs(diff) != 1 and kr - kl != 0:
+        raus.append(F("kehrwert", Rational(diff, kr - kl) if kr - kl != 0
+                      else Integer(0),
+            "Der Kehrwert steht verkehrt herum. Teile das Ergebnis der "
+            "rechten Seite durch die Zahl vor dem x."))
+
+    # 10 · Der Koeffizient wurde abgezogen statt geteilt
+    if abs(diff) != 1 and kr - kl != 0:
+        zahl = diff if abs(diff) > 1 else Rational(1, diff)
+        raus.append(F("koeffizient_abgezogen", (kr - kl) - zahl,
+            f"{zeige(zahl)} steht nicht neben dem x, sondern davor — das ist "
+            f"eine Punktrechnung, keine Strichrechnung."))
+
+    # 11 · Die Differenz verkehrt herum gebildet
     if diff != 0 and kr - kl != kl - kr:
         raus.append(F("differenz_vertauscht", Rational(kl - kr, diff),
             "Achte auf die Richtung: gefragt ist, was von der einen Seite "
@@ -250,8 +326,8 @@ TIPPS = [
 ]
 
 
-def bau(links, rechts, extra=(), schritte=None):
-    l = loesen(links, rechts)
+def bau(links, rechts, extra=(), schritte=None, loesung=None):
+    l = loesen(links, rechts) if loesung is None else sympify(loesung)
     if l is None:
         #: Kommt vor, wenn sich x auf beiden Seiten aufhebt. Der Filter
         #: verwirft die Aufgabe dann.
@@ -402,12 +478,90 @@ BF3 = Bauform("BF3", "x wird von einer Zahl abgezogen",
     bereiche=BEREICH, bauen=bf3, filter=STANDARD)
 
 
+def bf4(p):
+    """Zahl mal x:  20x = 80
+
+    B dreht das Vorzeichen des Koeffizienten um (−5x = 15), C hängt ein
+    zweites Glied auf der rechten Seite an (20x = −80 − 40).
+    """
+    a, b, vz = p["a"], p["b"], p["vz"]
+    k = b * vz
+    if p["extra"]:
+        #: 20x = −80 − 40
+        links = ("+", (X(b),))
+        rechts = ("--", (Z(b * 4), Z(b * 2)))
+    else:
+        links = ("+", (X(k),))
+        rechts = ("+", (Z(k * (a % 7 + 2)),))
+    return bau(links, rechts)
+
+
+BF4 = Bauform("BF4", "Zahl mal x",
+    bereiche=BEREICH, bauen=bf4, filter=STANDARD)
+
+
+def bf5(p):
+    """x geteilt durch eine Zahl:  x : 20 = 80"""
+    a, b, vz = p["a"], p["b"], p["vz"]
+    if p["extra"]:
+        #: x : 6 = 12 − 4
+        links = ("+", (XD(b),))
+        rechts = ("+-", (Z(a), Z(a - b - 2)))
+    else:
+        links = ("+", (XD(b * vz),))
+        rechts = ("+", (Z(a),))
+    return bau(links, rechts)
+
+
+BF5 = Bauform("BF5", "x geteilt durch eine Zahl",
+    bereiche=BEREICH, bauen=bf5, filter=STANDARD)
+
+
+def bf6(p):
+    """Zahl geteilt durch x — x steht im Nenner:  80 : x = 20
+
+    Nicht linear, darum wird die Lösung hier ausgerechnet und nicht über
+    `loesen()` bestimmt: aus a : x = b folgt x = a : b.
+    """
+    a, b, vz = p["a"], p["b"], p["vz"]
+    zaehler = b * (a % 5 + 3) * vz
+    if p["extra"]:
+        #: (−52) : x = 20 − 7   —   ein Glied mehr auf der rechten Seite
+        links = ("+", (ZD(zaehler),))
+        rechts = ("+-", (Z(b + 7), Z(7)))
+        nenner = b
+    else:
+        links = ("+", (ZD(zaehler),))
+        rechts = ("+", (Z(b),))
+        nenner = b
+    l = Rational(zaehler, nenner)
+    return bau(links, rechts, loesung=l, extra=[
+        F("mal_statt_geteilt_nenner", Integer(zaehler) * nenner,
+          f"{zeige(Integer(zaehler))} wird durch x geteilt. Um x zu "
+          f"bekommen, teilst du {zeige(Integer(zaehler))} durch das Ergebnis "
+          f"der rechten Seite."),
+        F("kehrwert_nenner", Rational(nenner, zaehler),
+          "Zähler und Nenner stehen verkehrt herum."),
+        F("zaehler_abgeschrieben", Integer(zaehler),
+          f"{zeige(Integer(zaehler))} steht über dem Bruchstrich, ist aber "
+          f"nicht der Wert von x."),
+        F("differenz", Integer(zaehler - nenner),
+          "Hier wird geteilt, nicht subtrahiert."),
+        F("vorzeichen_nenner", -l,
+          "Zähl die Minuszeichen: minus durch minus ergibt plus."),
+    ])
+
+
+BF6 = Bauform("BF6", "Zahl geteilt durch x — x steht im Nenner",
+    bereiche=BEREICH, bauen=bf6, filter=STANDARD)
+
+
 S45 = Schablone(
     nr="S45", titel="Einfache lineare Gleichungen",
     lektionen="13.1 – 13.4", erhebung="Vorstufe zu 1a",
     anleitung=ANLEITUNG,
     levelachse="Vorzeichen und Gliederzahl",
-    bauformen=[BF1, BF2, BF3],
+    bauformen=[BF1, BF2, BF3, BF4, BF5, BF6],
     kernidee=("Eine Gleichung bleibt richtig, solange du auf beiden Seiten "
               "dasselbe tust. Löse zuerst die Strich-, dann die "
               "Punktoperation auf."),
