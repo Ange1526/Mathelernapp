@@ -199,6 +199,31 @@ PUNKT_VOR_STRICH = Animation(
              "gleichartige Glieder zusammenfassen.",
 )
 
+#: S45 · Gleichungen — Lektionen 13.1 bis 13.4, Vorstufe zu Erhebung 1a.
+#: Die Waage ist das Bild dahinter: was links passiert, passiert rechts auch.
+GLEICHUNG = Animation(
+    titel="Eine Gleichung lösen",
+    schritte=[
+        S("Das Gleichheitszeichen sagt: beide Seiten sind gleich viel wert.",
+          ("5x + 6", "", "l"), (" = ", "mark", "gl"), ("21", "", "r")),
+        S("Gesucht ist x. Zuerst muss die 6 weg.",
+          ("5x", "", "l"), ("+ 6", "mark", "p"), (" = ", "", "gl"),
+          ("21", "", "r")),
+        S("Also −6 — aber auf BEIDEN Seiten, sonst stimmt es nicht mehr.",
+          ("5x", "", "l"), ("− 6", "neu", "p"), (" = ", "", "gl"),
+          ("21 − 6", "neu", "r")),
+        S("Links bleibt 5x, rechts wird 21 − 6 zu 15.",
+          ("5x", "", "l"), (" = ", "", "gl"), ("15", "neu", "r")),
+        S("Jetzt die Punktoperation: durch 5 teilen, wieder auf beiden Seiten.",
+          ("5x : 5", "mark", "l"), (" = ", "", "gl"), ("15 : 5", "mark", "r")),
+        S("Fertig: x = 3. Probe: 5 · 3 + 6 = 21.",
+          ("x", "neu", "l"), (" = ", "", "gl"), ("3", "neu", "r")),
+    ],
+    merksatz="Eine Gleichung bleibt richtig, solange du auf beiden Seiten "
+             "dasselbe tust. Löse zuerst die Strich-, dann die "
+             "Punktoperation auf.",
+)
+
 #: S30 · Terme dividieren — Lektionen 9.1 bis 9.3.
 DIVIDIEREN = Animation(
     titel="Terme dividieren",
@@ -605,6 +630,7 @@ FUER_KAPITEL: dict[str, Animation] = {
     "7.3": POTENZ_VORZEICHEN,
     "7.5": POTENZEN,
     "7.9": PRODUKT_POTENZ,
+    "13.1": GLEICHUNG,
     "9.1": DIVIDIEREN,
     "9.4": SUMME_TEILEN,
     "9.6": DIVISION_IM_TERM,

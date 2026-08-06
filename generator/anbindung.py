@@ -33,6 +33,8 @@ from .s6_punktrechnung import S20, S21
 from .s22_s23_potenzen import S22, S23
 from .s24_s25_potenzgesetze import S24, S25
 from .s9_division import S30, S31, S32
+from .s45_gleichungen import S45
+from .s60_mischen import S60
 
 #: Kapitelnummer in der App  ->  Schablone
 #: Die Nummern folgen deiner Lektionslandkarte.
@@ -62,6 +64,8 @@ KAPITEL = {
     "7.3": S23,     # Potenz vor Punkt vor Strich   7.3 – 7.4 — Erhebung 3c
     "7.5": S24,     # Potenzgesetze                 7.5 – 7.8
     "7.9": S25,     # Potenz eines Produkts         7.9 – 7.10 — Vorstufe 3e
+    # Kapitel 13 — Gleichungen. S45 deckt 13.1 bis 13.4 ab.
+    "13.1": S45,    # Einfache lineare Gleichungen  13.1 – 13.4
     "10.1": S10,    # Klammern           — Vorstufe zu 2b und 3d
     "12.1": S4,     # Faktorisieren    — Erhebung 4a bis 4d
     # Kapitel 8 Wurzeln — bringt die Erhebungsteilaufgaben 3a, 3b und 3e.
@@ -69,7 +73,30 @@ KAPITEL = {
     "8.3": S27,     # Wurzel aus einer Summe   8.3 · 8.7   — Erhebung 3b
     "8.4": S28,     # Wurzelgesetze            8.4 – 8.8   — Erhebung 3a
     "8.9": S29,     # Wurzel mit Variable      8.9         — Erhebung 3e
+    # Mischaufgaben. Bewusst KEIN Eintrag in netz.SCHABLONE_FUER: sie sind
+    # keine Lektion auf dem Weg, sondern die Stufe darueber. Erreichbar ueber
+    # /gemischt und ueber die Vertiefung, und erst dann, wenn die beteiligten
+    # Kapitel sicher sind.
+    "16.1": S60,    # zwei bis drei Kapitel in einer Aufgabe
 }
+
+#: Welche Kapitel muessen sitzen, damit eine Mischaufgabe ueberhaupt fair ist?
+#: Aus den Bauformen von S60: Wurzeln, Potenzen, Produkte, Division,
+#: Klammern und das Zusammenfassen. Ohne diese Pruefung bekaeme ein Anfaenger
+#: nach der ersten Lektion eine Aufgabe mit drei fremden Regeln.
+MISCHEN = "16.1"
+MISCH_VORAUSSETZUNG = ["4.2", "5.1", "7.1", "8.1", "9.1", "10.1"]
+
+
+def mischen_moeglich(sichere_kapitel) -> bool:
+    """Mindestens vier der sechs Grundlagen muessen sitzen.
+
+    Vier statt sechs, weil sonst niemand vor der letzten Studienwoche
+    hinkommt — und die Mischaufgaben sind genau das, was den Starken
+    weiterbringt.
+    """
+    da = sum(1 for k in MISCH_VORAUSSETZUNG if k in sichere_kapitel)
+    return da >= 4
 
 
 def kernidee(kapitel: str) -> str:

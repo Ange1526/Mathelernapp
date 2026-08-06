@@ -89,6 +89,10 @@ SCHABLONE_FUER: dict[str, str] = {
     "9.1": "9.1", "9.2": "9.1", "9.3": "9.1",
     "9.4": "9.4", "9.5": "9.4",
     "9.6": "9.6",
+    # Kapitel 13 — S45 deckt 13.1 bis 13.4 ab (die vier Grundformen der
+    # linearen Gleichung). 13.5 bis 13.9 sind S46 und S47, 13.10 ist die
+    # Gemischt-Lektion und bleibt offen.
+    "13.1": "13.1", "13.2": "13.1", "13.3": "13.1", "13.4": "13.1",
     # Faktorisieren — BF5 bringt Potenzen und zwei Variablen (12.5, 12.6),
     # BF6 und BF7 die dreigliedrigen Terme (12.7), die Zielform FAKTORISIERT
     # zusammen mit BF8 prueft die Vollstaendigkeit (12.8). Damit sind die

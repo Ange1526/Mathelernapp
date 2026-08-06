@@ -112,6 +112,12 @@ LAEUFE = [
     Lauf("K9", "generator.s9_division", "S30"),
     Lauf("K9", "generator.s9_division", "S31"),
     Lauf("K9", "generator.s9_division", "S32"),
+    #: Mischaufgaben. Die Levelachse traegt hier die Zahl der Teilschritte,
+    #: der Glieder und der Variablen. Die Exponenten unter der Wurzel
+    #: gehoeren zum Aufbau (a² gegen a⁴ ist ein anderer Rechenweg, nicht
+    #: bloss eine andere Zahl) — darum «exponent» und nicht «streng».
+    Lauf("K16", "generator.s60_mischen", "S60", "exponent"),
+    Lauf("K13", "generator.s45_gleichungen", "S45"),
     # ── noch im alten Format, numerische Levelachse ──────────────────────
     #: S2 haengt an keiner Lektion mehr, wird aber weiter geprueft,
     #: solange die Datei existiert.
