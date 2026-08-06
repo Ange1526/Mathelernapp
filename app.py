@@ -31,6 +31,17 @@ app = Flask(__name__)
 # ── Konfiguration ──────────────────────────────────────────────────────────────
 app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "dev-secret-matura-2024")
 
+# Abgestorbene Datenbankverbindungen erkennen, bevor sie benutzt werden.
+# Gratis-Datenbanken trennen Verbindungen nach kurzer Ruhe; die App merkt es
+# sonst erst mitten in einer Abfrage und stirbt mit «SSL error: decryption
+# failed or bad record mac». `pool_pre_ping` schickt vorher ein winziges
+# Signal und baut bei Bedarf still eine neue Verbindung auf — das kostet
+# weniger als eine Millisekunde und erspart genau diesen Absturz.
+app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
+    "pool_pre_ping": True,
+    "pool_recycle": 280,        # Verbindungen vor dem Ablauf selbst erneuern
+}
+
 database_url = os.environ.get("DATABASE_URL", "sqlite:///local.db")
 if database_url.startswith("postgres://"):
     database_url = database_url.replace("postgres://", "postgresql://", 1)
@@ -941,6 +952,53 @@ def level_fertig(chapter):
         flash("Geschafft — jede Aufgabenart sitzt auf allen drei Levels.", "success")
         return redirect(url_for("start"))
     return redirect(url_for("lektion", chapter=chapter))
+
+
+@app.route("/level-ueberspringen/<chapter>", methods=["POST"])
+@login_required
+def level_ueberspringen(chapter):
+    """«Das ist mir zu einfach» — eine Stufe weiter, ohne alles zu lösen.
+
+    WARUM ES DAS GEBEN MUSS: Eine Aufgabenart gilt erst nach zwei richtigen
+    Antworten als sicher; bei zwölf Bauformen sind das vierundzwanzig
+    Aufgaben je Level. Wer den Stoff längst kann, sitzt damit über eine
+    Stunde an Dingen, die er im Schlaf beherrscht — und hört auf. Für eine
+    Plattform, die freiwillig zu Hause benutzt wird, ist das der sicherste
+    Weg, niemanden zu erreichen.
+
+    WAS DABEI NICHT PASSIERT: Das übersprungene Level wird NICHT als
+    gemeistert verbucht. Die Bauformen bleiben offen, und im Lernstand ist
+    nachher sichtbar, dass hier übersprungen wurde. Wer sich überschätzt,
+    fällt in der Probe-Erhebung darauf zurück — dort kommen falsch gelöste
+    Lektionen wieder in den Weg. Das ist die ehrlichere Lösung, als den
+    Sprung zu verbieten.
+    """
+    if chapter not in KAPITEL:
+        return redirect(url_for("lektion", chapter=chapter))
+
+    ks = kapitel_stand(chapter)
+    alt = ks.level
+    neu = naechstes_level(alt)
+    ks.offen = ""
+    close_task()
+
+    if neu:
+        ks.level = neu
+        db.session.commit()
+        flash(f"Level {alt} übersprungen. Weiter mit Level {neu} — wenn es "
+              f"doch zu schwer wird, kommst du jederzeit zurück.", "info")
+        return redirect(url_for("lektion", chapter=chapter))
+
+    # Level C übersprungen: die Lektion ist durch.
+    ks.abgeschlossen = True
+    db.session.commit()
+    lw = lernweg()
+    for lek, kap in SCHABLONE_FUER.items():
+        if kap == chapter:
+            lektion_fertig_melden(lw, lek)
+    flash("Lektion übersprungen. Sie bleibt im Dashboard, falls du sie "
+          "später doch üben willst.", "info")
+    return redirect(url_for("start"))
 
 
 @app.route("/luecke-schliessen", methods=["POST"])

@@ -104,6 +104,19 @@
 
     .btn-check:active { transform: scale(0.98); }
 
+    .ueberspringen-form { margin-top: 26px; }
+
+    .btn-ueberspringen {
+        background: none;
+        border: none;
+        color: #A0AEC0;
+        font-size: 0.85rem;
+        cursor: pointer;
+        text-decoration: underline;
+        padding: 6px;
+    }
+    .btn-ueberspringen:hover { color: #667EEA; }
+
     /* Zurück-Link und Stern */
     .top-row {
         width: 100%;
@@ -577,6 +590,20 @@
                 <button type="submit" class="btn-weiter">Weiter zur nächsten Aufgabe</button>
             </form>
         </div>
+        {% endif %}
+
+        {# «Zu einfach» — eine Stufe weiter, ohne alles lösen zu müssen.
+           Der Knopf steht bewusst klein und unten: er soll da sein, wenn
+           man ihn braucht, aber nicht dazu einladen, jede Lektion
+           wegzuklicken. #}
+        {% if chapter in generator_kapitel %}
+        <form action="{{ url_for('level_ueberspringen', chapter=chapter) }}"
+              method="POST" class="ueberspringen-form">
+            <button type="submit" class="btn-ueberspringen"
+                    title="Springt zum nächsten Level dieser Lektion">
+                Das ist mir zu einfach — nächstes Level
+            </button>
+        </form>
         {% endif %}
 
     </div>
