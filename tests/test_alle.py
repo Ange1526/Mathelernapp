@@ -140,6 +140,26 @@ LAEUFE = [
     Lauf("K11", "generator.s11_ausmultiplizieren", "S38"),
     Lauf("K11", "generator.s39_s40_ausmultiplizieren", "S39"),
     Lauf("K11", "generator.s39_s40_ausmultiplizieren", "S40"),
+    # ── die Gemischt-Lektionen am Ende jedes Kapitels ────────────────────
+    #: Dieselben Bauformen wie im Kapitel, nur neu durchnummeriert. Geprueft
+    #: werden sie trotzdem: die Anleitung kommt von der MISCHUNG, und eine
+    #: falsch angeschriebene Aufgabe waere hier der teure Fehler.
+    Lauf("misch", "generator.anbindung", "M3"),
+    Lauf("misch", "generator.anbindung", "M4"),
+    Lauf("misch", "generator.anbindung", "M5"),
+    Lauf("misch", "generator.anbindung", "M6"),
+    Lauf("misch", "generator.anbindung", "M7", "exponent"),
+    #: M8 erbt die Bauformen von S26 bis S29 — dort ist die Zahlengroesse
+    #: laut Teil 2 der einzige verfuegbare Regler. Also «zahl», wie dort.
+    Lauf("misch", "generator.anbindung", "M8", "zahl"),
+    Lauf("misch", "generator.anbindung", "M9"),
+    Lauf("misch", "generator.anbindung", "M10"),
+    Lauf("misch", "generator.anbindung", "M11"),
+    Lauf("misch", "generator.anbindung", "M12"),
+    Lauf("misch", "generator.anbindung", "M13"),
+    Lauf("misch", "generator.anbindung", "M14"),
+    Lauf("misch", "generator.anbindung", "M15"),
+    Lauf("misch", "generator.anbindung", "M16"),
     # ── noch im alten Format, numerische Levelachse ──────────────────────
     #: S2 haengt an keiner Lektion mehr, wird aber weiter geprueft,
     #: solange die Datei existiert.
@@ -166,7 +186,8 @@ ALTBEFUNDE = set()
 
 #: Dasselbe für die Fehlerdichte. S10 ist abgelöst, S18 hat
 #: Bauformen ohne Katalogeintrag.
-ALTBEFUNDE_DICHTE = {"S10", "S18"}
+#: M5 erbt die Bauformen von S18 und damit auch dessen Luecke.
+ALTBEFUNDE_DICHTE = {"S10", "S18", "M5"}
 
 
 def auswahl(namen: list[str]) -> list[Lauf]:

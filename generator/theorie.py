@@ -985,6 +985,24 @@ FUER_KAPITEL: dict[str, Animation] = {
     "10.7": MAL_KLAMMER,
     "10.12": MINUS_KLAMMER_VARIABLE,
     "12.1": FAKTORISIEREN,
+
+    # ── Die Gemischt-Lektionen am Ende jedes Kapitels ────────────────────
+    # Kein neuer Stoff, also auch keine neue Animation: sie zeigen noch
+    # einmal die Kernidee des Kapitels, bevor alles durcheinander kommt.
+    "3.12": ZAHL_UND_VARIABLE,
+    "4.10": GLEICHARTIGE,
+    "5.9": MULTIPLIZIEREN,
+    "6.8": PUNKT_VOR_STRICH,
+    "7.11": POTENZEN,
+    "8.10": WURZELGESETZE,
+    "9.7": SUMME_TEILEN,
+    "10.17": MINUS_KLAMMER,
+    "11.10": AUSMULTIPLIZIEREN,
+    "12.9": FAKTORISIEREN,
+    "13.10": KLAMMER_GLEICHUNG,
+    "14.12": KUERZEN,
+    "15.9": HAUPTNENNER,
+    "16.2": HAUPTNENNER,
 }
 
 

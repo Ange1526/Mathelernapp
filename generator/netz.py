@@ -142,6 +142,15 @@ SCHABLONE_FUER: dict[str, str] = {
     # 12.7 und 12.8 — S44 · dreigliedrige Terme
     "12.7": "12.7", "12.8": "12.7",
     # 12.9 hat keinen Generator und zaehlt darum als uebersprungen.
+
+    # ── Die Gemischt-Lektionen am Ende jedes Kapitels ────────────────────
+    # Kein neuer Stoff, sondern alle Bauformen des Kapitels nebeneinander.
+    # Siehe `mischung.py`. Kapitel 16 bleibt bewusst draussen — dort liegt
+    # die Stufe UEBER dem Weg, nicht auf ihm.
+    "3.12": "3.12", "4.10": "4.10", "5.9": "5.9", "6.8": "6.8",
+    "7.11": "7.11", "8.10": "8.10", "9.7": "9.7", "10.17": "10.17",
+    "11.10": "11.10", "12.9": "12.9", "13.10": "13.10", "14.12": "14.12",
+    "15.9": "15.9",
 }
 
 

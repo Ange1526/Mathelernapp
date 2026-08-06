@@ -49,6 +49,54 @@ from .s42_s44_faktorisieren import S42, S43, S44
 from .s11_ausmultiplizieren import S38
 from .s39_s40_ausmultiplizieren import S39, S40
 from .s60_mischen import S60
+from .mischung import mischung
+
+# ── Die Gemischt-Lektionen am Ende jedes Kapitels ─────────────────────────
+# Kein neuer Stoff: dieselben Bauformen wie im Kapitel, nur alle
+# nebeneinander statt eine Schablone nach der anderen. Siehe `mischung.py`.
+
+M3 = mischung("M3", "Gemischt: Kapitel 3", "3.12", [S13, S14],
+              "Zuerst hinschauen, was fuer eine Aufgabe es ist — "
+              "danach rechnen.")
+M4 = mischung("M4", "Gemischt: Kapitel 4", "4.10", [S15, S16, S17],
+              "Nur Gleichartiges laesst sich zusammenfassen. Das gilt in "
+              "jeder dieser Formen.")
+M5 = mischung("M5", "Gemischt: Kapitel 5", "5.9", [S18, S19],
+              "Ein Produkt wird Faktor fuer Faktor zusammengefasst, "
+              "das Vorzeichen zaehlt man am Schluss.")
+M6 = mischung("M6", "Gemischt: Kapitel 6", "6.8", [S20, S21],
+              "Punkt vor Strich — auch dann, wenn Variablen dabeistehen.")
+M7 = mischung("M7", "Gemischt: Kapitel 7", "7.11", [S22, S23, S24, S25],
+              "Potenz vor Punkt vor Strich. Und die Potenzgesetze gelten "
+              "nur bei gleicher Basis.")
+M8 = mischung("M8", "Gemischt: Kapitel 8", "8.10", [S26, S27, S28, S29],
+              "Eine Wurzel ist kein Faktor, den man verteilen darf — "
+              "ausser bei Produkt und Quotient.")
+M9 = mischung("M9", "Gemischt: Kapitel 9", "9.7", [S30, S31, S32],
+              "Beim Teilen einer Summe wird JEDER Summand geteilt.")
+M10 = mischung("M10", "Gemischt: Kapitel 10", "10.17",
+               [S33, S34, S35, S36, S37],
+               "Zuerst die Klammer. Ein Minus davor dreht jedes Vorzeichen "
+               "darin um.")
+M11 = mischung("M11", "Gemischt: Kapitel 11", "11.10", [S38, S39, S40, S41],
+               "Der Faktor vor der Klammer gilt fuer jedes Glied darin.")
+M12 = mischung("M12", "Gemischt: Kapitel 12", "12.9", [S42, S43, S44],
+               "Ausklammern heisst: etwas suchen, das in JEDEM Glied "
+               "steckt.")
+M13 = mischung("M13", "Gemischt: Kapitel 13", "13.10", [S45, S46, S47],
+               "Was auf der einen Seite passiert, passiert auch auf der "
+               "anderen.")
+M14 = mischung("M14", "Gemischt: Kapitel 14", "14.12", [S49, S50, S51],
+               "Gekuerzt wird durch Faktoren, nie durch Summanden.")
+M15 = mischung("M15", "Gemischt: Kapitel 15", "15.9",
+               [S52, S53, S54, S55],
+               "Erst mit dem Hauptnenner durchmultiplizieren, dann wie eine "
+               "gewoehnliche Gleichung loesen.")
+M16 = mischung("M16", "Gemischte Gleichungen", "16.2",
+               [S45, S46, S47, S52, S53, S54, S55],
+               "Jede Gleichung zuerst anschauen: stehen Brueche darin oder "
+               "nicht?")
+
 
 #: Kapitelnummer in der App  ->  Schablone
 #: Die Nummern folgen deiner Lektionslandkarte.
@@ -100,6 +148,11 @@ KAPITEL = {
     "11.5": S39,    # Ausmultiplizieren und zusammenfassen 11.5 – 11.6
     "11.7": S40,    # Negative Zahl, Minus vor der Variablen 11.7 – 11.8 — Erhebung 2b
     "11.9": S41,    # Bruch mal Klammer                — Erhebung 1b
+
+    # ── Die Gemischt-Lektionen am Ende jedes Kapitels ────────────────────
+    "3.12": M3, "4.10": M4, "5.9": M5, "6.8": M6, "7.11": M7,
+    "8.10": M8, "9.7": M9, "10.17": M10, "11.10": M11, "12.9": M12,
+    "13.10": M13, "14.12": M14, "15.9": M15, "16.2": M16,
     "10.1": S33,    # Klammern setzen und weglassen
     "10.2": S34,    # Strichoperation vor der Klammer — enthaelt 10.6
     "10.7": S35,    # Punktoperation und Klammer
