@@ -26,7 +26,7 @@ LEVELACHSE (Teil 2 der Schablone, wörtlich):
 Gesperrt bleibt die Rechenoperation: ob x addiert, abgezogen, malgenommen
 oder geteilt wird, trennt die Bauformen voneinander und ist kein Regler.
 
-STAND: BF1 bis BF6 gebaut (Portionen 1 und 2). BF7 bis BF11 folgen.
+Alle elf Bauformen der Schablone sind gebaut.
 """
 from __future__ import annotations
 
@@ -425,9 +425,10 @@ def bf1(p):
         rechts = ("+", (Z(a + b + b + 3 + 7 * vz),))
     else:
         links = ("++", (X(1), Z(a)))
-        #: Auf B ist die rechte Seite kleiner als die Zahl links — dann wird
-        #: die Lösung negativ. Das ist der Vorzeichenregler von Teil 2.
-        rechts = ("+", (Z(a - b if vz < 0 else a + b),))
+        #: Auf B steht rechts eine NEGATIVE Zahl. Eine bloss negative
+        #: Loesung wuerde man der Aufgabe nicht ansehen — dann haetten A und
+        #: B denselben Aufbau, und genau das verbietet die Levelachse.
+        rechts = ("-", (Z(b),)) if vz < 0 else ("+", (Z(a + b),))
     return bau(links, rechts)
 
 
@@ -557,12 +558,169 @@ BF6 = Bauform("BF6", "Zahl geteilt durch x — x steht im Nenner",
     bereiche=BEREICH, bauen=bf6, filter=STANDARD)
 
 
+def bf7(p):
+    """Zahl mal x, plus eine Zahl — zwei Schritte:  5x + 6 = 21
+
+    Der Kern von Lektion 13.2: erst die Strich-, dann die Punktoperation.
+    """
+    a, b, vz = p["a"], p["b"], p["vz"]
+    k, l = b, (a % 4 + 2) * vz
+    if p["extra"]:
+        #: 5x + 6 + 4 = 30
+        links = ("+++", (X(k), Z(b), Z(b + 2)))
+        rechts = ("+", (Z(k * 4 + b + b + 2),))
+    else:
+        links = ("++", (X(k), Z(b + 1)))
+        rechts = ("+", (Z(k * l + b + 1),))
+    return bau(links, rechts)
+
+
+BF7 = Bauform("BF7", "Zahl mal x, plus eine Zahl — zwei Schritte",
+    bereiche=BEREICH, bauen=bf7, filter=STANDARD)
+
+
+def bf8(p):
+    """x wird abgezogen, zwei Schritte:  38 − 4x = 10
+
+    Die Vorzeichenfalle: aus 38 − 4x = 10 folgt −4x = −28, und minus durch
+    minus ergibt +7.
+    """
+    a, b, vz = p["a"], p["b"], p["vz"]
+    #: Die Loesung wird vorgegeben und die rechte Seite daraus gerechnet —
+    #: sonst kommt bei zufaelligen Zahlen fast immer ein Bruch heraus.
+    #: Auf A bleibt rechts eine positive Zahl, auf B eine negative — das
+    #: ist der Vorzeichenregler von Teil 2. Ohne diesen Unterschied haetten
+    #: A und B denselben Aufbau.
+    ziel = 2 if vz > 0 else 3
+    k = b * 3
+    kopf = b * 8
+    rest = kopf - k * ziel
+    if p["extra"]:
+        links = ("+-", (Z(kopf), X(k)))
+        #: 2b dazu und wieder weg — so bleibt kein Nullglied stehen.
+        rechts = ("+-", (Z(rest + 2 * b), Z(2 * b)))
+    else:
+        links = ("+-", (Z(kopf), X(k)))
+        rechts = ("+", (Z(rest),))
+    return bau(links, rechts)
+
+
+BF8 = Bauform("BF8", "x wird abgezogen, zwei Schritte",
+    bereiche=BEREICH, bauen=bf8, filter=STANDARD)
+
+
+def bf9(p):
+    """Verhältnis auf beiden Seiten:  60 : x = 80 : 20
+
+    Rechts steht ein ausrechenbarer Quotient, links x im Nenner — nicht
+    linear, darum wieder mit eigener Lösung und eigenem Katalog.
+    """
+    a, b, vz = p["a"], p["b"], p["vz"]
+    q = (a % 4 + 2) * vz
+    zaehler = b * q * (2 if p["extra"] else 1)
+    links = ("+", (ZD(zaehler),))
+    #: 80 : 20 — der rechte Quotient ergibt q
+    rechts = ("+", (Z(q * 4),)) if not p["extra"] else ("+", (Z(q * 4),))
+    l = Rational(zaehler, q * 4) if q * 4 != 0 else None
+    frage_rechts = ("+", (Z(q * 4),))
+    return bau(links, frage_rechts, loesung=Rational(zaehler, q * 4), extra=[
+        F("mal_statt_geteilt_v", Integer(zaehler) * q * 4,
+          "Bei einem Verhältnis wird geteilt, nicht malgenommen."),
+        F("kehrwert_v", Rational(q * 4, zaehler),
+          "Zähler und Nenner stehen verkehrt herum."),
+        F("zaehler_abgeschrieben_v", Integer(zaehler),
+          "Das ist der Zähler, nicht der Wert von x."),
+        F("rechte_seite_v", Integer(q * 4),
+          "Rechts steht das Ergebnis des Verhältnisses, nicht x."),
+        F("vorzeichen_v", -Rational(zaehler, q * 4),
+          "Zähl die Minuszeichen: minus durch minus ergibt plus."),
+    ])
+
+
+BF9 = Bauform("BF9", "Verhältnis auf beiden Seiten",
+    bereiche=BEREICH, bauen=bf9, filter=STANDARD)
+
+
+def bf10(p):
+    """Sonderfall: die Lösung ist null:  4x = 0  ·  7x + 12 = 12
+
+    Muss gezielt gebaut werden — bei zufälligen Zahlen kommt null praktisch
+    nie vor. So steht es auch in Teil 1.
+    """
+    a, b, vz = p["a"], p["b"], p["vz"]
+    k = b * vz
+    if p["extra"]:
+        #: 7x + 12 = 12
+        links = ("++", (X(b), Z(a)))
+        rechts = ("+", (Z(a),))
+    else:
+        links = ("+", (X(k),))
+        rechts = ("+", (Z(0),))
+    return bau(links, rechts, loesung=0, extra=[
+        F("koeffizient_als_loesung", Integer(k),
+          f"Die Zahl vor dem x ist nicht die Lösung. {zeige(Integer(k))} mal "
+          f"null ergibt null — x ist null."),
+        F("eins", Integer(1),
+          "Null geteilt durch irgendetwas bleibt null, nicht eins."),
+        F("konstante", Integer(a),
+          "Auf beiden Seiten steht dieselbe Zahl. Sie fällt weg, und übrig "
+          "bleibt nur das x."),
+        F("negativ_eins", Integer(-1),
+          "Es bleibt nichts übrig, was x von null verschieden macht."),
+        F("summe", Integer(a + b),
+          "Die Zahlen der Aufgabe sind nicht die Lösung."),
+    ])
+
+
+BF10 = Bauform("BF10", "Sonderfall: die Lösung ist null",
+    bereiche=BEREICH, bauen=bf10,
+    filter=[loesbar, kopfrechenbar, fehler_eindeutig, fuenf_fehler])
+
+
+def bf11(p):
+    """Minuszeichen direkt vor dem x:  −x = 9
+
+    Wer das Minus übersieht, schreibt x = 9 statt x = −9.
+    """
+    a, b, vz = p["a"], p["b"], p["vz"]
+    if p["extra"]:
+        #: −x + 8 = 15
+        links = ("++", (X(-1), Z(b)))
+        rechts = ("+", (Z(a),))
+    else:
+        links = ("+", (X(-1),))
+        rechts = ("+", (Z(a * vz),))
+    l = loesen(links, rechts)
+    #: Vor dem x steht −1. Damit faellt fast jeder allgemeine Kandidat weg,
+    #: darum bringt diese Bauform ihre fuenf Eintraege selbst mit.
+    return bau(links, rechts, extra=[
+        F("minus_uebersehen", -l,
+          "Vor dem x steht ein Minus. Multiplizierst du beide Seiten mit "
+          "−1, dreht sich das Vorzeichen der Lösung um."),
+        F("differenz_zahlen", Integer(a * vz - b),
+          "Hier wird nichts subtrahiert: das Minus gehört zum x."),
+        F("nur_zahl_links", Integer(b),
+          "Die Zahl auf der linken Seite muss zuerst weg — und zwar auf "
+          "beiden Seiten."),
+        F("summe_beider", Integer(a * vz + b),
+          "Hier wird nichts addiert: das Minus vor dem x wird aufgelöst."),
+        F("kehrwert_eins", Integer(1),
+          "−x heisst −1 · x. Zum Auflösen teilst du durch −1, das dreht nur "
+          "das Vorzeichen."),
+    ])
+
+
+BF11 = Bauform("BF11", "Minuszeichen direkt vor dem x",
+    bereiche=BEREICH, bauen=bf11, filter=STANDARD)
+
+
 S45 = Schablone(
     nr="S45", titel="Einfache lineare Gleichungen",
     lektionen="13.1 – 13.4", erhebung="Vorstufe zu 1a",
     anleitung=ANLEITUNG,
     levelachse="Vorzeichen und Gliederzahl",
-    bauformen=[BF1, BF2, BF3, BF4, BF5, BF6],
+    bauformen=[BF1, BF2, BF3, BF4, BF5, BF6,
+               BF7, BF8, BF9, BF10, BF11],
     kernidee=("Eine Gleichung bleibt richtig, solange du auf beiden Seiten "
               "dasselbe tust. Löse zuerst die Strich-, dann die "
               "Punktoperation auf."),
