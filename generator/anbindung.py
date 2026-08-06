@@ -36,6 +36,7 @@ from .s46_s47_klammern import S46
 from .s47_brueche import S47
 from .s48_erweitern import S48
 from .s14_bruchterme import S49
+from .s49b_ausklammern_kuerzen import S49B
 from .s50_s51_bruchterme import S50, S51
 from .s15_bruchgleichungen import S52
 from .s53_s54_bruchgleichungen import S53, S54
@@ -86,7 +87,8 @@ M12 = mischung("M12", "Gemischt: Kapitel 12", "12.9", [S42, S43, S44],
 M13 = mischung("M13", "Gemischt: Kapitel 13", "13.10", [S45, S46, S47],
                "Was auf der einen Seite passiert, passiert auch auf der "
                "anderen.")
-M14 = mischung("M14", "Gemischt: Kapitel 14", "14.12", [S49, S50, S51],
+M14 = mischung("M14", "Gemischt: Kapitel 14", "14.12",
+               [S49, S49B, S50, S51],
                "Gekuerzt wird durch Faktoren, nie durch Summanden.")
 M15 = mischung("M15", "Gemischt: Kapitel 15", "15.9",
                [S52, S53, S54, S55],
@@ -134,6 +136,7 @@ KAPITEL = {
     # Ausklammern); alles andere ist abgedeckt.
     "14.1": S48,    # Bruchterme erweitern  14.1 – 14.2 · 14.8 — Erhebung 5a
     "14.3": S49,    # Bruchterme kuerzen             14.3 – 14.4 — Erhebung 5b
+    "14.5": S49B,   # Kuerzen nach dem Ausklammern   14.5
     "14.6": S50,    # Addieren bei gleichem Nenner   14.6 – 14.7
     "14.9": S51,    # Mal, geteilt, Doppelbruch      14.9 – 14.11 — Erhebung 5c
     # Kapitel 15 — Bruchgleichungen.

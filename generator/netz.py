@@ -112,6 +112,8 @@ SCHABLONE_FUER: dict[str, str] = {
     # (14.9 bis 14.11). Nur 14.5 bleibt offen.
     "14.1": "14.1", "14.2": "14.1", "14.8": "14.1",
     "14.3": "14.3", "14.4": "14.3",
+    # 14.5 — S49B · Kuerzen nach dem Ausklammern (14.4 und 12.5 davor)
+    "14.5": "14.5",
     "14.6": "14.6", "14.7": "14.6",
     "14.9": "14.9", "14.10": "14.9", "14.11": "14.9",
     # Kapitel 15 — Bruchgleichungen. S52 bestimmt den Hauptnenner
