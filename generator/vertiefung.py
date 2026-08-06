@@ -126,6 +126,21 @@ class Probelauf:
         """
         return [ZIEL[a] for a in self.falsch if a in ZIEL]
 
+    def richtige_lektionen(self) -> list[str]:
+        """Die Lektionen hinter den richtig gelösten Teilaufgaben.
+
+        Der Rückweg allein macht die Probe zu einer Bestrafung: falsch
+        Gelöstes kommt zurück, richtig Gelöstes bringt nichts. Wer alles
+        kann, sieht nach der Probe genau dasselbe wie vorher.
+
+        Gutgeschrieben wird darum auch nach vorne — aber NUR die neunzehn
+        Ziellektionen der Erhebung, nicht das halbe Netz. Das ist der
+        Unterschied zum alten Einstufungstest, an dem eine einzige richtige
+        Antwort bis zu vierunddreissig Lektionen gutschrieb und den
+        Deckeneffekt erzeugte.
+        """
+        return [ZIEL[a] for a in self.richtig if a in ZIEL]
+
     def bericht(self) -> dict:
         gesamt = len(self.richtig) + len(self.falsch)
         return {

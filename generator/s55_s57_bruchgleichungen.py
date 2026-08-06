@@ -33,10 +33,13 @@ from .s46_s47_klammern import (KL, SONDER, bau, fehler_eindeutig, fuenf,
                                kopfrechenbar, loesbar, nicht_null, reihe,
                                stimmt)
 from .s15_bruchgleichungen import BZ, TIPPS, XB, ZB, bg
+from .qualitaet import brueche_gekuerzt
 from .schablone import Bauform, Schablone
 
 STANDARD = [loesbar, stimmt, kopfrechenbar, fehler_eindeutig, fuenf,
-            nicht_null]
+            nicht_null,
+            # kein «3/6» und kein «2/2» in der Frage
+            brueche_gekuerzt]
 
 BEREICH = {
     "A": {"n1": [2, 3], "n2": [3, 4], "k": [1, 2, 4], "stufe": [1]},

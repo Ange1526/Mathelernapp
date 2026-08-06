@@ -26,10 +26,15 @@ from .s45_gleichungen import ANLEITUNG, F, X, Z, _sammeln
 from .s46_s47_klammern import (KL, SONDER, bau, fehler_eindeutig, fuenf,
                                kopfrechenbar, loesbar, nicht_null, stimmt)
 from .s15_bruchgleichungen import BZ, TIPPS, XB, ZB, bg
+from .qualitaet import brueche_gekuerzt
 from .schablone import Bauform, Schablone
 
 STANDARD = [loesbar, stimmt, kopfrechenbar, fehler_eindeutig, fuenf,
-            nicht_null]
+            nicht_null,
+            # Verhindert «x/2 = 3/6» und «2/2 − (1/4 − x) + 1»: die Ziehung
+            # würfelt Zähler und Nenner unabhängig, und ungekürzte Brüche in
+            # der FRAGE stehen in keinem Lehrmittel.
+            brueche_gekuerzt]
 
 BEREICH = {
     "A": {"n1": [2, 3], "n2": [4, 6], "k": [1, 2, 3], "stufe": [1]},

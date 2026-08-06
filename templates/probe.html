@@ -1,30 +1,206 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="lektion-wrapper">
-  <div class="progress-bar-wrapper">
-    <div class="progress-meta">
-      <span>Probe-Erhebung · Aufgabe {{ nummer }} von {{ gesamt }}</span>
-      <span>Teilaufgabe {{ teilaufgabe }}</span>
+<style>
+    /* Die Probe-Erhebung sieht aus wie eine Lektion, aber ernster:
+       Orange statt Blau, keine Tipps, kein Stern, kein Zurück-Knopf im
+       Aufgabenkopf. Der Schüler soll spüren, dass hier Prüfungsbedingungen
+       gelten — ohne dass er eine fremde Oberfläche vor sich hat. */
+    body { background-color: #F4F7FA !important; }
+
+    .probe-wrapper {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 40px 20px;
+        min-height: 70vh;
+    }
+
+    .fortschritt-wrapper { width: 100%; max-width: 600px; margin-bottom: 18px; }
+
+    .fortschritt-meta {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.85rem;
+        color: #718096;
+        margin-bottom: 8px;
+    }
+
+    .fortschritt-bg {
+        background: #E9EDF5;
+        border-radius: 99px;
+        height: 8px;
+        overflow: hidden;
+    }
+
+    .fortschritt-fill {
+        background: linear-gradient(90deg, #ED8936 0%, #F6AD55 100%);
+        height: 100%;
+        border-radius: 99px;
+        transition: width 0.3s;
+    }
+
+    .task-card {
+        background: white;
+        width: 100%;
+        max-width: 600px;
+        padding: 50px 40px;
+        border-radius: 40px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.03);
+        position: relative;
+        text-align: center;
+    }
+
+    .task-header { text-align: left; margin-bottom: 30px; }
+
+    .karten-marke {
+        color: #ED8936;
+        font-weight: bold;
+        text-transform: uppercase;
+        font-size: 0.8rem;
+        letter-spacing: 1px;
+    }
+
+    .task-instruction {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #2D3748;
+        margin-top: 5px;
+    }
+
+    /* Statt des Levels steht hier die Teilaufgabe der Erhebung — 3a, 5b.
+       So sieht der Schüler, welche Aufgabe der echten Prüfung er gerade
+       vor sich hat, und findet sie im Nachgespräch wieder. */
+    .teil-indicator {
+        position: absolute;
+        top: 30px;
+        right: 30px;
+        background-color: #ED8936;
+        color: white;
+        min-width: 45px;
+        height: 45px;
+        padding: 0 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 12px;
+        font-size: 1.1rem;
+        font-weight: bold;
+    }
+
+    .math-expression {
+        font-size: clamp(2.2rem, 9vw, 3.6rem);
+        font-weight: 700;
+        color: #2D3748;
+        margin: 40px 0;
+    }
+
+    .answer-input {
+        width: 100%;
+        max-width: 300px;
+        background-color: #F7FAFC;
+        border: 2px solid #EDF2F7;
+        border-radius: 15px;
+        padding: 18px;
+        font-size: 1.8rem;
+        text-align: center;
+        outline: none;
+        transition: all 0.2s;
+        color: #2D3748;
+    }
+
+    .answer-input:focus {
+        border-color: #ED8936;
+        background-color: #fff;
+        box-shadow: 0 0 0 4px rgba(237, 137, 54, 0.12);
+    }
+
+    .button-row {
+        display: flex;
+        justify-content: center;
+        max-width: 300px;
+        margin: 26px auto 0;
+    }
+
+    .btn-weiter {
+        background: linear-gradient(135deg, #DD6B20 0%, #F6AD55 100%);
+        color: white;
+        border: none;
+        padding: 15px 46px;
+        border-radius: 15px;
+        font-weight: 600;
+        cursor: pointer;
+        font-size: 1.1rem;
+        transition: transform 0.1s;
+    }
+    .btn-weiter:active { transform: scale(0.98); }
+
+    .rueckmeldung {
+        margin: 18px auto 0;
+        max-width: 420px;
+        padding: 12px 16px;
+        border-radius: 14px;
+        font-size: 0.95rem;
+        background: #F7FAFC;
+        color: #4A5568;
+    }
+
+    .hinweis-kasten {
+        width: 100%;
+        max-width: 600px;
+        margin-top: 18px;
+        padding: 16px 22px;
+        border-radius: 20px;
+        background: #FEF3E6;
+        color: #7B4A16;
+        font-size: 0.92rem;
+        line-height: 1.55;
+    }
+    .hinweis-kasten strong { color: #63380F; }
+</style>
+
+<div class="probe-wrapper">
+
+    <div class="fortschritt-wrapper">
+        <div class="fortschritt-meta">
+            <span>Probe-Erhebung · Aufgabe {{ nummer }} von {{ gesamt }}</span>
+            <span>Wie in der richtigen Prüfung</span>
+        </div>
+        <div class="fortschritt-bg">
+            <div class="fortschritt-fill"
+                 style="width: {{ (nummer / gesamt * 100) | round }}%;"></div>
+        </div>
     </div>
-    <div class="progress-bar-bg">
-      <div class="progress-bar-fill" style="width: {{ (nummer / gesamt * 100) | round }}%;"></div>
+
+    <div class="task-card">
+        {% if teilaufgabe %}<div class="teil-indicator">{{ teilaufgabe }}</div>{% endif %}
+
+        <div class="task-header">
+            <div class="karten-marke">Probe-Erhebung</div>
+            <div class="task-instruction">{{ anleitung }}</div>
+        </div>
+
+        <div class="math-expression formel">{{ frage }}</div>
+
+        {% if antwort_text %}
+        <div class="rueckmeldung {{ antwort_status }}">{{ antwort_text }}</div>
+        {% endif %}
+
+        <form action="{{ url_for('probe_pruefen') }}" method="POST">
+            <input type="text" name="antwort" class="answer-input"
+                   autocomplete="off" autofocus placeholder="Antwort ...">
+            {% include "_tastenreihe.html" %}
+            {% include "_formel.html" %}
+            <div class="button-row">
+                <button type="submit" class="btn-weiter">Weiter</button>
+            </div>
+        </form>
     </div>
-  </div>
-  <div class="task-card">
-    <div class="task-header">
-      <div class="chapter-info">Wie in der richtigen Prüfung</div>
-      <div class="task-instruction">{{ anleitung }}</div>
+
+    <div class="hinweis-kasten">
+        <strong>Keine Tipps, keine zweite Chance</strong> — wie in der Prüfung.
+        Wenn du etwas nicht weisst, lass das Feld leer und geh weiter. Was du
+        hier falsch löst, kommt nachher wieder in deinen Lernweg.
     </div>
-    <div class="math-expression">{{ frage }}</div>
-    {% if antwort_text %}<div class="rueckmeldung {{ antwort_status }}">{{ antwort_text }}</div>{% endif %}
-    <form action="{{ url_for('probe_pruefen') }}" method="POST">
-      <input type="text" name="antwort" class="answer-input" autocomplete="off" autofocus placeholder="Antwort...">
-      <div class="button-row"><button type="submit" class="btn-check">Weiter</button></div>
-    </form>
-    <p class="notiz-label" style="margin-top:20px;">
-      Hier gibt es keine Tipps und keine zweite Chance — wie in der Prüfung.
-      Wenn du etwas nicht weisst, lass das Feld leer.
-    </p>
-  </div>
+
 </div>
 {% endblock %}

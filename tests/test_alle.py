@@ -116,6 +116,22 @@ LAEUFE = [
     #: der Glieder und der Variablen. Die Exponenten unter der Wurzel
     #: gehoeren zum Aufbau (a² gegen a⁴ ist ein anderer Rechenweg, nicht
     #: bloss eine andere Zahl) — darum «exponent» und nicht «streng».
+    #: Kapitel 2. Reine Zahlenbrueche — die Levelachse traegt die Zahl der
+    #: Kuerzungsschritte und die Schreibweise, nicht die Groesse der Zahlen.
+    #: Kapitel 1. Vorzeichen, Zahlengerade und die Reihenfolge der
+    #: Operationen. Die Levelachse traegt die Zahl der Glieder und der
+    #: Vorzeichen, nicht die Groesse der Zahlen.
+    Lauf("K1", "generator.s1_s3_vorzeichen", "S1"),
+    Lauf("K1", "generator.s1_s3_vorzeichen", "S3"),
+    Lauf("K1", "generator.s5_s6_punkt_reihenfolge", "S5"),
+    Lauf("K1", "generator.s5_s6_punkt_reihenfolge", "S6"),
+    Lauf("K1", "generator.k1_mischung", "M1"),
+    Lauf("K2", "generator.s7_kuerzen_erweitern", "S7"),
+    Lauf("K2", "generator.s8_addition_subtraktion", "S8"),
+    Lauf("K2", "generator.s9_ganze_zahlen", "S9"),
+    Lauf("K2", "generator.s10_multiplikation", "S10"),
+    Lauf("K2", "generator.s11_division", "S11"),
+    Lauf("K2", "generator.s12_doppelbrueche", "S58"),
     Lauf("K16", "generator.s60_mischen", "S60", "exponent"),
     Lauf("K13", "generator.s45_gleichungen", "S45"),
     Lauf("K13", "generator.s46_s47_klammern", "S46"),

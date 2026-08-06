@@ -39,6 +39,50 @@ ZIEL: dict[str, str] = {
 #: Wird gefüllt, sobald die Generatoren da sind. Was hier fehlt, kann noch
 #: nicht geübt werden — und zählt darum auch nicht als sicher.
 SCHABLONE_FUER: dict[str, str] = {
+    # Kapitel 1 — S1 · Vorzeichen und Zahlengerade
+    "1.1": "1.1",
+    "1.2": "1.1",
+    "1.3": "1.1",
+    "1.4": "1.1",
+    # Kapitel 1 — S3 · Addieren und Subtrahieren
+    "1.5": "1.5",
+    "1.6": "1.5",
+    "1.7": "1.5",
+    "1.8": "1.5",
+    "1.9": "1.5",
+    # Kapitel 1 — S5 · Multiplizieren und Dividieren
+    "1.10": "1.10",
+    "1.11": "1.10",
+    "1.12": "1.10",
+    "1.13": "1.10",
+    "1.14": "1.10",
+    "1.15": "1.10",
+    # Kapitel 1 — S6 · Reihenfolge der Operationen
+    "1.16": "1.16",
+    "1.17": "1.16",
+    "1.18": "1.16",
+    "1.19": "1.16",
+    # Kapitel 1 — M1 · Gemischt
+    "1.20": "1.20",
+    # Kapitel 2 — S7 · Kuerzen und Erweitern
+    "2.1": "2.1",
+    "2.2": "2.1",
+    # Kapitel 2 — S8 · Addition und Subtraktion
+    "2.3": "2.3",
+    "2.4": "2.3",
+    "2.5": "2.3",
+    "2.6": "2.3",
+    # Kapitel 2 — S9 · Brueche mit ganzen Zahlen
+    "2.7": "2.7",
+    "2.8": "2.7",
+    # Kapitel 2 — S10 · Multiplikation
+    "2.9": "2.9",
+    "2.11": "2.9",
+    # Kapitel 2 — S11 · Division
+    "2.10": "2.10",
+    # Kapitel 2 — S12 · Doppelbrueche und Gemischtes
+    "2.12": "2.12",
+    "2.13": "2.12",
     # Klammern — deckt 10.1 bis 10.11 ab, darunter 10.6, das haeufigste
     # Ruecksprungziel im ganzen Netz.
     # 10.1 — S33 · Klammern setzen und weglassen

@@ -35,6 +35,7 @@ from .s45_gleichungen import ANLEITUNG, F, X, Z, _sammeln
 from .s46_s47_klammern import (KL, SONDER, bau, fehler_eindeutig, fuenf,
                                ganz, kopfrechenbar, loesbar, nicht_null,
                                reihe, stimmt)
+from .qualitaet import brueche_gekuerzt
 from .schablone import Bauform, Schablone
 
 
@@ -141,7 +142,9 @@ def hauptnenner_fehler(links, rechts, hn):
 
 
 STANDARD = [loesbar, stimmt, kopfrechenbar, fehler_eindeutig, fuenf,
-            nicht_null]
+            nicht_null,
+            # kein «3/6» und kein «2/2» in der Frage
+            brueche_gekuerzt]
 GANZ = STANDARD + [ganz]
 
 

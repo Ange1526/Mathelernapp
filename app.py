@@ -269,6 +269,46 @@ class Lernweg(db.Model):
         m.add(lektion)
         self.uebersprungen = ",".join(sorted(m))
 
+    def uebersprungene_aufraeumen(self) -> set:
+        """Lektionen aus der Uebersprungen-Liste holen, die es jetzt gibt.
+
+        WARUM DAS NOETIG IST: «uebersprungen» merkt sich, wo die App keine
+        Aufgaben hatte. Sobald ein Generator dazukommt, ist der Eintrag
+        falsch — die Lektion bliebe fuer immer grau.
+
+        WARUM DAS NICHT REICHT: Wer die Lektion damals uebersprungen hat,
+        ist inzwischen weitergekommen. Nimmt man sie einfach aus der Liste,
+        gilt sie weder als sicher noch als uebersprungen — und die App
+        schickt einen Schueler, der schon bei Kapitel 5 stand, zurueck auf
+        Lektion 1.1. Genau das ist passiert, als Kapitel 1 und 2 fertig
+        wurden.
+
+        Darum: was VOR der aktuellen Stelle liegt, wird gutgeschrieben. Der
+        Schueler hat es nicht uebersprungen, die App hatte damals nichts
+        anzubieten. Was DAHINTER liegt, wird zu einer normalen offenen
+        Lektion und kommt der Reihe nach dran.
+        """
+        alt = self.uebersprungene_menge()
+        befreit = {l for l in alt if kapitel_fuer_lektion(l)}
+        if not befreit:
+            return set()
+
+        self.uebersprungen = ",".join(sorted(alt - befreit))
+
+        # Alles vor der aktuellen Stelle gutschreiben.
+        def nummer(lektion):
+            teile = lektion.split(".")
+            return (int(teile[0]), int(teile[1]) if len(teile) > 1 else 0)
+
+        stand = self.aktuelle_lektion
+        if stand:
+            grenze = nummer(stand)
+            davor = {l for l in befreit if nummer(l) < grenze}
+            if davor:
+                self.setze_sicher(self.sichere_menge() | davor)
+
+        return befreit
+
 
 class MarkedTask(db.Model):
     """Aufgabe, die der Lernende spaeter mit der Lehrperson anschauen will."""
@@ -479,13 +519,72 @@ def aktuelles_level(chapter):
 
 
 def bauform_stand(chapter, level, bauform):
+    """Der Zaehlerstand einer Bauform — genau EIN Datensatz je Kombination.
+
+    WARUM DAS `flush()` NOETIG IST: `db.session.add()` schreibt noch nichts in
+    die Datenbank. Die naechste `query.filter_by(...)` sucht dort, findet
+    nichts, und legt einen ZWEITEN Datensatz an. So entstanden Paare wie
+    (BF10, treffer 1) und (BF10, treffer 2) nebeneinander — und im schlimmsten
+    Fall zaehlt keiner je bis zwei, weil jede richtige Antwort eine neue Zeile
+    mit treffer 1 anlegt. Fuer den Schueler sieht das aus, als bewege sich der
+    Fortschritt nicht, egal wie viel er loest.
+
+    `flush()` schiebt den neuen Datensatz in die laufende Transaktion, ohne
+    sie abzuschliessen. Die naechste Abfrage findet ihn dann.
+    """
     bs = BauformStand.query.filter_by(
-        user_id=current_user.id, chapter=chapter, level=level, bauform=bauform).first()
+        user_id=current_user.id, chapter=chapter, level=level,
+        bauform=bauform).order_by(BauformStand.id).first()
     if not bs:
         bs = BauformStand(user_id=current_user.id, chapter=chapter, level=level,
                           bauform=bauform, treffer=0, fehler=0, gemeistert=False)
         db.session.add(bs)
+        db.session.flush()
     return bs
+
+
+def bereit_zum_ueben(lektion, sicher, lw) -> bool:
+    """Darf diese Lektion jetzt geuebt werden?
+
+    Nur wenn sie einen Generator hat und ihre Voraussetzungen sitzen —
+    sonst schickt die App den Schueler auf eine Seite, die er nicht loesen
+    kann, und das ist schlimmer als ein Umweg ueber die Grundlagen.
+    """
+    if not kapitel_fuer_lektion(lektion):
+        return False
+    bekannt = set(sicher) | lw.uebersprungene_menge()
+    return all(v in bekannt for v in voraussetzungen(lektion))
+
+
+def doppelte_bauformen_zusammenlegen():
+    """Raeumt die Doppeleintraege auf, die vor dem flush()-Fix entstanden sind.
+
+    Wer die App vorher benutzt hat, hat pro Bauform mehrere Datensaetze in der
+    Datenbank. Der Fortschritt bleibt dann stehen, obwohl richtig geloest
+    wird. Beim Oeffnen der Lernreise werden sie einmalig zusammengelegt: der
+    hoechste Trefferstand gewinnt, gemeistert bleibt gemeistert.
+    """
+    alle = BauformStand.query.filter_by(user_id=current_user.id).all()
+    nach_schluessel = {}
+    for bs in alle:
+        schluessel = (bs.chapter, bs.level, bs.bauform)
+        nach_schluessel.setdefault(schluessel, []).append(bs)
+
+    geaendert = False
+    for eintraege in nach_schluessel.values():
+        if len(eintraege) < 2:
+            continue
+        eintraege.sort(key=lambda b: b.id)
+        behalten = eintraege[0]
+        behalten.treffer = max(e.treffer or 0 for e in eintraege)
+        behalten.fehler = max(e.fehler or 0 for e in eintraege)
+        behalten.gemeistert = any(e.gemeistert for e in eintraege)
+        for weg in eintraege[1:]:
+            db.session.delete(weg)
+        geaendert = True
+
+    if geaendert:
+        db.session.commit()
 
 
 def gemeisterte(chapter, level):
@@ -562,6 +661,15 @@ def dashboard():
     if not lw.eingestuft:
         return redirect(url_for("start"))
 
+    doppelte_bauformen_zusammenlegen()
+
+    # Neue Generatoren freischalten, bevor die Kacheln gebaut werden.
+    # BEWUSST OHNE MELDUNG: fuer den Lernenden ist es keine Nachricht, dass
+    # eine Lektion jetzt Aufgaben hat — sie ist einfach da. Eine Liste von
+    # Nummern oben auf der Lernreise ist Entwicklerinformation und stoert.
+    if lw.uebersprungene_aufraeumen():
+        db.session.commit()
+
     prog_rows = Progress.query.filter_by(user_id=current_user.id).all()
     progress_map = {p.chapter: p for p in prog_rows}
     sicher = lw.sichere_menge()
@@ -579,6 +687,32 @@ def dashboard():
         eintraege = []
         for l in lektionen:
             uebbar = kapitel_fuer_lektion(l)
+
+            # Kapitel 16 sind keine Lektionen auf dem Weg, sondern die Stufe
+            # darueber: Mischaufgaben und die Probe-Erhebung. Sie stehen
+            # bewusst NICHT in SCHABLONE_FUER, damit sie nicht in den
+            # Einstufungstest und nicht in den Fortschritt einfliessen.
+            # Ohne den folgenden Zweig las man dort «noch keine Aufgaben» —
+            # was nach Panne aussieht, obwohl beides laengst laeuft, nur
+            # eben ueber einen eigenen Knopf.
+            if l.startswith("16."):
+                eintraege.append({
+                    "nr": l,
+                    "titel": KLARTEXT.get(l, l),
+                    "zustand": "vertiefung",
+                    "kapitel": uebbar,
+                    # 16.1 geht ueber /gemischt, weil dort erst geprueft
+                    # wird, ob genug Grundlagen sitzen. 16.2 fuehrt direkt
+                    # zur Schablone — ueber /gemischt landete man sonst
+                    # IMMER bei 16.1, und unter der Ueberschrift «Gemischte
+                    # Gleichungen» stand dann eine Termvereinfachung.
+                    "ziel": (url_for("probe") if l == "16.3"
+                             else url_for("lektion", chapter="16.2")
+                             if l == "16.2"
+                             else url_for("gemischt")),
+                })
+                continue
+
             if l in sicher:
                 zustand = "fertig"
             elif l == lw.aktuelle_lektion:
@@ -712,11 +846,28 @@ def lektion(chapter):
         alle = alle_bauformen(chapter, level)
         g, ges, pct = fortschritt(alle, gemeisterte(chapter, level))
         geloest, min_questions, quote = g, ges, pct
+
+        # ── Der Balken zaehlt auch HALBE Schritte ────────────────────────
+        # Eine Bauform gilt erst nach zwei richtigen Antworten als sicher.
+        # Bei zwoelf Bauformen und Reihum-Ziehung heisst das: die ersten
+        # ZWOELF richtigen Antworten bewegen den Zaehler um null. Wer so
+        # lange nichts sieht, haelt die App fuer kaputt — zu Recht, denn
+        # eine Rueckmeldung, die zwoelf Aufgaben lang schweigt, ist keine.
+        # Der Balken zeigt darum den halben Schritt schon an, die Zahl
+        # daneben bleibt bei den wirklich sicheren Bauformen.
+        staende = {b.bauform: (b.treffer or 0) for b in BauformStand.query
+                   .filter_by(user_id=current_user.id, chapter=chapter,
+                              level=level)}
+        punkte = sum(min(staende.get(b, 0), MASTERY) for b in alle)
+        balken = int(punkte / (len(alle) * MASTERY) * 100) if alle else 0
+        angefangen = sum(1 for b in alle if 0 < staende.get(b, 0) < MASTERY)
     else:
         total   = prog.total_cnt   or 0
         correct = prog.correct_cnt or 0
         geloest, min_questions = total, MIN_QUESTIONS
         quote = int((correct / total) * 100) if total > 0 else 0
+        balken = quote
+        angefangen = 0
 
     show_hint     = prog.consecutive_err >= CONSECUTIVE_ERR
     versuche      = session.get("task_tries", 0)
@@ -727,6 +878,8 @@ def lektion(chapter):
         frage=daten["frage"],
         chapter=chapter,
         quote=quote,
+        balken=balken,
+        angefangen=angefangen,
         geloest=geloest,
         level=level,
         show_hint=show_hint,
@@ -1333,12 +1486,34 @@ def probe():
         # eines starken Schuelers auf — der Einstufungstest mit dreissig
         # Aufgaben kann sie nicht in achtzig Lektionen orten, die Probe mit
         # neunzehn Pruefungsaufgaben schon.
+        # ── Nach vorne gutschreiben ──────────────────────────────────────
+        # Wer eine Erhebungsaufgabe richtig loest, kann diese Lektion — und
+        # mit ihr die Vorstufen. Ohne diesen Schritt bleibt ein Schueler,
+        # der die Probe fehlerfrei besteht, genau dort stehen, wo er vorher
+        # war, und die Probe fuehlt sich an wie eine Pruefung ohne Wirkung.
+        gewonnen = [l for l in p.richtige_lektionen()
+                    if l not in lw.sichere_menge()]
+        if gewonnen:
+            menge = lw.sichere_menge()
+            for lektion in gewonnen:
+                menge = rueckwaerts_gutschreiben(lektion, menge)
+            lw.setze_sicher(menge)
+
         verloren = [l for l in p.falsche_lektionen() if l in lw.sichere_menge()]
         if verloren:
             menge = lw.sichere_menge() - set(verloren)
             lw.setze_sicher(menge)
-            lw.aktuelle_lektion = naechste_lektion(
-                menge | lw.uebersprungene_menge())
+
+            # DIREKT ZU DEM, WAS SCHIEFGING — nicht zur kleinsten offenen
+            # Nummer. `naechste_lektion` nimmt sonst die niedrigste offene
+            # Lektion im ganzen Netz, und das ist nach einer Probe fast
+            # immer 1.1: der Schueler landet bei den Grundlagen auf Level A,
+            # obwohl die Probe genau gezeigt hat, wo es klemmt. Von den
+            # zurueckgeholten Lektionen wird die mit der kleinsten Nummer
+            # genommen, damit die Reihenfolge nachvollziehbar bleibt.
+            ziel = min(verloren, key=lambda l: [int(x) for x in l.split(".")])
+            lw.aktuelle_lektion = ziel if bereit_zum_ueben(ziel, menge, lw) \
+                else naechste_lektion(menge | lw.uebersprungene_menge())
             lw.durchgelaufen = False
             for lektion in verloren:
                 kap = kapitel_fuer_lektion(lektion)
@@ -1350,6 +1525,22 @@ def probe():
                 ks.offen = ""
             flash(f"{len(verloren)} Lektionen kommen zurueck in deinen Weg — "
                   f"dort ging in der Probe etwas schief.", "info")
+        elif gewonnen:
+            flash(f"{len(gewonnen)} Aufgabenarten sitzen — sie sind aus "
+                  f"deinem Weg verschwunden.", "success")
+
+        # ── Wohin nach der Probe? ────────────────────────────────────────
+        # NICHT zur kleinsten offenen Nummer. Das waere fast immer Kapitel 1,
+        # und ein Schueler, der die Probe fast fehlerfrei loest, landete
+        # ausgerechnet bei «Zahlen auf der Zahlengeraden». Die Probe ist eine
+        # Lueckensuche — also gehoert er zu der Luecke, die sie gefunden hat.
+        bekannt = lw.sichere_menge() | lw.uebersprungene_menge()
+        if verloren:
+            lw.aktuelle_lektion = sorted(
+                verloren, key=lambda l: [int(x) for x in l.split(".")])[0]
+        elif lw.aktuelle_lektion in lw.sichere_menge() or not lw.aktuelle_lektion:
+            # Die Stelle, an der er stand, sitzt jetzt — dann die naechste.
+            lw.aktuelle_lektion = naechste_lektion(bekannt)
         db.session.commit()
         session.pop("probe", None)
         return render_template("probe_fertig.html", bericht=b)

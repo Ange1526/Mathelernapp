@@ -1,0 +1,126 @@
+{#
+  Tastenreihe für Zeichen, die auf keiner Schweizer Tastatur liegen.
+
+  Warum es das braucht
+  --------------------
+  Der Parser nimmt `sqrt(9)` und `√(9)` an, aber NICHT `wurzel(9)` und nicht
+  `9^(1/2)`. Ein Schüler ohne √ auf der Tastatur tippt genau das, was nicht
+  geht — und hält sich danach für schlecht in Mathe, obwohl er nur das
+  Zeichen nicht eintippen konnte. Bei den Erhebungsaufgaben 3a, 3b und 3e
+  steht er damit sofort an.
+
+  Einbinden mit:
+      {% include "_tastenreihe.html" %}
+  direkt NACH dem Eingabefeld. Das Feld muss `class="answer-input"` oder
+  `name="antwort"` tragen — beides wird gefunden.
+#}
+<div class="tastenreihe" role="group" aria-label="Sonderzeichen einfügen">
+  <button type="button" class="taste" data-ein="√(" data-zu=")" title="Wurzel"
+          data-formel="\sqrt{\;\;}">√( )</button>
+  <button type="button" class="taste" data-ein="^2"  title="hoch 2"
+          data-formel="x^{2}">x²</button>
+  <button type="button" class="taste" data-ein="^3"  title="hoch 3"
+          data-formel="x^{3}">x³</button>
+  <button type="button" class="taste" data-ein="^"   title="hoch"
+          data-formel="x^{\square}">x^</button>
+  <button type="button" class="taste" data-ein="/"   title="Bruchstrich"
+          data-formel="\frac{a}{b}">a/b</button>
+  <button type="button" class="taste" data-ein="*"   title="mal"
+          data-formel="\cdot">·</button>
+  <button type="button" class="taste" data-ein=":"   title="geteilt durch"
+          data-formel="\div">:</button>
+  <button type="button" class="taste" data-ein="("  data-zu=")" title="Klammer"
+          data-formel="(\;)">( )</button>
+  {# Ohne diese Taste raet ein Schueler, wie er «unloesbar» eintippen soll —
+     und tippt dann irgendetwas, das als falsche Antwort zaehlt, obwohl er
+     richtig gedacht hat. Der Text wird ERSETZT, nicht angehaengt: «3 keine
+     Lösung» ergibt keinen Sinn. #}
+  <button type="button" class="taste taste-wort" data-ersetzen="keine Lösung"
+          title="wenn die Gleichung keine Lösung hat">keine Lösung</button>
+  <button type="button" class="taste taste-weg" data-loeschen="1" title="Zeichen löschen">⌫</button>
+</div>
+
+<style>
+.tastenreihe {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+    margin: 14px auto 0;
+    max-width: 340px;
+}
+.taste {
+    min-width: 46px;
+    padding: 10px 12px;
+    font-size: 1.05rem;
+    font-family: inherit;
+    color: #2D3748;
+    background: #fff;
+    border: 2px solid #EDF2F7;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.12s;
+    -webkit-tap-highlight-color: transparent;
+}
+.taste:hover  { border-color: #667EEA; background: #F7FAFC; }
+/* Die Wort-Taste ist breiter und ruhiger als die Zeichen-Tasten — sie
+   gehoert nicht in dieselbe Reihe von Symbolen. */
+.taste-wort {
+    font-size: 0.85rem;
+    padding: 8px 14px;
+    color: #718096;
+}
+.taste:active { transform: scale(0.94); background: #EBF4FF; }
+.taste-weg    { color: #718096; }
+</style>
+
+<script>
+(function () {
+    const reihe = document.currentScript.closest(".task-card, body")
+                  || document;
+
+    function feld() {
+        return document.querySelector(".answer-input")
+            || document.querySelector('input[name="antwort"]');
+    }
+
+    document.querySelectorAll(".taste").forEach(function (t) {
+        t.addEventListener("click", function () {
+            const f = feld();
+            if (!f) return;
+
+            const a = f.selectionStart !== null ? f.selectionStart : f.value.length;
+            const b = f.selectionEnd   !== null ? f.selectionEnd   : f.value.length;
+            const vorher = f.value.slice(0, a);
+            const markiert = f.value.slice(a, b);
+            const nachher = f.value.slice(b);
+
+            if (t.dataset.ersetzen) {
+                // Ein ganzes Wort als Antwort: alles andere wird ersetzt.
+                // «3 keine Lösung» waere Unsinn und kaeme als Eingabefehler
+                // zurueck.
+                f.value = t.dataset.ersetzen;
+                f.setSelectionRange(f.value.length, f.value.length);
+            } else if (t.dataset.loeschen) {
+                // Markiertes weg, sonst ein Zeichen vor dem Cursor.
+                if (markiert) {
+                    f.value = vorher + nachher;
+                    f.setSelectionRange(a, a);
+                } else if (a > 0) {
+                    f.value = vorher.slice(0, -1) + nachher;
+                    f.setSelectionRange(a - 1, a - 1);
+                }
+            } else {
+                const ein = t.dataset.ein || "";
+                const zu  = t.dataset.zu  || "";
+                // Ist etwas markiert, wird es eingeklammert statt ersetzt —
+                // so kann man √ nachträglich um einen fertigen Term legen.
+                f.value = vorher + ein + markiert + zu + nachher;
+                const cursor = a + ein.length + markiert.length;
+                f.setSelectionRange(cursor, cursor);
+            }
+            f.focus();
+        });
+    });
+})();
+</script>

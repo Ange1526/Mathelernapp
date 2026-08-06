@@ -211,3 +211,29 @@ def exponent_hoechstens(grenze: int = 10):
         return True
 
     return f
+
+
+def brueche_gekuerzt(p, g) -> bool:
+    """Kein ungekürzter Zahlenbruch in der FRAGE.
+
+    Die Ziehung würfelt Zähler und Nenner unabhängig. Dabei entsteht ab und
+    zu «3/6» oder «2/2» — Schreibweisen, die in keinem Lehrmittel stehen.
+    Für die Rechnung ist das gleichgültig, für die Glaubwürdigkeit nicht:
+    wer «x/2 = 3/6» liest, hält die Aufgabe für einen Fehler der App und
+    nicht für eine Aufgabe.
+
+    Geprüft wird nur die Frage, nicht die Lösung. Ein ungekürztes Ergebnis
+    wäre ein Rechenfehler und wird anderswo abgefangen; hier geht es um das,
+    was der Schüler VOR dem Rechnen zu sehen bekommt.
+    """
+    from math import gcd
+    import re as _re
+
+    frage = str(g.get("frage", ""))
+    for zaehler, nenner in _re.findall(r"(\d+)\s*/\s*(\d+)", frage):
+        z, n = int(zaehler), int(nenner)
+        if n == 0:
+            return False
+        if gcd(z, n) > 1:
+            return False
+    return True

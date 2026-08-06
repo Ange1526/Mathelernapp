@@ -363,9 +363,13 @@ def bf3(p):
 
     if zwei:
         # k a² − m a(a + n b)
-        frage = reihe(T(k, (z, 2)),
-                      f"{MINUS if vz < 0 else '+'} {T(m,(z,1))} · "
-                      f"({reihe(T(1,(z,1)), T(n,(zwei,1)))})")
+        # NICHT ueber reihe(): die setzt selbst ein Pluszeichen zwischen die
+        # Glieder, und das zweite Glied bringt hier schon eins mit. Ergebnis
+        # war «3x + + 4 · (x + 2)» bzw. «6u −  4 · (u + 3)» mit doppeltem
+        # Abstand. Rechnerisch harmlos, sieht aber nach Panne aus.
+        zeichen = MINUS if vz < 0 else "+"
+        frage = (f"{T(k, (z, 2))} {zeichen} {T(m,(z,1))} · "
+                 f"({reihe(T(1,(z,1)), T(n,(zwei,1)))})")
         wert1 = k + vz * m
         loesung = M(wert1, (z, 2)) + M(vz * m * n, (z, 1), (zwei, 1))
         text = reihe(T(wert1, (z, 2)), T(vz * m * n, (z, 1), (zwei, 1)))
@@ -396,9 +400,9 @@ def bf3(p):
         return bau(frage, loesung, text, fehler, schritte, TIPPS)
 
     # k a  ±  m(a + n)
-    frage = reihe(T(k, (z, 1)),
-                  f"{MINUS if vz < 0 else '+'} {m} · "
-                  f"({reihe(T(1,(z,1)), T(n))})")
+    zeichen = MINUS if vz < 0 else "+"
+    frage = (f"{T(k, (z, 1))} {zeichen} {m} · "
+             f"({reihe(T(1,(z,1)), T(n))})")
     wert1 = k + vz * m
     loesung = M(wert1, (z, 1)) + Integer(vz * m * n)
     text = reihe(T(wert1, (z, 1)), T(vz * m * n))

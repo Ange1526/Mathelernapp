@@ -399,12 +399,16 @@
 
     <!-- Fortschrittsbalken -->
     <div class="progress-bar-wrapper">
+        {# Der Balken spricht fuer sich. Die Zeile «Aufgabenarten sicher:
+           0 / 11 · 4 angefangen» erklaerte die Buchhaltung der App statt
+           den Fortschritt des Schuelers — und «0 / 11» las sich wie ein
+           Vorwurf, obwohl der Balken schon bei einem Viertel stand. #}
         <div class="progress-meta">
-            <span>{% if chapter in generator_kapitel %}Aufgabenarten sicher{% else %}Aufgaben gelöst{% endif %}: {{ geloest }} / {{ min_questions }}</span>
-            <span>{{ quote }}%</span>
+            <span>Fortschritt in dieser Lektion</span>
+            <span>{{ balken if balken is defined else quote }}%</span>
         </div>
         <div class="progress-bar-bg">
-            <div class="progress-bar-fill" style="width: {{ [geloest / (min_questions or 1) * 100, 100] | min }}%;"></div>
+            <div class="progress-bar-fill" style="width: {{ [balken if balken is defined else quote, 100] | min }}%;"></div>
         </div>
     </div>
 
@@ -500,7 +504,7 @@
         </div>
         {% endif %}
 
-        <div class="math-expression">{{ frage }}</div>
+        <div class="math-expression formel">{{ frage }}</div>
 
         <form action="{{ url_for('check') }}" method="POST">
             <input type="text"
@@ -512,6 +516,9 @@
                    autocomplete="off"
                    autofocus
                    required>
+
+            {% include "_tastenreihe.html" %}
+            {% include "_formel.html" %}
 
             <input type="hidden" name="chapter" value="{{ chapter }}">
 

@@ -153,6 +153,25 @@ def normalisieren(text: str) -> str:
     # Dezimalkomma nur zwischen Ziffern: 1,5 -> 1.5
     s = re.sub(r"(?<=\d),(?=\d)", ".", s)
 
+    # Gemischte Brueche: «1 3/4».
+    # SymPy liest das als «1 * 3/4» — nein, schlimmer: der Parser wirft die
+    # fuehrende Eins weg und liest 3/4. Eine RICHTIG gerechnete Antwort kaeme
+    # so als falsch zurueck, und die Schuelerin erfaehrt nicht, warum. Das
+    # Lehrmittel benutzt gemischte Brueche (Aufgabe 39a: 1¾ + 2 + ¾), also
+    # wird ein Schueler sie frueher oder spaeter eintippen.
+    # Lieber deutlich ablehnen als stillschweigend falsch lesen.
+    # Auch mitten im Term suchen: «1 3/4 + 2» wurde sonst als 1·3/4 + 2
+    # gelesen und ergab 11/4 statt 15/4 — wieder still und falsch.
+    gemischt = re.search(r"(?<![\w.])([+-]?\d+)\s+(\d+)\s*/\s*(\d+)", s)
+    if gemischt:
+        ganz = int(gemischt.group(1))
+        z, n = int(gemischt.group(2)), int(gemischt.group(3))
+        unecht = abs(ganz) * n + z
+        vorzeichen = "-" if ganz < 0 else ""
+        raise ParseError(
+            f"Schreib gemischte Brüche als unechten Bruch: "
+            f"{vorzeichen}{unecht}/{n} statt {gemischt.group(0).strip()}.", s)
+
     return s
 
 

@@ -50,6 +50,15 @@ from .s41_bruch_klammer import S41
 from .s42_s44_faktorisieren import S42, S43, S44
 from .s11_ausmultiplizieren import S38
 from .s39_s40_ausmultiplizieren import S39, S40
+from .s1_s3_vorzeichen import S1, S3
+from .s5_s6_punkt_reihenfolge import S5, S6
+from .k1_mischung import M1
+from .s7_kuerzen_erweitern import S7
+from .s8_addition_subtraktion import S8
+from .s9_ganze_zahlen import S9
+from .s10_multiplikation import S10 as S10K2
+from .s11_division import S11 as S11K2
+from .s12_doppelbrueche import S58
 from .s60_mischen import S60
 from .mischung import mischung
 
@@ -104,6 +113,20 @@ M16 = mischung("M16", "Gemischte Gleichungen", "16.2",
 #: Kapitelnummer in der App  ->  Schablone
 #: Die Nummern folgen deiner Lektionslandkarte.
 KAPITEL = {
+    # Kapitel 1 — Vorzeichen und Grundoperationen. Ohne .docx-Schablone
+    # gebaut, aus den Lektionstiteln in netz_daten.py.
+    "1.1": S1,      # Vorzeichen und Zahlengerade            1.1 - 1.4
+    "1.5": S3,      # Addieren und Subtrahieren              1.5 - 1.9
+    "1.10": S5,     # Multiplizieren und Dividieren          1.10 - 1.15
+    "1.16": S6,     # Reihenfolge der Operationen            1.16 - 1.19
+    "1.20": M1,     # Gemischt, siehe generator/k1_mischung.py
+    # Kapitel 2 — Brueche. Quelle: Lehrmittel A, Kapitel 1.5, Seiten 45-60.
+    "2.1": S7,      # Kuerzen und Erweitern                  2.1 - 2.2
+    "2.3": S8,      # Addition und Subtraktion               2.3 - 2.6
+    "2.7": S9,      # Brueche mit ganzen Zahlen              2.7 - 2.8
+    "2.9": S10K2,   # Multiplikation von Bruechen            2.9 · 2.11
+    "2.10": S11K2,  # Division von Bruechen                  2.10
+    "2.12": S58,    # Doppelbrueche und Gemischtes           2.12 - 2.13
     # Kapitel 6 — S20 und S21 haben S2 hier abgeloest.
     "6.1": S20,     # Punkt vor Strich mit Variablen        6.1 – 6.4
     "6.5": S21,     # Ausrechnen und zusammenfassen         6.5 – 6.7 — Erhebung 2a
@@ -240,6 +263,7 @@ def neue_aufgabe(kapitel: str, level: str, bauform: str | None = None) -> dict:
         "art": e.aufgabe.loesung.art.value,
         "loesung_text": e.loesung_text,
         "zielform": e.aufgabe.zielform.value,
+        "dezimal_stellen": e.aufgabe.dezimal_stellen,
         "fehler": [[f.schluessel, str(f.ergebnis.expr), f.text]
                    for f in e.aufgabe.fehlerkatalog],
         "tipps": e.tipps,
@@ -272,6 +296,11 @@ def aufgabe_aus_session(daten: dict) -> Aufgabe:
         loesung=loesung,
         variablen=set(ALLE_VARIABLEN),
         zielform=Zielform(daten.get("zielform", "beliebig")),
+        # Ohne diese Zeile geht die Einstellung beim Weg durch die Session
+        # verloren, und «0.57» gilt wieder als richtige Antwort auf 4/7.
+        # Die Aufgabe wird ja nicht weitergereicht, sondern aus dem
+        # Dictionary NEU gebaut — was nicht im Dictionary steht, ist weg.
+        dezimal_stellen=daten.get("dezimal_stellen", 2),
         fehlerkatalog=[Fehler(s, Loesung.zahl(lesen(e)), t)
                        for s, e, t in daten.get("fehler", [])],
     )

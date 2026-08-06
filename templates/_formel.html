@@ -1,0 +1,385 @@
+{#
+  Formeldarstellung — Brüche, Doppelbrüche und Wurzeln so wie im Lehrmittel.
+
+  Warum es das braucht
+  --------------------
+  Bisher stand in der Aufgabe «(5/6)/(1/7)» und «√(36a²)». Rechnerisch ist
+  das eindeutig, aber im Buch steht ein echter Bruchstrich mit Zähler oben
+  und Nenner unten, und die Wurzel hat einen Strich über dem, was drunter
+  gehört. Gerade beim Doppelbruch ist das kein Schönheitsproblem: an
+  «(5/6)/(1/7)» muss man abzählen, welcher Strich der grosse ist, an einem
+  gesetzten Doppelbruch sieht man es.
+
+  Wie es arbeitet
+  ---------------
+  KaTeX setzt die Formel. Der Umsetzer unten übersetzt die Schreibweise der
+  App nach LaTeX — er wird an KEINER Stelle in die Rechnung eingebaut. Wenn
+  KaTeX nicht lädt (kein Internet), bleibt der ursprüngliche Text stehen und
+  alles funktioniert weiter wie vorher. Das ist Absicht: eine hübschere
+  Anzeige darf die Übung nie blockieren.
+
+  Einbinden mit:
+      {% include "_formel.html" %}
+  einmal pro Seite, VOR den Stellen, die `formelSetzen(element)` aufrufen.
+#}
+<link rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer
+        src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+
+<script>
+(function () {
+    "use strict";
+
+    var HOCH = {"\u00b2": "2", "\u00b3": "3", "\u2074": "4", "\u2075": "5",
+                "\u2076": "6", "\u2077": "7", "\u2078": "8", "\u2079": "9",
+                "\u00b9": "1", "\u2070": "0"};
+
+    /* ---------------------------------------------------------------
+       Der Umsetzer.  «(5/6)/(1/7)»  ->  \frac{\frac{5}{6}}{\frac{1}{7}}
+
+       Gelesen wird von links nach rechts in ATOME: eine Klammergruppe,
+       eine Wurzel oder ein Stück Text ohne Sonderzeichen. Trifft der
+       Leser auf einen Schrägstrich, nimmt er das letzte Atom als Zähler
+       und das nächste als Nenner. Damit stimmt die Verschachtelung von
+       selbst, auch beim Doppelbruch.
+    --------------------------------------------------------------- */
+
+    function istAtomZeichen(c) {
+        return !("()/\u00b7:+=\u2212- ".indexOf(c) >= 0) && c !== "\u221a";
+    }
+
+    function klammerEnde(text, start) {
+        // start zeigt auf die oeffnende Klammer
+        var tiefe = 0;
+        for (var i = start; i < text.length; i++) {
+            if (text[i] === "(") { tiefe++; }
+            else if (text[i] === ")") {
+                tiefe--;
+                if (tiefe === 0) { return i; }
+            }
+        }
+        return -1;                       // unbalanciert: nicht anfassen
+    }
+
+    function hochstellen(s) {
+        var raus = "", i = 0;
+        while (i < s.length) {
+            if (HOCH[s[i]] !== undefined) {
+                var ziffern = "";
+                while (i < s.length && HOCH[s[i]] !== undefined) {
+                    ziffern += HOCH[s[i]];
+                    i++;
+                }
+                raus += "^{" + ziffern + "}";
+            } else {
+                raus += s[i];
+                i++;
+            }
+        }
+        return raus;
+    }
+
+    function nachLatex(text) {
+        var teile = [];                  // fertige LaTeX-Stuecke
+        var i = 0;
+
+        function naechstesAtom() {
+            while (i < text.length && text[i] === " ") { i++; }
+            if (i >= text.length) { return null; }
+
+            if (text[i] === "(") {
+                var e = klammerEnde(text, i);
+                if (e < 0) { i++; return "("; }
+                var innen = nachLatex(text.slice(i + 1, e));
+                i = e + 1;
+                // Hochzahl direkt hinter der Klammer gehoert zur Klammer:
+                // «(3 − 8)²» ist nicht «(3 − 8)» gefolgt von einer Zwei.
+                var hoch = "";
+                while (i < text.length && HOCH[text[i]] !== undefined) {
+                    hoch += HOCH[text[i]];
+                    i++;
+                }
+                if (hoch) {
+                    return "\\left(" + innen + "\\right)^{" + hoch + "}";
+                }
+                return {klammer: true, inhalt: innen};
+            }
+            if (text[i] === "\u221a") {          // Wurzelzeichen
+                i++;
+                var rad = naechstesAtom();
+                if (rad === null) { return "\\sqrt{\\;}"; }
+                var inhalt = (typeof rad === "object") ? rad.inhalt : rad;
+                return "\\sqrt{" + inhalt + "}";
+            }
+            var start = i;
+            while (i < text.length && istAtomZeichen(text[i])) { i++; }
+            if (i === start) { i++; return text[start]; }
+            return hochstellen(text.slice(start, i));
+        }
+
+        function alsText(atom) {
+            if (atom === null) { return ""; }
+            if (typeof atom === "object") {
+                return "\\left(" + atom.inhalt + "\\right)";
+            }
+            return atom;
+        }
+
+        function ohneKlammer(atom) {
+            if (atom === null) { return ""; }
+            if (typeof atom === "object") { return atom.inhalt; }
+            return atom;
+        }
+
+        while (i < text.length) {
+            var c = text[i];
+
+            if (c === " ") { i++; teile.push(" "); continue; }
+
+            if (c === "/") {
+                i++;
+                var zaehler = teile.pop();
+                if (zaehler === " ") { zaehler = teile.pop(); }
+                var nenner = naechstesAtom();
+                teile.push("\\frac{" + ohneKlammer(zaehler === undefined ? "" : zaehler)
+                           + "}{" + ohneKlammer(nenner) + "}");
+                continue;
+            }
+            if (c === "\u00b7") { i++; teile.push("\\cdot"); continue; }
+            if (c === ":")      { i++; teile.push("\\div");  continue; }
+            if (c === "\u2212") { i++; teile.push("-");      continue; }
+            if (c === "+" || c === "-" || c === "=" || c === "?" || c === ",") {
+                i++; teile.push(c); continue;
+            }
+            if (c === ")") { i++; continue; }   // sollte nicht vorkommen
+
+            // Das Atom bleibt als Objekt liegen. Erst am Schluss wird
+            // daraus Text — vorher koennte ein Schraegstrich kommen, und
+            // dann muss der Zaehler OHNE Klammern in den Bruch.
+            var atom = naechstesAtom();
+            teile.push(atom === null ? "" : atom);
+        }
+
+        // Ein Zaehler, der als Klammergruppe gespeichert wurde, hat seine
+        // Klammern schon verloren — hier alles zusammensetzen.
+        return teile.map(function (t) {
+            return (typeof t === "object") ? alsText(t) : t;
+        }).join(" ").replace(/\s+/g, " ").trim();
+    }
+
+    /* ---------------------------------------------------------------
+       Setzen. Der Originaltext bleibt in data-roh stehen, damit man
+       jederzeit zurueckkann und damit ein zweiter Aufruf nichts kaputt
+       macht.
+    --------------------------------------------------------------- */
+    function formelSetzen(el) {
+        if (!el) { return; }
+        if (typeof katex === "undefined") { return; }   // ohne KaTeX: Rohtext
+
+        var roh = el.getAttribute("data-roh");
+        if (roh === null) {
+            roh = el.textContent.trim();
+            el.setAttribute("data-roh", roh);
+        }
+        if (!roh) { el.innerHTML = ""; return; }
+
+        // Ein angehaengter Klartext wie «für m = 4» wird nicht gesetzt.
+        var zusatz = "";
+        var m = roh.match(/^(.*?)\s+(f\u00fcr\s.*)$/);
+        var formel = roh;
+        if (m) { formel = m[1]; zusatz = m[2]; }
+
+        try {
+            katex.render(nachLatex(formel), el, {
+                throwOnError: false, displayMode: false
+            });
+            if (zusatz) {
+                var span = document.createElement("span");
+                span.className = "formel-zusatz";
+                span.textContent = "  " + zusatz;
+                el.appendChild(span);
+            }
+        } catch (e) {
+            el.textContent = roh;                        // im Zweifel Rohtext
+        }
+    }
+
+    /* Auch die Tastenbeschriftungen setzen: der Bruchstrich soll auf der
+       Taste so aussehen wie in der Aufgabe, sonst muss man erst raten,
+       welche Taste welches Zeichen macht. */
+    function tastenSetzen() {
+        if (typeof katex === "undefined") { return; }
+        document.querySelectorAll(".taste[data-formel]").forEach(function (t) {
+            if (t.dataset.gesetzt) { return; }
+            try {
+                katex.render(t.dataset.formel, t,
+                             {throwOnError: false, displayMode: false});
+                t.dataset.gesetzt = "1";
+            } catch (e) { /* Beschriftung bleibt als Text stehen */ }
+        });
+    }
+
+    /* ---------------------------------------------------------------
+       Auf eine Zeile schrumpfen.
+
+       Lange Aufgaben — «√(36a²) · 2a − 4a³ + 2a·(a + 3v)» — brachen bisher
+       mitten im Term um. Eine Formel, die auf zwei Zeilen steht, liest sich
+       schlechter als eine kleine auf einer: der Bruchstrich verliert seinen
+       Bezug, und beim Doppelbruch sieht man nicht mehr, welcher Strich der
+       grosse ist.
+
+       Darum wird die Schrift so weit verkleinert, bis alles nebeneinander
+       passt — aber nur bis zu einer Untergrenze. Wer darunter noch umbricht,
+       soll lieber umbrechen als unlesbar werden.
+    --------------------------------------------------------------- */
+    var MIN_ANTEIL = 0.55;          // nie kleiner als 55 % der Normalgroesse
+
+    function aufEineZeile(el) {
+        if (!el || !el.parentNode) { return; }
+
+        el.style.whiteSpace = "nowrap";
+        el.style.fontSize = "";                 // erst zuruecksetzen
+        // Die Aufgabenzeile steht auf clamp(2.5rem, 10vw, 4rem) — auf einem
+        // schmalen Fenster also schon klein. Gemessen wird die tatsaechlich
+        // wirksame Groesse, nicht der Wert aus dem Stylesheet.
+        var normal = parseFloat(getComputedStyle(el).fontSize);
+        if (!normal) { return; }
+
+        var platz = el.clientWidth || el.parentNode.clientWidth;
+        if (!platz) { return; }
+
+        var breit = el.scrollWidth;
+        if (breit <= platz) { return; }         // passt schon
+
+        var faktor = Math.max(MIN_ANTEIL, (platz - 4) / breit);
+        el.style.fontSize = (normal * faktor).toFixed(1) + "px";
+
+        // Nach dem Verkleinern nochmals messen: bei Bruechen aendert sich
+        // die Breite nicht ganz linear mit der Schriftgroesse.
+        for (var i = 0; i < 3 && el.scrollWidth > platz; i++) {
+            faktor = Math.max(MIN_ANTEIL, faktor * 0.92);
+            el.style.fontSize = (normal * faktor).toFixed(1) + "px";
+            if (faktor <= MIN_ANTEIL) { break; }
+        }
+
+        // Ganz unten angekommen und es passt immer noch nicht: dann darf
+        // die Zeile umbrechen. Unlesbar klein ist schlechter als zweizeilig.
+        if (el.scrollWidth > platz && faktor <= MIN_ANTEIL) {
+            el.style.whiteSpace = "normal";
+        }
+    }
+
+    function alleAnpassen() {
+        document.querySelectorAll(".formel").forEach(aufEineZeile);
+    }
+
+    window.addEventListener("resize", function () {
+        clearTimeout(window._formelTakt);
+        window._formelTakt = setTimeout(alleAnpassen, 120);
+    });
+
+    function alleSetzen() {
+        document.querySelectorAll(".formel").forEach(formelSetzen);
+        tastenSetzen();
+        vorschauAnhaengen();
+        // Erst setzen, dann messen — vorher steht die Breite nicht fest.
+        setTimeout(alleAnpassen, 0);
+    }
+
+    /* ---------------------------------------------------------------
+       Live-Vorschau unter dem Eingabefeld.
+
+       Warum keine Eingabe direkt in Bruchform: das Antwortfeld schickt
+       seinen Text unveraendert an den Parser, und der erwartet «3/4».
+       Ein Formeleditor muesste den Text wieder zurueckuebersetzen — eine
+       zweite Stelle, an der etwas schiefgehen kann, und zwar genau die,
+       an der die Antwort der Schuelerin haengt. Die Vorschau zeigt
+       stattdessen sofort, WIE das Getippte gelesen wird. Wer «3/4+1»
+       tippt und darunter den gesetzten Bruch sieht, merkt einen
+       Klammerfehler, bevor er auf «Prüfen» drückt.
+    --------------------------------------------------------------- */
+    function vorschauAnhaengen() {
+        var feld = document.querySelector(".answer-input")
+                || document.querySelector('input[name="antwort"]');
+        if (!feld) { return; }
+        var kasten = document.querySelector(".eingabe-vorschau");
+        if (!kasten) {
+            kasten = document.createElement("div");
+            kasten.className = "eingabe-vorschau leer";
+            var nachbar = document.querySelector(".tastenreihe");
+            if (nachbar) { nachbar.parentNode.insertBefore(kasten, nachbar); }
+            else { feld.parentNode.insertBefore(kasten, feld.nextSibling); }
+        }
+
+        function zeichnen() {
+            var text = feld.value.trim();
+            if (!text) {
+                kasten.className = "eingabe-vorschau leer";
+                kasten.textContent = "So wird deine Eingabe gelesen";
+                return;
+            }
+            kasten.className = "eingabe-vorschau";
+            if (typeof katex === "undefined") {
+                kasten.textContent = text;
+                return;
+            }
+            try {
+                katex.render(nachLatex(text.replace(/\*/g, "\u00b7")),
+                             kasten, {throwOnError: false, displayMode: false});
+                aufEineZeile(kasten);
+            } catch (e) {
+                kasten.textContent = text;
+            }
+        }
+
+        feld.addEventListener("input", zeichnen);
+        feld.addEventListener("change", zeichnen);
+        document.addEventListener("click", function (ev) {
+            if (ev.target.closest && ev.target.closest(".taste")) {
+                setTimeout(zeichnen, 0);
+            }
+        });
+        zeichnen();
+    }
+
+    window.formelSetzen = formelSetzen;
+    window.formelNachLatex = nachLatex;
+
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", function () {
+            setTimeout(alleSetzen, 0);
+        });
+    } else {
+        setTimeout(alleSetzen, 0);
+    }
+    window.addEventListener("load", alleSetzen);
+})();
+</script>
+
+<style>
+.formel {
+    line-height: 1.5;
+    white-space: nowrap;
+    overflow: hidden;          /* nichts soll aus der Karte ragen */
+}
+.formel .katex { font-size: 1em; }
+.formel-zusatz {
+    font-size: 0.55em;
+    font-weight: 500;
+    color: #718096;
+    margin-left: 0.6em;
+}
+
+/* Vorschau unter dem Eingabefeld */
+.eingabe-vorschau {
+    min-height: 34px;
+    margin: 10px auto 0;
+    max-width: 340px;
+    font-size: 1.5rem;
+    color: #4A5568;
+    text-align: center;
+}
+.eingabe-vorschau:empty { min-height: 0; }
+.eingabe-vorschau.leer { color: #A0AEC0; font-size: 0.9rem; }
+</style>
