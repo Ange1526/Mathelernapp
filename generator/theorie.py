@@ -199,6 +199,64 @@ PUNKT_VOR_STRICH = Animation(
              "gleichartige Glieder zusammenfassen.",
 )
 
+#: S52 · Hauptnenner — Lektionen 15.1 und 15.2.
+HAUPTNENNER = Animation(
+    titel="Brüche aus einer Gleichung schaffen",
+    schritte=[
+        S("Zwei Brüche mit verschiedenen Nennern.",
+          ("x/4", "mark", "l"), (" + ", "", "op"), ("x/6", "mark", "r"),
+          (" = 5", "", "gl")),
+        S("Der Hauptnenner ist das kgV von 4 und 6 — also 12, nicht 24.",
+          ("12", "neu", "hn")),
+        S("Beide Seiten mal 12: aus x/4 wird 3x, aus x/6 wird 2x.",
+          ("3x", "neu", "l"), (" + ", "", "op"), ("2x", "neu", "r"),
+          (" = 60", "neu", "gl")),
+        S("Die Brüche sind weg. Jetzt zusammenfassen: 3x + 2x = 5x.",
+          ("5x", "neu", "l"), (" = 60", "", "gl")),
+        S("Durch 5 teilen: x = 12.", ("x = 12", "neu", "l")),
+    ],
+    merksatz="Multipliziere beide Seiten mit dem Hauptnenner — dem kgV aller "
+             "Nenner. Dann verschwinden die Brüche.",
+)
+
+#: S53 · Jeden Summanden — Lektion 15.3, Erhebungsaufgabe 6b.
+JEDEN_SUMMANDEN = Animation(
+    titel="Auch die Zahl ohne Bruchstrich",
+    schritte=[
+        S("Hier steht ein Summand, der gar kein Bruch ist.",
+          ("x/2", "", "l"), (" − 1", "mark", "eins"), (" = x/4", "", "r")),
+        S("Der Hauptnenner ist 4. Beide Seiten mal 4.",
+          ("x/2 · 4", "", "l"), (" − 1 · 4", "mark", "eins"),
+          (" = x/4 · 4", "", "r")),
+        S("Auch die −1 wird mal 4 genommen — daraus wird −4.",
+          ("2x", "neu", "l"), (" − 4", "neu", "eins"), (" = x", "neu", "r")),
+        S("Wer die −1 stehen lässt, rechnet mit der falschen Gleichung.",
+          ("2x − 1 = x", "weg", "falsch")),
+        S("Richtig: 2x − 4 = x, also x = 4.",
+          ("x = 4", "neu", "l")),
+    ],
+    merksatz="Beim Multiplizieren mit dem Hauptnenner muss JEDER Summand "
+             "mit — auch der, der gar kein Bruch ist.",
+)
+
+#: S54 · Term im Zähler — Lektionen 15.4 und 15.5, Erhebungsaufgabe 6a.
+TERM_IM_ZAEHLER = Animation(
+    titel="Der Bruchstrich als Klammer",
+    schritte=[
+        S("Über dem Bruchstrich steht nicht eine Zahl, sondern ein Term.",
+          ("(x + 1)/2", "mark", "l"), (" = 3", "", "r")),
+        S("Der Bruchstrich wirkt wie eine Klammer: alles oben gehört zusammen.",
+          ("(x + 1)", "mark", "z"), ("/2", "", "n"), (" = 3", "", "r")),
+        S("Mal 2 — und zwar der GANZE Zähler, nicht nur das x.",
+          ("x + 1", "neu", "z"), (" = 6", "neu", "r")),
+        S("Wer nur das x malnimmt, bekommt 2x + 1 = 6. Das ist falsch.",
+          ("2x + 1 = 6", "weg", "falsch")),
+        S("Richtig: x + 1 = 6, also x = 5.", ("x = 5", "neu", "z")),
+    ],
+    merksatz="Der Bruchstrich wirkt wie eine Klammer: beim Multiplizieren "
+             "muss der ganze Zähler mit, nicht nur sein erstes Glied.",
+)
+
 #: S49 · Bruchterme kuerzen — Lektionen 14.3 und 14.4, Erhebung 5b.
 #: Der Kernfehler des ganzen Kapitels: Summanden statt Faktoren kuerzen.
 KUERZEN = Animation(
@@ -734,6 +792,9 @@ FUER_KAPITEL: dict[str, Animation] = {
     "7.9": PRODUKT_POTENZ,
     "13.1": GLEICHUNG,
     "13.5": KLAMMER_GLEICHUNG,
+    "15.1": HAUPTNENNER,
+    "15.3": JEDEN_SUMMANDEN,
+    "15.4": TERM_IM_ZAEHLER,
     "14.3": KUERZEN,
     "14.6": BRUCH_ADDIEREN,
     "14.9": BRUCH_MAL,

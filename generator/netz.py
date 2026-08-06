@@ -102,6 +102,13 @@ SCHABLONE_FUER: dict[str, str] = {
     "14.3": "14.3", "14.4": "14.3",
     "14.6": "14.6", "14.7": "14.6",
     "14.9": "14.9", "14.10": "14.9", "14.11": "14.9",
+    # Kapitel 15 — Bruchgleichungen. S52 bestimmt den Hauptnenner
+    # (15.1, 15.2), S53 nimmt jeden Summanden damit mal (15.3,
+    # Erhebung 6b), S54 hat den Term im Zaehler (15.4, 15.5,
+    # Erhebung 6a).
+    "15.1": "15.1", "15.2": "15.1",
+    "15.3": "15.3",
+    "15.4": "15.4", "15.5": "15.4",
     # Faktorisieren — BF5 bringt Potenzen und zwei Variablen (12.5, 12.6),
     # BF6 und BF7 die dreigliedrigen Terme (12.7), die Zielform FAKTORISIERT
     # zusammen mit BF8 prueft die Vollstaendigkeit (12.8). Damit sind die
