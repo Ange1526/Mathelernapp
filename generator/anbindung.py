@@ -41,6 +41,8 @@ from .s50_s51_bruchterme import S50, S51
 from .s15_bruchgleichungen import S52
 from .s53_s54_bruchgleichungen import S53, S54
 from .s55_s57_bruchgleichungen import S55
+from .s11_ausmultiplizieren import S38
+from .s39_s40_ausmultiplizieren import S39, S40
 from .s60_mischen import S60
 
 #: Kapitelnummer in der App  ->  Schablone
@@ -87,6 +89,12 @@ KAPITEL = {
     "15.3": S53,    # Jeden Summanden malnehmen      15.3 — Erhebung 6b
     "15.4": S54,    # Term im Zaehler                15.4 – 15.5 — Erhebung 6a
     "15.6": S55,    # Bruch mal Klammer              15.6 — Erhebung 1b
+    # Kapitel 11 — Ausmultiplizieren. 11.9 (Bruch mal Klammer) und
+    # 11.10 (Gemischt) bleiben offen; 11.9 waere S41, das nur in einer
+    # Kurzfassung mit sechs Bauformen vorliegt.
+    "11.1": S38,    # Zahl bzw. Variable mal Klammer 11.1 – 11.4
+    "11.5": S39,    # Ausmultiplizieren und zusammenfassen 11.5 – 11.6
+    "11.7": S40,    # Negative Zahl, Minus vor der Variablen 11.7 – 11.8 — Erhebung 2b
     "10.1": S10,    # Klammern           — Vorstufe zu 2b und 3d
     "12.1": S4,     # Faktorisieren    — Erhebung 4a bis 4d
     # Kapitel 8 Wurzeln — bringt die Erhebungsteilaufgaben 3a, 3b und 3e.

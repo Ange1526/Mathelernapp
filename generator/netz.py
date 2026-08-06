@@ -110,6 +110,13 @@ SCHABLONE_FUER: dict[str, str] = {
     "15.3": "15.3",
     "15.4": "15.4", "15.5": "15.4",
     "15.6": "15.6",
+    # Kapitel 11 — Ausmultiplizieren. S38 deckt 11.1 bis 11.4 ab, S39
+    # die Lektionen 11.5 und 11.6, S40 die Lektionen 11.7 und 11.8 —
+    # letztere ist das Ziel von Erhebungsaufgabe 2b.
+    # 11.9 und 11.10 bleiben offen.
+    "11.1": "11.1", "11.2": "11.1", "11.3": "11.1", "11.4": "11.1",
+    "11.5": "11.5", "11.6": "11.5",
+    "11.7": "11.7", "11.8": "11.7",
     # Faktorisieren — BF5 bringt Potenzen und zwei Variablen (12.5, 12.6),
     # BF6 und BF7 die dreigliedrigen Terme (12.7), die Zielform FAKTORISIERT
     # zusammen mit BF8 prueft die Vollstaendigkeit (12.8). Damit sind die

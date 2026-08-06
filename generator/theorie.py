@@ -199,6 +199,46 @@ PUNKT_VOR_STRICH = Animation(
              "gleichartige Glieder zusammenfassen.",
 )
 
+#: S38 bis S40 · Ausmultiplizieren — Kapitel 11, Erhebungsaufgabe 2b.
+AUSMULTIPLIZIEREN = Animation(
+    titel="Der Faktor gilt für alles in der Klammer",
+    schritte=[
+        S("Vor der Klammer steht eine 3.",
+          ("3", "mark", "f"), ("(x + 2)", "", "kl")),
+        S("Sie gilt für JEDES Glied darin — für das x und für die 2.",
+          ("3", "", "f"), ("(", "", "k1"), ("x", "mark", "a"),
+          (" + ", "", "op"), ("2", "mark", "b"), (")", "", "k2")),
+        S("3 · x macht 3x.",
+          ("3x", "neu", "a"), (" + ", "", "op"), ("3 · 2", "", "b")),
+        S("Und 3 · 2 macht 6.",
+          ("3x", "", "a"), (" + ", "", "op"), ("6", "neu", "b")),
+        S("3x + 2 wäre falsch — dort hat die 2 den Faktor nicht bekommen.",
+          ("3x + 2", "weg", "falsch")),
+        S("Fertig: 3x + 6.", ("3x + 6", "neu", "a")),
+    ],
+    merksatz="Der Faktor vor der Klammer gilt für jedes Glied darin. "
+             "3(x + 2) ist 3x + 6, nicht 3x + 2.",
+)
+
+#: S40 · Minus vor der Klammer — Lektion 11.8, Erhebungsaufgabe 2b.
+MINUS_MAL_KLAMMER = Animation(
+    titel="Minus vor der Klammer",
+    schritte=[
+        S("Hier ist der Faktor negativ.",
+          (MINUS + "2", "mark", "f"), ("(x − 3)", "", "kl")),
+        S("Minus mal plus gibt minus: −2 · x wird −2x.",
+          (MINUS + "2x", "neu", "a"), ("… ", "", "rest")),
+        S("Minus mal minus gibt PLUS: −2 · (−3) wird +6.",
+          (MINUS + "2x", "", "a"), (" + 6", "neu", "b")),
+        S("−2x − 6 wäre falsch — dort ist das zweite Vorzeichen verloren "
+          "gegangen.",
+          (MINUS + "2x − 6", "weg", "falsch")),
+        S("Fertig: −2x + 6.", (MINUS + "2x + 6", "neu", "a")),
+    ],
+    merksatz="Ein Minus vor der Klammer dreht jedes Vorzeichen darin um — "
+             "auch das zweite und dritte.",
+)
+
 #: S55 · Bruch mal Klammer — Lektion 15.6, Erhebungsaufgabe 1b.
 BRUCH_KLAMMER = Animation(
     titel="Ein Bruch vor der Klammer",
@@ -812,6 +852,9 @@ FUER_KAPITEL: dict[str, Animation] = {
     "7.9": PRODUKT_POTENZ,
     "13.1": GLEICHUNG,
     "13.5": KLAMMER_GLEICHUNG,
+    "11.1": AUSMULTIPLIZIEREN,
+    "11.5": AUSMULTIPLIZIEREN,
+    "11.7": MINUS_MAL_KLAMMER,
     "15.1": HAUPTNENNER,
     "15.6": BRUCH_KLAMMER,
     "15.3": JEDEN_SUMMANDEN,
