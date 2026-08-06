@@ -95,6 +95,13 @@ SCHABLONE_FUER: dict[str, str] = {
     "13.1": "13.1", "13.2": "13.1", "13.3": "13.1", "13.4": "13.1",
     "13.5": "13.5", "13.6": "13.5",
     "13.7": "13.7", "13.8": "13.7", "13.9": "13.7",
+    # Kapitel 14 — Bruchterme. S49 kuerzt (14.3, 14.4), S50 addiert bei
+    # gleichem Nenner (14.6, 14.7), S51 multipliziert und dividiert
+    # (14.9 bis 14.11). 14.1, 14.2, 14.5 und 14.8 bleiben offen: dafuer
+    # braeuchte es S48, das nur als Kurzfassung vorliegt.
+    "14.3": "14.3", "14.4": "14.3",
+    "14.6": "14.6", "14.7": "14.6",
+    "14.9": "14.9", "14.10": "14.9", "14.11": "14.9",
     # Faktorisieren — BF5 bringt Potenzen und zwei Variablen (12.5, 12.6),
     # BF6 und BF7 die dreigliedrigen Terme (12.7), die Zielform FAKTORISIERT
     # zusammen mit BF8 prueft die Vollstaendigkeit (12.8). Damit sind die

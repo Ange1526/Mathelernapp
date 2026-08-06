@@ -36,6 +36,8 @@ from .s9_division import S30, S31, S32
 from .s45_gleichungen import S45
 from .s46_s47_klammern import S46
 from .s47_brueche import S47
+from .s14_bruchterme import S49
+from .s50_s51_bruchterme import S50, S51
 from .s60_mischen import S60
 
 #: Kapitelnummer in der App  ->  Schablone
@@ -70,6 +72,13 @@ KAPITEL = {
     "13.1": S45,    # Einfache lineare Gleichungen  13.1 – 13.4
     "13.5": S46,    # Klammern, Variablen beidseitig 13.5 – 13.6 — Erhebung 1a
     "13.7": S47,    # Loesung als Bruch              13.7 – 13.9 — Erhebung 1a
+    # Kapitel 14 — Bruchterme. 14.1, 14.2, 14.5 und 14.8 fehlen: dafuer
+    # waere S48 noetig, das nur in einer Kurzfassung mit sechs Bauformen
+    # vorliegt. Erhebungsaufgabe 5a haengt an 14.8 und ist darum noch
+    # nicht uebbar.
+    "14.3": S49,    # Bruchterme kuerzen             14.3 – 14.4 — Erhebung 5b
+    "14.6": S50,    # Addieren bei gleichem Nenner   14.6 – 14.7
+    "14.9": S51,    # Mal, geteilt, Doppelbruch      14.9 – 14.11 — Erhebung 5c
     "10.1": S10,    # Klammern           — Vorstufe zu 2b und 3d
     "12.1": S4,     # Faktorisieren    — Erhebung 4a bis 4d
     # Kapitel 8 Wurzeln — bringt die Erhebungsteilaufgaben 3a, 3b und 3e.

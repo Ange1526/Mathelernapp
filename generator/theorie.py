@@ -199,6 +199,68 @@ PUNKT_VOR_STRICH = Animation(
              "gleichartige Glieder zusammenfassen.",
 )
 
+#: S49 · Bruchterme kuerzen — Lektionen 14.3 und 14.4, Erhebung 5b.
+#: Der Kernfehler des ganzen Kapitels: Summanden statt Faktoren kuerzen.
+KUERZEN = Animation(
+    titel="Kürzen darf man nur Faktoren",
+    schritte=[
+        S("Oben steht eine Summe, unten eine Zahl.",
+          ("(2a + 4)", "mark", "o"), ("/", "", "s"), ("2", "", "u")),
+        S("Verlockend: die 2 oben und die 2 unten wegstreichen.",
+          ("(2a + 4)", "", "o"), ("/", "", "s"), ("2", "mark", "u")),
+        S("Das wäre falsch — 4 hat auch eine 2 darin und muss mit.",
+          ("a + 4", "weg", "falsch")),
+        S("Richtig ist: zuerst ausklammern, was in JEDEM Glied steckt.",
+          ("2(a + 2)", "neu", "o"), ("/", "", "s"), ("2", "", "u")),
+        S("Jetzt steht die 2 als FAKTOR da — und ein Faktor darf gekürzt werden.",
+          ("2", "mark", "o2"), ("(a + 2)", "", "o"), ("/", "", "s"),
+          ("2", "mark", "u")),
+        S("Fertig: a + 2.", ("a + 2", "neu", "o")),
+    ],
+    merksatz="Kürzen darf man nur Faktoren, nie einzelne Summanden. Steht "
+             "oben eine Summe, muss zuerst ausgeklammert werden.",
+)
+
+#: S50 · Bruchterme addieren — Lektionen 14.6 und 14.7.
+BRUCH_ADDIEREN = Animation(
+    titel="Brüche mit gleichem Nenner",
+    schritte=[
+        S("Beide Brüche haben denselben Nenner — das ist die Bedingung.",
+          ("2x/(3y)", "", "l"), (" + ", "", "op"), ("x/(3y)", "", "r")),
+        S("Dann werden nur die Zähler verrechnet: 2x + x.",
+          ("(2x + x)", "neu", "l"), ("/(3y)", "", "n")),
+        S("Der Nenner bleibt stehen — er wird NICHT mitaddiert.",
+          ("3x", "neu", "l"), ("/(3y)", "mark", "n")),
+        S("Zum Schluss kürzen: die 3 steht oben und unten.",
+          ("3x", "mark", "l"), ("/(3y)", "mark", "n")),
+        S("Fertig: x/y.", ("x/y", "neu", "l")),
+    ],
+    merksatz="Bei gleichem Nenner werden nur die Zähler verrechnet — der "
+             "Nenner bleibt stehen. Ein Minus vor einem Bruch gilt für den "
+             "ganzen Zähler.",
+)
+
+#: S51 · Multiplizieren und Dividieren — 14.9 bis 14.11, Erhebung 5c.
+BRUCH_MAL = Animation(
+    titel="Brüche mal und geteilt",
+    schritte=[
+        S("Geteilt durch einen Bruch — das ist der schwierige Fall.",
+          ("(8b/(9a))", "", "l"), (" : ", "mark", "op"),
+          ("(4a/(3b))", "", "r")),
+        S("Regel: geteilt durch einen Bruch heisst mal den KEHRWERT.",
+          ("(8b/(9a))", "", "l"), (" · ", "neu", "op"),
+          ("(3b/(4a))", "neu", "r")),
+        S("Der zweite Bruch steht jetzt auf dem Kopf. Nur der zweite.",
+          ("(8b/(9a))", "", "l"), (" · ", "", "op"), ("(3b/(4a))", "mark", "r")),
+        S("Jetzt Zähler mal Zähler und Nenner mal Nenner.",
+          ("24b²", "neu", "l"), ("/(36a²)", "neu", "r")),
+        S("Kürzen: 24 und 36 haben beide den Teiler 12.",
+          ("2b²", "neu", "l"), ("/(3a²)", "neu", "r")),
+    ],
+    merksatz="Beim Multiplizieren mal man Zähler mit Zähler und Nenner mit "
+             "Nenner. Geteilt durch einen Bruch heisst mal den Kehrwert.",
+)
+
 #: S46 · Klammern und Variablen beidseitig — Lektionen 13.5 und 13.6.
 KLAMMER_GLEICHUNG = Animation(
     titel="Klammern in einer Gleichung",
@@ -672,6 +734,9 @@ FUER_KAPITEL: dict[str, Animation] = {
     "7.9": PRODUKT_POTENZ,
     "13.1": GLEICHUNG,
     "13.5": KLAMMER_GLEICHUNG,
+    "14.3": KUERZEN,
+    "14.6": BRUCH_ADDIEREN,
+    "14.9": BRUCH_MAL,
     "13.7": BRUCH_GLEICHUNG,
     "9.1": DIVIDIEREN,
     "9.4": SUMME_TEILEN,
