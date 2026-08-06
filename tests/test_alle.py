@@ -149,12 +149,10 @@ LAEUFE = [
 #: niemand sie vergisst — jeder Lauf zählt sie am Schluss auf. Wer das
 #: betreffende Kapitel anfasst, streicht seine Zeile hier und baut die
 #: Bauform nach Teil 2 der Schablone um.
-ALTBEFUNDE = {
-    "S13/BF9", "S14/BF5",           # Kapitel 3
-    "S15/BF7", "S15/BF11",          # Kapitel 4
-    "S18/BF1", "S18/BF11",          # Kapitel 5
-    "S19/BF1", "S19/BF2", "S19/BF3", "S19/BF4",
-}
+#: Leer — die zehn Befunde von damals sind behoben. Wer hier wieder etwas
+#: einträgt, verschiebt eine Reparatur; besser ist, die Bauform gleich nach
+#: Teil 2 ihrer Schablone umzubauen.
+ALTBEFUNDE = set()
 
 #: Dasselbe für die Fehlerdichte. S10 wird in Runde K10 ersetzt, S18 hat
 #: Bauformen ohne Katalogeintrag.

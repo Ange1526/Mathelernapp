@@ -236,8 +236,16 @@ def _b18(**extra):
 
 
 def bf18_1(p):
-    k = zahlen18(p, 1)[0]
-    return bau([(k, []), (1, [p["var"]])])
+    """Zahl mal Variable:  3 · u
+
+    Bei nur zwei Faktoren gibt es einen einzigen Vorzeichenplatz — B und C
+    sahen darum frueher gleich aus. Auf C kommt darum ein Faktor dazu.
+    """
+    ks = zahlen18(p, 1 + p["extra"])
+    teile = [(ks[0], []), (1, [p["var"]])]
+    if p["extra"]:
+        teile.append((ks[1], []))
+    return bau(teile)
 
 
 BF18_1 = Bauform("BF1", "Zahl mal Variable",
@@ -371,8 +379,11 @@ BF18_10 = Bauform("BF10", "Sonderfall: ein Faktor ist null",
 def bf18_11(p):
     """Nur Variablen, gar keine Zahl."""
     v1, v2 = p["var"], p["var2"]
-    anzahl = 3 + p["extra"]
-    folge = [v1, v2, v1, v2, v1][:anzahl + 1]
+    #: Frueher stand hier `3 + extra`, und weil extra auf A und B beide null
+    #: ist, hatten beide Stufen vier Faktoren. Die Stufe traegt jetzt die
+    #: Faktorenzahl selbst: drei, vier, fuenf.
+    anzahl = {0: 2, 1: 3}.get(p["extra"], 2) + p["neg"]
+    folge = [v1, v2, v1, v2, v1, v2][:max(anzahl + 1, 3)]
     return bau([(1, [s]) for s in folge])
 
 
@@ -420,8 +431,18 @@ def _b19(**extra):
 
 
 def bf19_1(p):
-    ks = zahlen19(p, 2)
-    return bau([(ks[0], []), (ks[1], [p["var"]])])
+    """Zahl mal Monom:  (−3) · 4u
+
+    Zwei Faktoren koennen hoechstens zwei Minuszeichen tragen — B und C
+    sahen darum frueher gleich aus. Auf C kommt ein dritter Faktor dazu,
+    und damit ein dritter Vorzeichenplatz.
+    """
+    n = 2 + (1 if p["extra"] > 1 else 0)
+    ks = zahlen19(p, n)
+    teile = [(ks[0], []), (ks[1], [p["var"]])]
+    if n == 3:
+        teile.append((ks[2], []))
+    return bau(teile)
 
 
 BF19_1 = Bauform("BF1", "Zahl mal Monom",
@@ -429,8 +450,13 @@ BF19_1 = Bauform("BF1", "Zahl mal Monom",
 
 
 def bf19_2(p):
-    ks = zahlen19(p, 2)
-    return bau([(ks[0], [p["var"]]), (ks[1], [p["var2"]])])
+    """Zwei Monome, verschiedene Variablen — auf C ein dritter Faktor."""
+    n = 2 + (1 if p["extra"] > 1 else 0)
+    ks = zahlen19(p, n)
+    teile = [(ks[0], [p["var"]]), (ks[1], [p["var2"]])]
+    if n == 3:
+        teile.append((ks[2], [p["var3"]]))
+    return bau(teile)
 
 
 BF19_2 = Bauform("BF2", "Zwei Monome, verschiedene Variablen",
@@ -439,9 +465,14 @@ BF19_2 = Bauform("BF2", "Zwei Monome, verschiedene Variablen",
 
 
 def bf19_3(p):
-    ks = zahlen19(p, 2)
+    """Zweimal dieselbe Variable — auf C ein dritter Faktor."""
+    n = 2 + (1 if p["extra"] > 1 else 0)
+    ks = zahlen19(p, n)
     v = p["var"]
-    return bau([(ks[0], [v]), (ks[1], [v])])
+    teile = [(ks[0], [v]), (ks[1], [v])]
+    if n == 3:
+        teile.append((ks[2], [v]))
+    return bau(teile)
 
 
 BF19_3 = Bauform("BF3", "Gleiche Variable — eine Potenz entsteht",
@@ -449,9 +480,14 @@ BF19_3 = Bauform("BF3", "Gleiche Variable — eine Potenz entsteht",
 
 
 def bf19_4(p):
-    ks = zahlen19(p, 2)
+    """Zwei Monome mit je zwei Variablen — auf C ein dritter Faktor."""
+    n = 2 + (1 if p["extra"] > 1 else 0)
+    ks = zahlen19(p, n)
     v1, v2 = p["var"], p["var2"]
-    return bau([(ks[0], [v1, v2]), (ks[1], [v1, v2])])
+    teile = [(ks[0], [v1, v2]), (ks[1], [v1, v2])]
+    if n == 3:
+        teile.append((ks[2], [v1]))
+    return bau(teile)
 
 
 BF19_4 = Bauform("BF4", "Zwei Variablen, beide quadriert",

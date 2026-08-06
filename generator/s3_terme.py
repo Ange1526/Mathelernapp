@@ -694,7 +694,11 @@ def bf13_9(p):
     elif anz == 4:
         glieder = [(1, v1, "+"), (1, v1, "+"), (-1, v1, "-"), (-1, v1, "-")]
     else:
-        glieder = [(1, v1, "+"), (1, v2, "+"), (-1, v1, "-"), (-1, v2, "-")]
+        #: Frueher standen hier immer vier Glieder, egal welche Stufe — dann
+        #: sahen B und C gleich aus. Jetzt waechst die Zahl mit.
+        paare = anz // 2
+        glieder = [(1, v1 if i % 2 == 0 else v2, "+") for i in range(paare)]
+        glieder += [(-1, v1 if i % 2 == 0 else v2, "-") for i in range(paare)]
     return bau(zeige_glieder(glieder), Integer(0), [
         F("nicht_null", Integer(len(glieder)) * v1,
           "Die Minuszeichen zählen mit — hier hebt sich alles auf."),
@@ -705,9 +709,11 @@ def bf13_9(p):
 
 
 BF13_9 = Bauform("BF9", "Sonderfall: das Ergebnis ist null",
+    #: C hatte frueher auch vier Glieder — dann trug zwischen B und C nur
+    #: die Zahl. Die Levelachse von S13 ist die Gliederzahl.
     bereiche={"A": {"var": SORTE1, "var2": SORTE2, "anzahl": [2]},
               "B": {"var": SORTE1, "var2": SORTE2, "anzahl": [4]},
-              "C": {"var": SORTE1, "var2": SORTE2, "anzahl": [4, 5]}},
+              "C": {"var": SORTE1, "var2": SORTE2, "anzahl": [6]}},
     bauen=bf13_9, filter=[fehler_eindeutig,
                           symbole_verschieden("var", "var2")])
 
@@ -978,6 +984,11 @@ def bf14_5(p):
     if anzahl >= 3:
         teile.append(f"+ {zeige(v)}")
         glieder.append((1, v, "+"))
+    if anzahl >= 4:
+        #: Ein viertes Glied — frueher endete die Bauform bei drei, und
+        #: darum sahen B und C gleich aus.
+        teile.append(f"{MINUS} {k1}{zeige(v)}")
+        glieder.append((-k1, v, "+"))
     l = wert(glieder)
     return bau(" ".join(teile), l, [
         F("mal_vergessen", l - (f1 - 1) * k1 * v,
@@ -992,8 +1003,10 @@ BF14_5 = Bauform("BF5", "Punkt vor Strich vor dem Zusammenfassen",
                     "anzahl": [2], "minus": [False]},
               "B": {"var": SORTE1, "faktor": [3], "k1": [2], "k2": [4],
                     "anzahl": [3], "minus": [True]},
+              #: C hatte frueher auch drei Glieder — ein Glied mehr macht
+              #: den Unterschied im Aufbau, nicht die groessere Zahl.
               "C": {"var": SORTE1, "faktor": [4, 5], "k1": [2, 3], "k2": [5],
-                    "anzahl": [3], "minus": [True]}},
+                    "anzahl": [4], "minus": [True]}},
     bauen=bf14_5, filter=[kopfrechenbar, fehler_eindeutig, loesung_nicht_null])
 
 

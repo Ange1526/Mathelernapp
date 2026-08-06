@@ -372,9 +372,15 @@ def bf15_7(p):
     if anzahl == 5:
         glieder = [(k1, v1, "+"), (k2, v2, "+"), (-k1, v1, "-"),
                    (-k2, v2, "-"), (zahl, eins, "+")]
-    else:
+    elif anzahl == 6:
         glieder = [(k1, v1, "+"), (k2, v2, "+"), (zahl, eins, "+"),
                    (-k1, v1, "-"), (-k2, v2, "-"), (-1, eins, "-")]
+    else:
+        #: Sieben Glieder — frueher endete die Bauform bei sechs, und B und
+        #: C sahen gleich aus.
+        glieder = [(k1, v1, "+"), (k2, v2, "+"), (zahl, eins, "+"),
+                   (k1, v1, "+"), (-2 * k1, v1, "-"), (-k2, v2, "-"),
+                   (-1, eins, "-")]
     l = wert(glieder)
     return bau(glieder, [
         F("variablen_stehen_geblieben", l + k1 * v1,
@@ -386,11 +392,13 @@ def bf15_7(p):
 
 
 BF15_7 = Bauform("BF7", "Sonderfall: nur eine Zahl bleibt übrig",
+    #: A und B hatten frueher beide fuenf Glieder. Die Levelachse von S15
+    #: ist die Gliederzahl — jetzt fuenf, sechs, sieben.
     bereiche={"A": {"var": SORTE1, "var2": SORTE2, "anzahl": [5],
                     "k1": [2, 3], "k2": [2, 3], "zahl": [5, 8]},
-              "B": {"var": SORTE1, "var2": SORTE2, "anzahl": [5],
+              "B": {"var": SORTE1, "var2": SORTE2, "anzahl": [6],
                     "k1": [4, 5], "k2": [2, 3], "zahl": [7, 9]},
-              "C": {"var": SORTE1, "var2": SORTE2, "anzahl": [6],
+              "C": {"var": SORTE1, "var2": SORTE2, "anzahl": [7],
                     "k1": [4, 6], "k2": [3, 4], "zahl": [6, 9]}},
     bauen=bf15_7, filter=[kopfrechenbar, fehler_eindeutig, loesung_nicht_null,
                           symbole_verschieden("var", "var2")])
@@ -509,9 +517,16 @@ def bf15_11(p):
     eins = symbole("q")[0] ** 0
     if anzahl == 4:
         glieder = [(k1, v1, "+"), (k2, v2, "+"), (-k1, v1, "-"), (-k2, v2, "-")]
-    else:
+    elif anzahl == 6:
         glieder = [(k1, v1, "+"), (k2, v2, "+"), (-3, eins, "-"),
                    (-k1, v1, "-"), (-k2, v2, "-"), (3, eins, "+")]
+    else:
+        #: Acht Glieder — frueher endete die Bauform bei sechs, und dann
+        #: sahen B und C gleich aus.
+        glieder = [(k1, v1, "+"), (k2, v2, "+"), (-3, eins, "-"),
+                   (k1, v1, "+"), (-2 * k1, v1, "-"), (-k2, v2, "-"),
+                   (3, eins, "+"), (0, eins, "+")]
+        glieder = [g for g in glieder if g[0] != 0]
     return bau(glieder, [
         F("nicht_null", sum(abs(k) for k, _, _ in glieder) * v1,
           "Die Vorzeichen zählen mit — hier heben sich alle Glieder auf."),
@@ -521,12 +536,14 @@ def bf15_11(p):
 
 
 BF15_11 = Bauform("BF11", "Sonderfall: das Ergebnis ist null",
+    #: A und B hatten frueher beide vier Glieder. Damit sich alles
+    #: aufhebt, muss die Zahl gerade sein — also vier, sechs, acht.
     bereiche={"A": {"var": SORTE1, "var2": SORTE2, "k1": [3, 5],
                     "k2": [2, 3], "anzahl": [4]},
               "B": {"var": SORTE1, "var2": SORTE2, "k1": [4, 7],
-                    "k2": [2, 3], "anzahl": [4]},
+                    "k2": [2, 3], "anzahl": [6]},
               "C": {"var": SORTE1, "var2": SORTE2, "k1": [5, 6],
-                    "k2": [3, 4], "anzahl": [6]}},
+                    "k2": [3, 4], "anzahl": [8]}},
     bauen=bf15_11, filter=[fehler_eindeutig,
                            symbole_verschieden("var", "var2")])
 
