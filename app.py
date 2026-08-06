@@ -1603,14 +1603,39 @@ def probe():
         # auf der Zahlengeraden». Das ist die Rueckmeldung, die niemand
         # versteht — und sie ist auch sachlich falsch: die Probe hat ihm
         # genau gesagt, wo es hakt.
-        offene_luecken = [l for l in p.falsche_lektionen() if l not in bekannt]
-        ziel = verloren or offene_luecken
-        if ziel:
+        # EIN FEHLER SCHLAEGT EINE GUTSCHRIFT.
+        #
+        # Der Haken war subtil: wer 6a richtig loest, bekommt ueber
+        # `rueckwaerts_gutschreiben` auch alle Vorstufen von 15.5 gutgeschrieben
+        # — und darunter kann ausgerechnet die Lektion sein, deren eigene
+        # Teilaufgabe er falsch hatte. Sie stand danach als «sicher» da, die
+        # Liste der Luecken war leer, und die App schickte ihn zur kleinsten
+        # offenen Nummer: 1.1. Er hat gerade neunzehn Pruefungsaufgaben
+        # geloest und landet bei «Zahlen auf der Zahlengeraden».
+        #
+        # Darum werden die falsch geloesten Lektionen ZULETZT wieder
+        # gestrichen — nach dem Gutschreiben, nicht davor. Was er in der
+        # Pruefung nicht konnte, kann keine Nebenrechnung gutmachen.
+        alle_falschen = p.falsche_lektionen()
+        if alle_falschen:
+            menge = lw.sichere_menge() - set(alle_falschen)
+            lw.setze_sicher(menge)
+            lw.durchgelaufen = False
+            for lektion in alle_falschen:
+                kap = kapitel_fuer_lektion(lektion)
+                if not kap:
+                    continue
+                ks = kapitel_stand(kap)
+                ks.abgeschlossen = False
+                ks.level = "C"
+                ks.offen = ""
             lw.aktuelle_lektion = sorted(
-                ziel, key=lambda l: [int(x) for x in l.split(".")])[0]
+                alle_falschen,
+                key=lambda l: [int(x) for x in l.split(".")])[0]
         elif lw.aktuelle_lektion in lw.sichere_menge() or not lw.aktuelle_lektion:
-            # Die Stelle, an der er stand, sitzt jetzt — dann die naechste.
-            lw.aktuelle_lektion = naechste_lektion(bekannt)
+            # Alles richtig: die Stelle, an der er stand, sitzt jetzt.
+            lw.aktuelle_lektion = naechste_lektion(
+                lw.sichere_menge() | lw.uebersprungene_menge())
         db.session.commit()
         session.pop("probe", None)
         return render_template("probe_fertig.html", bericht=b)
