@@ -152,6 +152,30 @@ def _ist_null(d: Expr) -> bool:
     c = cancel(together(e))        # deckt Brüche und gemeinsame Nenner ab
     if c == 0:
         return True
+
+    # Siebung vor der teuersten Stufe. Zwei Ausdrücke, die verschieden sind,
+    # sind es schon an einer einzigen Stelle. Ergibt das Einsetzen einer
+    # Bruchzahl irgendwo einen Wert ungleich null, ist die Sache entschieden
+    # — und zwar bewiesen, nicht geschätzt: was überall gleich ist, ist auch
+    # hier gleich. Das spart den Aufruf von simplify bei genau dem Fall, der
+    # am häufigsten vorkommt, nämlich einer falschen Schülerantwort.
+    symbole = sorted(c.free_symbols, key=str)
+    if symbole:
+        for wert in (R(7, 3), R(11, 5), R(13, 4)):
+            try:
+                probe = c.subs({s: wert for s in symbole})
+                if probe.is_number:
+                    # Nur ein DEUTLICH von null verschiedener Wert entscheidet.
+                    # Bei Wurzeln kann evalf statt null eine Winzigkeit wie
+                    # 1e-17 liefern; wer die als «ungleich null» liest, würde
+                    # eine richtige Schülerantwort als falsch abstempeln.
+                    # Alles unterhalb der Schwelle geht darum weiter an
+                    # simplify und wird dort exakt entschieden.
+                    if abs(complex(probe.evalf())) > 1e-9:
+                        return False
+            except Exception:              # noqa: BLE001
+                break
+
     return simplify(c) == 0
 
 

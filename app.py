@@ -9,8 +9,9 @@ import random
 import secrets
 
 from korrektur import auswerten, aufgabe_aus_generator, Status
-from generator.anbindung import (KAPITEL, KAPITEL_NAMEN, aufgabe_aus_session,
-                                 kernidee, neue_aufgabe)
+from generator.anbindung import (KAPITEL, KAPITEL_NAMEN, MISCHEN,
+                                 aufgabe_aus_session, kernidee,
+                                 mischen_moeglich, neue_aufgabe)
 from generator import theorie as theorie_modul
 from generator.lernstand import (LEVELS, MASTERY, Ziehung, bewerten,
                                  fortschritt, naechstes_level, vorheriges_level)
@@ -20,9 +21,10 @@ from generator.netz import (ALLE, KLARTEXT, SCHABLONE_FUER, ZIEL,
                             voraussetzungen, zielmenge)
 from generator.netz import fortschritt as netz_fortschritt
 from generator.einstufung import Einstufung
-from generator.vertiefung import (LEVEL_C, MODI, PROBE_ERHEBUNG, SCHWACHSTELLEN,
-                                  BESCHREIBUNG, Probelauf, TITEL as VTITEL,
-                                  naechster_modus, schwachstellen)
+from generator.vertiefung import (LEVEL_C, MISCHAUFGABEN, MODI, PROBE_ERHEBUNG,
+                                  SCHWACHSTELLEN, BESCHREIBUNG, Probelauf,
+                                  TITEL as VTITEL, naechster_modus,
+                                  schwachstellen)
 
 app = Flask(__name__)
 
@@ -550,9 +552,18 @@ def index():
 @app.route("/dashboard")
 @login_required
 def dashboard():
+    lw = lernweg()
+
+    # Wer noch nie eingestuft wurde, gehoert zuerst in den Einstufungstest.
+    # Ohne diese Zeile landet ein frisch angemeldeter Schueler direkt auf der
+    # Lernreise: der Test wird nie angeboten, der Lernweg bleibt leer, und
+    # Kacheln wie «Gemischte Aufgaben» tauchen gar nicht erst auf, weil noch
+    # keine Lektion als sicher gilt. /start leitet von hier korrekt weiter.
+    if not lw.eingestuft:
+        return redirect(url_for("start"))
+
     prog_rows = Progress.query.filter_by(user_id=current_user.id).all()
     progress_map = {p.chapter: p for p in prog_rows}
-    lw = lernweg()
     sicher = lw.sichere_menge()
     uebersprungen = lw.uebersprungene_menge()
     bekannt = sicher | uebersprungen
@@ -636,6 +647,16 @@ def gemischt():
         flash("Fuer gemischte Aufgaben musst du zuerst eine Lektion abschliessen.",
               "info")
         return redirect(url_for("dashboard"))
+
+    # ECHTE Mischaufgaben, sobald genug Grundlagen sitzen: eine Aufgabe, in
+    # der zwei bis drei Kapitel gleichzeitig vorkommen. Vorher war
+    # «gemischt» nur ein Reihumgehen durch die bekannten Kapitel — die
+    # Aufgaben blieben Einzelteile, und genau daran scheitert man in der
+    # Erhebung, die kombiniert.
+    if mischen_moeglich(kapitel):
+        session["gemischt_modus"] = True
+        close_task()
+        return redirect(url_for("lektion", chapter=MISCHEN))
 
     # Reihum durch die bekannten Kapitel
     zuletzt = session.get("gemischt_zuletzt")
@@ -1063,6 +1084,26 @@ def _ratbar(daten):
     return loesung in ("0", "-0", "−0") or (loesung and loesung == frage)
 
 
+def hat_level(kapitel, level):
+    """Gibt es diese Stufe in dieser Schablone ueberhaupt?
+
+    Nicht jede Bauform kann jedes Level. Ohne diese Pruefung bricht der
+    Einstufungstest mit einem ValueError ab, sobald er eine Sonde auf C
+    stellen will und die Schablone dort keine Bauform hat.
+    """
+    if kapitel not in KAPITEL:
+        return True
+    return bool(KAPITEL[kapitel].bauformen_fuer(level))
+
+
+def bestes_level(kapitel, wunsch):
+    """Das gewuenschte Level, sonst das naechstniedrigere, das es gibt."""
+    for lv in (wunsch, "B", "A", "C"):
+        if hat_level(kapitel, lv):
+            return lv
+    return "A"
+
+
 def leitaufgabe(kapitel, level, versuche=30):
     """Eine Aufgabe fuer den Einstufungstest, ohne ratbare Sonderfaelle."""
     daten = neue_aufgabe_fuer(kapitel, level)
@@ -1084,6 +1125,13 @@ def einstufung():
     der Test 41 Aufgaben statt zwoelf.
     """
     lw = lernweg()
+
+    # Wer schon eingestuft ist und keinen laufenden Test hat, gehoert nicht
+    # hierher. Ohne diese Zeile startet ein Klick auf den Link einen zweiten
+    # Test und wirft den Plan weg, den der erste gerade erstellt hat.
+    if lw.eingestuft and not session.get("einstufung"):
+        return redirect(url_for("start"))
+
     e = Einstufung.aus_dict(session.get("einstufung") or {})
 
     # Lektionen ohne Generator ueberspringen — in einer Schleife, nicht ueber
@@ -1108,7 +1156,14 @@ def einstufung():
         return redirect(url_for("einstufung_fertig"))
 
     kapitel = kapitel_fuer_lektion(lektion)
-    level = "B"          # Leitaufgaben auf mittlerem Niveau
+    # DAS ist die Adaptivitaet: der Test entscheidet selbst, wie schwer die
+    # naechste Sonde ist. Wer eben richtig geantwortet hat, bekommt die
+    # naechste eine Stufe hoeher; wer gescheitert ist, bekommt nicht
+    # dasselbe nochmals, sondern dieselbe Stufe an einer tieferen Stelle.
+    # Vorher stand hier fest «B» — fuer den Anfaenger zu schwer, fuer den
+    # Gymnasiasten zu leicht, und beide waren nach zwoelf Aufgaben gleich
+    # schlecht eingeschaetzt.
+    level = bestes_level(kapitel, e.naechstes_level())
     daten = leitaufgabe(kapitel, level)
     daten["einstufung_lektion"] = lektion
     session["aufgabe"] = daten
@@ -1124,7 +1179,8 @@ def einstufung():
         lektion=lektion,
         lektion_name=KLARTEXT.get(lektion, lektion),
         nummer=e.gestellt + 1,
-        gesamt=len(e.offen) + e.gestellt,
+        gesamt=e.geschaetzt_gesamt(),
+        level=level,
         antwort_text=session.pop("antwort_text", None),
         antwort_status=session.pop("antwort_status", None),
     )
@@ -1238,13 +1294,15 @@ def vertiefung():
     db.session.commit()
 
     schwach = schwachstellen(BauformStand.query.filter_by(user_id=current_user.id).all())
-    modus = naechster_modus(lw.probe_gemacht, bool(schwach))
+    modus = naechster_modus(lw.probe_gemacht, bool(schwach),
+                            mischen_moeglich(gemischte_kapitel(lw)))
 
     return render_template(
         "vertiefung.html",
         modus=modus, titel=VTITEL, beschreibung=BESCHREIBUNG,
         schwach=[(k, l, b, f, KLARTEXT.get(k, k)) for k, l, b, f in schwach],
         probe_gemacht=lw.probe_gemacht, probe_quote=lw.probe_quote,
+        mischen=mischen_moeglich(gemischte_kapitel(lw)),
     )
 
 
@@ -1257,7 +1315,8 @@ def probe():
 
     # Teilaufgaben ohne Generator ueberspringen — ehrlicher, als sie als
     # bestanden zu zaehlen. Sie erscheinen im Bericht als "nicht geprueft".
-    while not p.fertig() and kapitel_fuer_lektion(p.lektion()) is None:
+    while not p.fertig() and not Probelauf.ist_mischaufgabe(p.aktuelle()) \
+            and kapitel_fuer_lektion(p.lektion()) is None:
         p.uebersprungen()
     session["probe"] = p.als_dict()
 
@@ -1266,11 +1325,41 @@ def probe():
         b = p.bericht()
         lw.probe_gemacht = True
         lw.probe_quote = b["quote"]
+        # WAS IN DER PROBE SCHIEFGING, GILT NICHT MEHR ALS SICHER.
+        #
+        # Ohne diesen Rueckweg war die Probe-Erhebung eine Anzeige ohne
+        # Folgen: sie meldete «14 von 19», und danach uebte die App
+        # weiter, als waere alles in Ordnung. Genau hier faellt die Luecke
+        # eines starken Schuelers auf — der Einstufungstest mit dreissig
+        # Aufgaben kann sie nicht in achtzig Lektionen orten, die Probe mit
+        # neunzehn Pruefungsaufgaben schon.
+        verloren = [l for l in p.falsche_lektionen() if l in lw.sichere_menge()]
+        if verloren:
+            menge = lw.sichere_menge() - set(verloren)
+            lw.setze_sicher(menge)
+            lw.aktuelle_lektion = naechste_lektion(
+                menge | lw.uebersprungene_menge())
+            lw.durchgelaufen = False
+            for lektion in verloren:
+                kap = kapitel_fuer_lektion(lektion)
+                if not kap:
+                    continue
+                ks = kapitel_stand(kap)
+                ks.abgeschlossen = False
+                ks.level = "C"          # er kann das Thema, nur nicht ganz
+                ks.offen = ""
+            flash(f"{len(verloren)} Lektionen kommen zurueck in deinen Weg — "
+                  f"dort ging in der Probe etwas schief.", "info")
         db.session.commit()
         session.pop("probe", None)
         return render_template("probe_fertig.html", bericht=b)
 
-    kapitel = kapitel_fuer_lektion(p.lektion())
+    # Die drei Mischaufgaben am Schluss haben keine eigene Lektion: sie
+    # stehen eine Stufe ueber allen Kapiteln.
+    if Probelauf.ist_mischaufgabe(p.aktuelle()):
+        kapitel = MISCHEN
+    else:
+        kapitel = kapitel_fuer_lektion(p.lektion())
     daten = neue_aufgabe_fuer(kapitel, "C")
     daten["probe_teilaufgabe"] = p.aktuelle()
     session["aufgabe"] = daten
@@ -1332,6 +1421,10 @@ def wiederholen(modus):
         db.session.commit()
         close_task()
         return redirect(url_for("lektion", chapter=kapitel))
+
+    if modus == MISCHAUFGABEN:
+        close_task()
+        return redirect(url_for("lektion", chapter=MISCHEN))
 
     if modus == LEVEL_C:
         # Alle Kapitel mit Generator auf C stellen. Auch die, bei denen der

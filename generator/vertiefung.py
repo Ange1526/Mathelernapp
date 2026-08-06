@@ -26,13 +26,15 @@ from .netz import ZIEL, KLARTEXT, SCHABLONE_FUER
 
 PROBE_ERHEBUNG = "probe"
 SCHWACHSTELLEN = "schwach"
+MISCHAUFGABEN = "mischen"
 LEVEL_C = "level_c"
 
-MODI = (PROBE_ERHEBUNG, SCHWACHSTELLEN, LEVEL_C)
+MODI = (PROBE_ERHEBUNG, SCHWACHSTELLEN, MISCHAUFGABEN, LEVEL_C)
 
 TITEL = {
     PROBE_ERHEBUNG: "Probe-Erhebung",
     SCHWACHSTELLEN: "Deine Wackelkandidaten",
+    MISCHAUFGABEN: "Mischaufgaben",
     LEVEL_C: "Alles nochmals auf Level C",
 }
 
@@ -42,6 +44,11 @@ BESCHREIBUNG = {
                      "was schon sitzt."),
     SCHWACHSTELLEN: ("Die Aufgabenarten, bei denen du am meisten Fehler "
                      "gemacht hast — noch einmal, bis sie sicher sind."),
+    MISCHAUFGABEN: ("Aufgaben, in denen mehrere Kapitel gleichzeitig "
+                    "vorkommen — Wurzel, Potenz, Klammer und Zusammenfassen "
+                    "in einem Term. Kein neuer Stoff, aber eine Stufe "
+                    "schwerer als die Erhebung. Genau so sind die Aufgaben "
+                    "gebaut, an denen man in der Prüfung hängen bleibt."),
     LEVEL_C: ("Die schwerste Stufe für alle Lektionen. Auch für die, bei "
               "denen du direkt auf Level B eingestiegen bist."),
 }
@@ -59,10 +66,22 @@ class Probelauf:
         self.richtig = self.richtig if self.richtig is not None else []
         self.falsch = self.falsch if self.falsch is not None else []
 
+    #: So viele Mischaufgaben hängen hinten an der Probe-Erhebung.
+    #: Sie machen den Durchgang bewusst etwas schwerer als das Original:
+    #: die Erhebung kombiniert, die App übte bisher nur Einzelteile.
+    MISCHAUFGABEN_ANZAHL = 3
+
     @classmethod
-    def neu(cls) -> "Probelauf":
+    def neu(cls, mit_mischen: bool = True) -> "Probelauf":
         # Reihenfolge wie in der echten Prüfung, damit die Erfahrung stimmt.
-        return cls(reihenfolge=sorted(ZIEL))
+        reihe = sorted(ZIEL)
+        if mit_mischen:
+            reihe += [f"M{i+1}" for i in range(cls.MISCHAUFGABEN_ANZAHL)]
+        return cls(reihenfolge=reihe)
+
+    @staticmethod
+    def ist_mischaufgabe(teilaufgabe: str | None) -> bool:
+        return bool(teilaufgabe) and teilaufgabe.startswith("M")
 
     def aktuelle(self) -> str | None:
         if self.position >= len(self.reihenfolge):
@@ -70,8 +89,16 @@ class Probelauf:
         return self.reihenfolge[self.position]
 
     def lektion(self) -> str | None:
+        """Welche Lektion prüft die aktuelle Teilaufgabe?
+
+        Bei den angehängten Mischaufgaben ist das keine Lektion des Netzes —
+        sie stehen eine Stufe darüber. Sie geben `None` zurück; die App holt
+        die Aufgabe dann direkt aus Kapitel 16.1.
+        """
         a = self.aktuelle()
-        return ZIEL.get(a) if a else None
+        if a is None or self.ist_mischaufgabe(a):
+            return None
+        return ZIEL.get(a)
 
     def antwort(self, war_richtig: bool) -> None:
         a = self.aktuelle()
@@ -89,6 +116,16 @@ class Probelauf:
         if a is not None:
             self.position += 1
 
+    def falsche_lektionen(self) -> list[str]:
+        """Die Lektionen hinter den falsch gelösten Teilaufgaben.
+
+        Sie werden in `Lernweg` wieder aus «sicher» gestrichen. Ohne diesen
+        Rückweg bleibt eine Lücke, die in der Probe-Erhebung auffällt, in der
+        App unsichtbar — und der Schüler übt vier Wochen alles ausser der
+        einen Sache, die er nicht kann.
+        """
+        return [ZIEL[a] for a in self.falsch if a in ZIEL]
+
     def bericht(self) -> dict:
         gesamt = len(self.richtig) + len(self.falsch)
         return {
@@ -96,7 +133,10 @@ class Probelauf:
             "falsch": len(self.falsch),
             "gesamt": gesamt,
             "quote": int(len(self.richtig) / gesamt * 100) if gesamt else 0,
-            "fehlerhafte": [(a, KLARTEXT.get(ZIEL[a], ZIEL[a])) for a in self.falsch],
+            "fehlerhafte": [(a, KLARTEXT.get(ZIEL[a], ZIEL[a])) if a in ZIEL
+                            else (a, "Mischaufgabe") for a in self.falsch],
+            "mischaufgaben": [a for a in self.reihenfolge
+                              if self.ist_mischaufgabe(a)],
             "fehlerfrei": len(self.falsch) == 0 and gesamt > 0,
             "nicht_geprueft": len(self.reihenfolge) - gesamt,
         }
@@ -126,10 +166,20 @@ def schwachstellen(staende, wieviele: int = 8) -> list[tuple[str, str, str, int]
             for s in mit_fehlern[:wieviele]]
 
 
-def naechster_modus(probe_gemacht: bool, hat_schwachstellen: bool) -> str:
-    """Was ist nach dem Durchlauf als Nächstes dran?"""
+def naechster_modus(probe_gemacht: bool, hat_schwachstellen: bool,
+                    mischen_moeglich: bool = False) -> str:
+    """Was ist nach dem Durchlauf als Nächstes dran?
+
+    Die Reihenfolge ist nicht willkürlich: zuerst MESSEN, wo man steht, dann
+    GEZIELT üben, was wackelt, dann die Mischaufgaben — und erst zuletzt die
+    breite Wiederholung auf Level C. Für den Gymnasiasten, der schon fast
+    alles kann, ist der dritte Schritt der wichtigste: dort liegt der
+    Unterschied zwischen «kann die Regeln» und «löst die Prüfung fehlerfrei».
+    """
     if not probe_gemacht:
         return PROBE_ERHEBUNG
     if hat_schwachstellen:
         return SCHWACHSTELLEN
+    if mischen_moeglich:
+        return MISCHAUFGABEN
     return LEVEL_C

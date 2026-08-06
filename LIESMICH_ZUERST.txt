@@ -1,0 +1,92 @@
+EINSTUFUNGSTEST UND MISCHAUFGABEN — Stand 6. August 2026
+========================================================
+
+SO SPIELST DU ES EIN
+--------------------
+
+1. Sicherheitskopie machen. Rechtsklick auf den Ordner "Lernapp",
+   "Senden an" -> "ZIP-komprimierter Ordner". Nimm dir die 20 Sekunden.
+
+2. PowerShell oeffnen und diesen einen Befehl ausfuehren:
+
+   Expand-Archive -Path "$HOME\Downloads\einstufung_und_mischen.zip" -DestinationPath "C:\Users\1058909\Desktop\Maturaarbeit\Lernapp" -Force
+
+   Das -Force ueberschreibt die alten Dateien. Die Ordnerstruktur im ZIP
+   passt genau auf deinen Projektordner, es landet alles am richtigen Platz.
+
+3. Testen, ob alles laeuft:
+
+   cd C:\Users\1058909\Desktop\Maturaarbeit\Lernapp
+   python tests\test_einstufung.py
+
+   Ganz unten muss stehen: "Alles im Rahmen."
+
+4. Dann die Mischaufgaben pruefen (dauert jetzt Sekunden statt Minuten):
+
+   python tests\test_s60.py
+
+   Ganz unten muss stehen: "Alle Aufgaben nachgerechnet, keine Abweichung."
+
+5. App starten wie immer:
+
+   python app.py
+
+WICHTIG: Wenn du dich mit deinem bisherigen Konto anmeldest, kommt kein
+Test — dieses Konto ist schon eingestuft. Lege ein NEUES Testkonto an,
+dann startet der Test direkt nach der Registrierung.
+
+
+WAS SICH GEAENDERT HAT
+----------------------
+
+geaendert   app.py                            14 Stellen
+neu         generator/einstufung.py           komplett neu geschrieben
+neu         generator/s60_mischen.py          Mischaufgaben, 12 Bauformen
+geaendert   generator/anbindung.py            S60 als Kapitel 16.1
+geaendert   generator/vertiefung.py           Mischaufgaben-Modus, Rueckweg
+geaendert   templates/einstufung_fertig.html  persoenlicher Plan
+geaendert   templates/vertiefung.html         Link zu den Mischaufgaben
+neu         tests/test_einstufung.py          12 kuenstliche Schueler
+neu         tests/test_s60.py                 1440 Aufgaben nachgerechnet
+geaendert   tests/test_alle.py                S60 eingetragen
+geaendert   korrektur/pruefung.py             Siebung vor simplify (Tempo)
+neu         tests/schnellpruefung.py          schnelle exakte Gleichheit
+geaendert   CLAUDE.md                         Projektgedaechtnis nachgefuehrt
+
+NICHT angefasst: static/style.css, alle uebrigen Generatoren, korrektur/,
+netz.py, netz_daten.py, lernstand.py, alle uebrigen Templates.
+Am Design aendert sich nichts — die neue Ergebnisseite benutzt nur
+Klassen, die schon da waren (task-card, hint-box, btn-primary, back-link).
+
+
+WAS DU BEIM AUSPROBIEREN SEHEN SOLLTEST
+---------------------------------------
+
+Wenn du im Test alles richtig loest:
+  Levelfolge B B B C C C C ... , 30 Aufgaben, Plan mit 1 bis 5 Lektionen
+
+Wenn du alles falsch loest oder "Ich verstehe die Aufgabe nicht" drueckst:
+  Levelfolge B B B A A A A A , nach 8 Aufgaben fertig, Plan mit 79 Lektionen
+
+Wenn du gemischt antwortest:
+  Levelfolge springt zwischen B und C, die Luecken stehen einzeln auf der
+  Ergebnisseite, jede mit dem Level, auf dem du wieder einsteigst.
+
+Die Mischaufgaben findest du unter "Vertiefung" -> "Mischaufgaben", sobald
+vier der sechs Grundlagenkapitel sitzen (4.2, 5.1, 7.1, 8.1, 9.1, 10.1).
+
+
+FALLS ETWAS SCHIEFGEHT
+----------------------
+
+"ModuleNotFoundError: generator.s60_mischen"
+  -> Das ZIP wurde nicht in den Lernapp-Ordner entpackt, sondern daneben.
+     Pruefe, ob die Datei generator\s60_mischen.py wirklich da liegt.
+
+"ValueError: Level C gibt es hier nicht"
+  -> Sollte nicht mehr vorkommen, app.py faengt das ueber bestes_level() ab.
+     Falls doch: schick mir die ganze Fehlermeldung.
+
+Der Test startet immer wieder von vorne
+  -> Du bist mit einem Konto angemeldet, das schon eingestuft ist.
+     Neues Testkonto anlegen.

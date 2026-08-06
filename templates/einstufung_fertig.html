@@ -3,13 +3,76 @@
 <div class="task-card">
   <h2>Einstufung fertig</h2>
   {% if bericht %}
-  <p>Du hast {{ bericht.gestellt }} Aufgaben gelöst.
-     <strong>{{ bericht.sicher_anzahl }} von {{ bericht.ziel_anzahl }}</strong>
-     Lektionen sitzen bereits ({{ bericht.prozent }} %).</p>
-  <p>Du beginnst bei: <strong>{{ bericht.start_name }}</strong></p>
-  <p>Ab hier bekommst du deinen eigenen Weg. Du musst nichts auswählen —
-     die App zeigt dir immer, was als Nächstes dran ist.</p>
+  <p>Du hast {{ bericht.gestellt }} Aufgaben bearbeitet, {{ bericht.richtig }}
+     davon richtig. Von den {{ bericht.uebbar_anzahl }} Lektionen, die du hier
+     üben kannst, sitzen <strong>{{ bericht.uebbar_sicher }}</strong>
+     ({{ bericht.prozent_uebbar }} %).</p>
+
+  <div class="hint-box" style="border-color:#9AE6B4; background:#F0FFF4;">
+    <div class="hint-box-title" style="color:#22543D;">Dein Einstieg</div>
+    <div class="hint-box-text" style="color:#276749;">
+      Du beginnst bei <strong>{{ bericht.start_name }}</strong>
+      auf <strong>Level {{ bericht.start_level }}</strong>.
+      Du musst nichts auswählen — die App zeigt dir immer, was als Nächstes
+      dran ist.
+    </div>
+  </div>
+
+  {% if bericht.luecken %}
+  <h3>Das hat der Test gefunden</h3>
+  <p>An diesen Stellen hat etwas nicht gestimmt. Sie kommen zuerst dran, und
+     zwar auf der Stufe, die zu dir passt:</p>
+  <ul>
+    {% for l in bericht.luecken %}
+    <li>{{ l.lektion }} · {{ l.name }} — ab Level {{ l.level }}</li>
+    {% endfor %}
+  </ul>
   {% endif %}
+
+  {% if bericht.plan_kapitel %}
+  <h3>Dein Plan</h3>
+  <p>{{ bericht.plan_laenge }} Lektionen in {{ bericht.plan_kapitel|length }}
+     Abschnitten. Das Level steht dabei — du fängst nirgends bei null an, wo
+     du schon weiter bist.</p>
+  <ul>
+    {% for g in bericht.plan_kapitel %}
+    <li><strong>{{ g.name }}</strong> · {{ g.von_bis }}
+        ({{ g.anzahl }} Lektion{{ 'en' if g.anzahl > 1 }}) — ab Level {{ g.level }}</li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+
+  {% if bericht.kontrolle_laenge %}
+  <div class="hint-box">
+    <div class="hint-box-title">Danach: Kontrollrunde</div>
+    <div class="hint-box-text">
+      {{ bericht.kontrolle_laenge }} weitere Lektionen hast du dir im Test
+      mitverdient, ohne dass sie einzeln gefragt wurden. Sie kommen später
+      als kurze Runde auf Level C wieder. Wo es sitzt, geht das schnell —
+      und wo nicht, bleibt die App genau dort stehen. Dafür ist die Runde da.
+    </div>
+  </div>
+  {% endif %}
+
+  {% if bericht.profil == 'fortgeschritten' %}
+  <div class="hint-box" style="border-color:#FBD38D; background:#FFFAF0;">
+    <div class="hint-box-title" style="color:#7B341E;">Du kannst schon viel</div>
+    <div class="hint-box-text" style="color:#975A16;">
+      Bei dir geht es nicht darum, den Stoff neu zu lernen, sondern die
+      letzten Lücken zu schliessen. Mach möglichst früh eine Probe-Erhebung:
+      dort zeigt sich, was in der richtigen Prüfung noch schiefgehen würde.
+      Danach warten die Mischaufgaben — mehrere Kapitel in einer Aufgabe,
+      eine Stufe schwerer als die Erhebung.
+    </div>
+  </div>
+  {% endif %}
+  {% endif %}
+
   <a href="{{ url_for('lernen') }}" class="btn-primary">Losgehen</a>
+  {% if bericht and bericht.profil == 'fortgeschritten' %}
+  <p style="margin-top:16px;">
+    <a href="{{ url_for('probe') }}" class="back-link">Direkt zur Probe-Erhebung</a>
+  </p>
+  {% endif %}
 </div>
 {% endblock %}

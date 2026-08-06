@@ -31,6 +31,9 @@
     <p style="margin-top:20px;">
       <a href="{{ url_for('probe') }}" class="back-link">Probe-Erhebung</a> ·
       <a href="{{ url_for('wiederholen', modus='schwach') }}" class="back-link">Wackelkandidaten</a> ·
+      {% if mischen %}
+      <a href="{{ url_for('wiederholen', modus='mischen') }}" class="back-link">Mischaufgaben</a> ·
+      {% endif %}
       <a href="{{ url_for('wiederholen', modus='level_c') }}" class="back-link">Alles auf Level C</a> ·
       <a href="{{ url_for('ziel_erreicht') }}" class="back-link">Stand</a>
     </p>
