@@ -133,9 +133,13 @@ SCHABLONE_FUER: dict[str, str] = {
     # BF6 und BF7 die dreigliedrigen Terme (12.7), die Zielform FAKTORISIERT
     # zusammen mit BF8 prueft die Vollstaendigkeit (12.8). Damit sind die
     # Erhebungsteilaufgaben 4b, 4c und 4d abgedeckt.
+    # 12.1 bis 12.4 — S42 · Zahl und Variable ausklammern
     "12.1": "12.1", "12.2": "12.1", "12.3": "12.1", "12.4": "12.1",
-    "12.5": "12.1", "12.6": "12.1", "12.7": "12.1", "12.8": "12.1",
-    "12.9": "12.1",
+    # 12.5 und 12.6 — S43 · Potenzen und mehrere Variablen
+    "12.5": "12.5", "12.6": "12.5",
+    # 12.7 und 12.8 — S44 · dreigliedrige Terme
+    "12.7": "12.7", "12.8": "12.7",
+    # 12.9 hat keinen Generator und zaehlt darum als uebersprungen.
 }
 
 
@@ -188,6 +192,51 @@ RUECKSPRUNG: dict[str, str] = {
     "S4/BF7/variable_ausgeklammert": "12.4",
     "S4/BF7/letztes_vergessen":      "11.6",
     "S4/BF8/etwas_ausgeklammert":    "12.4",
+
+    # ── S42, S43, S44 Faktorisieren ──────────────────────────────────────────
+    #: Diese drei rechnen ihren Fehlerkatalog aus der Aufgabe. Die Schluessel
+    #: sind darum in allen zwoelf Bauformen dieselben — der Stern steht fuer
+    #: «jede Bauform dieser Schablone».
+    "S42/*/vorzeichen_verloren":            "1.9",
+    "S42/*/vorzeichen_gesamt":              "1.9",
+    "S42/*/nicht_geteilt":                  "11.6",
+    "S42/*/nur_erstes_geteilt":             "11.6",
+    "S42/*/subtrahiert":                    "11.6",
+    "S42/*/glied_verloren":                 "11.6",
+    "S42/*/eins_vergessen":                 "12.4",
+    "S42/*/variable_im_faktor_vergessen":   "12.4",
+    "S42/*/zahl_im_faktor_vergessen":       "12.4",
+    "S43/*/vorzeichen_verloren":            "1.9",
+    "S43/*/vorzeichen_gesamt":              "1.9",
+    "S43/*/nicht_geteilt":                  "11.6",
+    "S43/*/nur_erstes_geteilt":             "11.6",
+    "S43/*/subtrahiert":                    "11.6",
+    "S43/*/glied_verloren":                 "11.6",
+    "S43/*/eins_vergessen":                 "12.4",
+    "S43/*/variable_im_faktor_vergessen":   "12.4",
+    "S43/*/zahl_im_faktor_vergessen":       "12.4",
+    "S44/*/vorzeichen_verloren":            "1.9",
+    "S44/*/vorzeichen_gesamt":              "1.9",
+    "S44/*/nicht_geteilt":                  "11.6",
+    "S44/*/nur_erstes_geteilt":             "11.6",
+    "S44/*/subtrahiert":                    "11.6",
+    "S44/*/glied_verloren":                 "11.6",
+    "S44/*/eins_vergessen":                 "12.4",
+    "S44/*/variable_im_faktor_vergessen":   "12.4",
+    "S44/*/zahl_im_faktor_vergessen":       "12.4",
+
+    # ── S34, S35, S36 Klammern ───────────────────────────────────────────────
+    #: 10.6 ist das haeufigste Ruecksprungziel im ganzen Netz.
+    "S34/*/nur_erstes_glied":    "10.6",
+    "S34/*/minus_vergessen":     "10.6",
+    "S34/*/vorzeichen_34":       "1.9",
+    "S36/*/nur_erstes_glied":    "10.6",
+    "S36/*/minus_vergessen":     "10.6",
+    "S36/*/zuviel_gedreht":      "10.6",
+    "S36/*/variablen_gemischt":  "4.8",
+    "S36/*/ungleichartig":       "4.8",
+    "S36/*/variable_bleibt":     "4.8",
+    "S36/*/vorzeichen_gesamt":   "1.9",
 }
 
 
@@ -200,7 +249,12 @@ def rueckwaerts_zu(schablone: str, bauform: str,
     """
     if not fehlerschluessel:
         return None
-    return RUECKSPRUNG.get(f"{schablone}/{bauform}/{fehlerschluessel}")
+    treffer = RUECKSPRUNG.get(f"{schablone}/{bauform}/{fehlerschluessel}")
+    if treffer:
+        return treffer
+    #: Wo der Fehlerkatalog aus der Aufgabe gerechnet wird, heisst der
+    #: Schluessel in allen zwoelf Bauformen gleich. Dafuer der Stern.
+    return RUECKSPRUNG.get(f"{schablone}/*/{fehlerschluessel}")
 
 
 def _num(lektion: str) -> tuple[int, int]:

@@ -133,6 +133,9 @@ LAEUFE = [
     Lauf("K10", "generator.s34_s35_klammern", "S35"),
     Lauf("K10", "generator.s36_klammern_variablen", "S36"),
     Lauf("K10", "generator.s37_klammer_potenz", "S37"),
+    Lauf("K12", "generator.s42_s44_faktorisieren", "S42"),
+    Lauf("K12", "generator.s42_s44_faktorisieren", "S43"),
+    Lauf("K12", "generator.s42_s44_faktorisieren", "S44"),
     Lauf("K11", "generator.s11_ausmultiplizieren", "S38"),
     Lauf("K11", "generator.s39_s40_ausmultiplizieren", "S39"),
     Lauf("K11", "generator.s39_s40_ausmultiplizieren", "S40"),
@@ -142,7 +145,8 @@ LAEUFE = [
     Lauf("abgeloest", "generator.s2_grundoperationen", "S2", "alt"),
     #: S10 haengt an keiner Lektion mehr — abgeloest durch S33, S34, S35.
     Lauf("abgeloest", "generator.s10_klammern", "S10", "alt"),
-    Lauf("K12", "generator.s4_faktorisieren", "S4", "alt"),
+    #: S4 haengt an keiner Lektion mehr — abgeloest durch S42, S43, S44.
+    Lauf("abgeloest", "generator.s4_faktorisieren", "S4", "alt"),
 ]
 
 

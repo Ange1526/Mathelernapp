@@ -27,7 +27,6 @@ from .s16_gleichartig import S16
 from .s15_s17_sorten import S15, S17
 from .s3_terme import S12, S13, S14
 from .s5_produkte import S18, S19
-from .s4_faktorisieren import S4
 from .s6_punktrechnung import S20, S21
 from .s22_s23_potenzen import S22, S23
 from .s24_s25_potenzgesetze import S24, S25
@@ -45,6 +44,7 @@ from .s10_klammern_neu import S33
 from .s34_s35_klammern import S34, S35
 from .s36_klammern_variablen import S36
 from .s37_klammer_potenz import S37
+from .s42_s44_faktorisieren import S42, S43, S44
 from .s11_ausmultiplizieren import S38
 from .s39_s40_ausmultiplizieren import S39, S40
 from .s60_mischen import S60
@@ -103,7 +103,9 @@ KAPITEL = {
     "10.7": S35,    # Punktoperation und Klammer
     "10.12": S36,   # Klammern mit Variablen — Vorstufe zu 2b
     "10.16": S37,   # Klammer mit negativem Ergebnis quadrieren — Erhebung 3d
-    "12.1": S4,     # Faktorisieren    — Erhebung 4a bis 4d
+    "12.1": S42,    # Zahl und Variable ausklammern     — Erhebung 4a
+    "12.5": S43,    # Potenzen und mehrere Variablen     — Erhebung 4b, 4c
+    "12.7": S44,    # Dreigliedrige Terme                — Erhebung 4d
     # Kapitel 8 Wurzeln — bringt die Erhebungsteilaufgaben 3a, 3b und 3e.
     "8.1": S26,     # Wurzeln verstehen        8.1 – 8.2
     "8.3": S27,     # Wurzel aus einer Summe   8.3 · 8.7   — Erhebung 3b
