@@ -40,6 +40,7 @@ from .s14_bruchterme import S49
 from .s50_s51_bruchterme import S50, S51
 from .s15_bruchgleichungen import S52
 from .s53_s54_bruchgleichungen import S53, S54
+from .s55_s57_bruchgleichungen import S55
 from .s60_mischen import S60
 
 #: Kapitelnummer in der App  ->  Schablone
@@ -85,6 +86,7 @@ KAPITEL = {
     "15.1": S52,    # Hauptnenner bestimmen          15.1 – 15.2
     "15.3": S53,    # Jeden Summanden malnehmen      15.3 — Erhebung 6b
     "15.4": S54,    # Term im Zaehler                15.4 – 15.5 — Erhebung 6a
+    "15.6": S55,    # Bruch mal Klammer              15.6 — Erhebung 1b
     "10.1": S10,    # Klammern           — Vorstufe zu 2b und 3d
     "12.1": S4,     # Faktorisieren    — Erhebung 4a bis 4d
     # Kapitel 8 Wurzeln — bringt die Erhebungsteilaufgaben 3a, 3b und 3e.

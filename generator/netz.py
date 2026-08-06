@@ -109,6 +109,7 @@ SCHABLONE_FUER: dict[str, str] = {
     "15.1": "15.1", "15.2": "15.1",
     "15.3": "15.3",
     "15.4": "15.4", "15.5": "15.4",
+    "15.6": "15.6",
     # Faktorisieren — BF5 bringt Potenzen und zwei Variablen (12.5, 12.6),
     # BF6 und BF7 die dreigliedrigen Terme (12.7), die Zielform FAKTORISIERT
     # zusammen mit BF8 prueft die Vollstaendigkeit (12.8). Damit sind die

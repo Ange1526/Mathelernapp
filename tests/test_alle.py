@@ -126,6 +126,7 @@ LAEUFE = [
     Lauf("K15", "generator.s15_bruchgleichungen", "S52"),
     Lauf("K15", "generator.s53_s54_bruchgleichungen", "S53"),
     Lauf("K15", "generator.s53_s54_bruchgleichungen", "S54"),
+    Lauf("K15", "generator.s55_s57_bruchgleichungen", "S55"),
     # ── noch im alten Format, numerische Levelachse ──────────────────────
     #: S2 haengt an keiner Lektion mehr, wird aber weiter geprueft,
     #: solange die Datei existiert.

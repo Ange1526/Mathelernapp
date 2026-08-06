@@ -199,6 +199,26 @@ PUNKT_VOR_STRICH = Animation(
              "gleichartige Glieder zusammenfassen.",
 )
 
+#: S55 · Bruch mal Klammer — Lektion 15.6, Erhebungsaufgabe 1b.
+BRUCH_KLAMMER = Animation(
+    titel="Ein Bruch vor der Klammer",
+    schritte=[
+        S("Vor der Klammer steht ein Bruch.",
+          ("(1/2)", "mark", "b"), ("(x + 4)", "", "kl"), (" = 5", "", "r")),
+        S("Er gilt für JEDES Glied darin — für das x und für die 4.",
+          ("(1/2)", "", "b"), ("(x + 4)", "mark", "kl"), (" = 5", "", "r")),
+        S("Ausmultipliziert: x/2 + 2.",
+          ("x/2 + 2", "neu", "kl"), (" = 5", "", "r")),
+        S("Wer nur das x malnimmt, bekommt x/2 + 4. Das ist falsch.",
+          ("x/2 + 4", "weg", "falsch")),
+        S("Jetzt wie immer: −2, dann mal 2. x = 6.",
+          ("x = 6", "neu", "kl")),
+    ],
+    merksatz="Ein Bruch vor einer Klammer gilt für jedes Glied darin. "
+             "Multipliziere die Klammer aus oder nimm beide Seiten mit dem "
+             "Kehrwert mal.",
+)
+
 #: S52 · Hauptnenner — Lektionen 15.1 und 15.2.
 HAUPTNENNER = Animation(
     titel="Brüche aus einer Gleichung schaffen",
@@ -793,6 +813,7 @@ FUER_KAPITEL: dict[str, Animation] = {
     "13.1": GLEICHUNG,
     "13.5": KLAMMER_GLEICHUNG,
     "15.1": HAUPTNENNER,
+    "15.6": BRUCH_KLAMMER,
     "15.3": JEDEN_SUMMANDEN,
     "15.4": TERM_IM_ZAEHLER,
     "14.3": KUERZEN,
