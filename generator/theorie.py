@@ -199,6 +199,45 @@ PUNKT_VOR_STRICH = Animation(
              "gleichartige Glieder zusammenfassen.",
 )
 
+#: S48 · Erweitern — Lektionen 14.1, 14.2 und 14.8, Erhebungsaufgabe 5a.
+ERWEITERN = Animation(
+    titel="Einen Bruchterm erweitern",
+    schritte=[
+        S("Der Nenner soll von 7x auf 84xyz gebracht werden.",
+          ("6/(7x)", "", "l"), (" = ", "", "gl"), ("?/(84xyz)", "mark", "r")),
+        S("Womit wurde 7x malgenommen? 84xyz : 7x ergibt 12yz.",
+          ("12yz", "neu", "f")),
+        S("Derselbe Faktor muss auf den Zähler — sonst ändert sich der Wert.",
+          ("6 · 12yz", "neu", "l"), ("/(84xyz)", "", "r")),
+        S("6 · 12yz ergibt 72yz.",
+          ("72yz", "neu", "l"), ("/(84xyz)", "", "r")),
+        S("Probe: 72yz/(84xyz) lässt sich wieder zu 6/(7x) kürzen.",
+          ("72yz/(84xyz) = 6/(7x)", "mark", "l")),
+    ],
+    merksatz="Erweitern heisst: Zähler UND Nenner mit demselben Faktor "
+             "malnehmen. Der Wert des Bruchs ändert sich dabei nicht.",
+)
+
+#: S37 · Klammer mit negativem Ergebnis quadrieren — 10.16, Erhebung 3d.
+KLAMMER_QUADRAT = Animation(
+    titel="Klammer mit Minus, dann quadrieren",
+    schritte=[
+        S("Zuerst die Klammer ausrechnen: 3 − 5 ergibt −2.",
+          ("(3 − 5)", "mark", "kl"), ("²", "", "e")),
+        S("Jetzt steht dort (−2)².",
+          ("(−2)", "neu", "kl"), ("²", "", "e")),
+        S("Minus mal minus gibt plus: das Ergebnis ist +4.",
+          ("4", "neu", "kl")),
+        S("Aufgepasst: −(3 − 5)² ist etwas anderes.",
+          ("−(3 − 5)²", "mark", "kl")),
+        S("Dort gilt die Potenz nur für die Klammer, das Minus bleibt: −4.",
+          ("−4", "neu", "kl")),
+    ],
+    merksatz="Zuerst die Klammer ausrechnen, dann potenzieren. Ein Minus VOR "
+             "der Klammer gehört nicht zur Basis: (3 − 5)² ist +4, "
+             "−(3 − 5)² ist −4.",
+)
+
 #: S38 bis S40 · Ausmultiplizieren — Kapitel 11, Erhebungsaufgabe 2b.
 AUSMULTIPLIZIEREN = Animation(
     titel="Der Faktor gilt für alles in der Klammer",
@@ -852,6 +891,7 @@ FUER_KAPITEL: dict[str, Animation] = {
     "7.9": PRODUKT_POTENZ,
     "13.1": GLEICHUNG,
     "13.5": KLAMMER_GLEICHUNG,
+    "10.16": KLAMMER_QUADRAT,
     "11.1": AUSMULTIPLIZIEREN,
     "11.5": AUSMULTIPLIZIEREN,
     "11.7": MINUS_MAL_KLAMMER,
@@ -859,6 +899,7 @@ FUER_KAPITEL: dict[str, Animation] = {
     "15.6": BRUCH_KLAMMER,
     "15.3": JEDEN_SUMMANDEN,
     "15.4": TERM_IM_ZAEHLER,
+    "14.1": ERWEITERN,
     "14.3": KUERZEN,
     "14.6": BRUCH_ADDIEREN,
     "14.9": BRUCH_MAL,

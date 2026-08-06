@@ -44,6 +44,9 @@ SCHABLONE_FUER: dict[str, str] = {
     "10.1": "10.1", "10.2": "10.1", "10.3": "10.1", "10.4": "10.1",
     "10.5": "10.1", "10.6": "10.1", "10.7": "10.1", "10.8": "10.1",
     "10.9": "10.1", "10.10": "10.1", "10.11": "10.1",
+    # 10.16 — S37. Das ist das Ziel von Erhebungsaufgabe 3d. Die
+    # Lektionen 10.12 bis 10.15 gehoeren zu S36 und fehlen noch.
+    "10.16": "10.16",
     # Gleichartige Terme — S16 deckt 4.2 bis 4.6 und 4.8 ab, mehr nicht.
     # 4.1 und 4.7 sind Schablone S15, 4.9 ist S17, 4.10 ist die
     # Gemischt-Lektion. Sie standen frueher faelschlich hier drin.
@@ -95,10 +98,11 @@ SCHABLONE_FUER: dict[str, str] = {
     "13.1": "13.1", "13.2": "13.1", "13.3": "13.1", "13.4": "13.1",
     "13.5": "13.5", "13.6": "13.5",
     "13.7": "13.7", "13.8": "13.7", "13.9": "13.7",
-    # Kapitel 14 — Bruchterme. S49 kuerzt (14.3, 14.4), S50 addiert bei
+    # Kapitel 14 — Bruchterme. S48 erweitert (14.1, 14.2 und 14.8 — das ist
+    # Erhebungsaufgabe 5a), S49 kuerzt (14.3, 14.4), S50 addiert bei
     # gleichem Nenner (14.6, 14.7), S51 multipliziert und dividiert
-    # (14.9 bis 14.11). 14.1, 14.2, 14.5 und 14.8 bleiben offen: dafuer
-    # braeuchte es S48, das nur als Kurzfassung vorliegt.
+    # (14.9 bis 14.11). Nur 14.5 bleibt offen.
+    "14.1": "14.1", "14.2": "14.1", "14.8": "14.1",
     "14.3": "14.3", "14.4": "14.3",
     "14.6": "14.6", "14.7": "14.6",
     "14.9": "14.9", "14.10": "14.9", "14.11": "14.9",

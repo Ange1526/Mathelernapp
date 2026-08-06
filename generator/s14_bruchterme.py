@@ -52,7 +52,9 @@ ANLEITUNG = "Rechne aus und kürze so weit wie möglich."
 
 SORTE1 = [x, a, u, p_]
 SORTE2 = [y, b, v, q]
-SORTE3 = [z, c, w, r]
+#: Kein r: ein einzelnes «r» liest der Parser als «alle reellen
+#: Zahlen», nicht als Variable.
+SORTE3 = [z, c, w, d]
 
 
 def F(s, e, t):

@@ -36,11 +36,13 @@ from .s9_division import S30, S31, S32
 from .s45_gleichungen import S45
 from .s46_s47_klammern import S46
 from .s47_brueche import S47
+from .s48_erweitern import S48
 from .s14_bruchterme import S49
 from .s50_s51_bruchterme import S50, S51
 from .s15_bruchgleichungen import S52
 from .s53_s54_bruchgleichungen import S53, S54
 from .s55_s57_bruchgleichungen import S55
+from .s37_klammer_potenz import S37
 from .s11_ausmultiplizieren import S38
 from .s39_s40_ausmultiplizieren import S39, S40
 from .s60_mischen import S60
@@ -77,10 +79,9 @@ KAPITEL = {
     "13.1": S45,    # Einfache lineare Gleichungen  13.1 – 13.4
     "13.5": S46,    # Klammern, Variablen beidseitig 13.5 – 13.6 — Erhebung 1a
     "13.7": S47,    # Loesung als Bruch              13.7 – 13.9 — Erhebung 1a
-    # Kapitel 14 — Bruchterme. 14.1, 14.2, 14.5 und 14.8 fehlen: dafuer
-    # waere S48 noetig, das nur in einer Kurzfassung mit sechs Bauformen
-    # vorliegt. Erhebungsaufgabe 5a haengt an 14.8 und ist darum noch
-    # nicht uebbar.
+    # Kapitel 14 — Bruchterme. 14.5 bleibt offen (Kuerzen nach dem
+    # Ausklammern); alles andere ist abgedeckt.
+    "14.1": S48,    # Bruchterme erweitern  14.1 – 14.2 · 14.8 — Erhebung 5a
     "14.3": S49,    # Bruchterme kuerzen             14.3 – 14.4 — Erhebung 5b
     "14.6": S50,    # Addieren bei gleichem Nenner   14.6 – 14.7
     "14.9": S51,    # Mal, geteilt, Doppelbruch      14.9 – 14.11 — Erhebung 5c
@@ -96,6 +97,7 @@ KAPITEL = {
     "11.5": S39,    # Ausmultiplizieren und zusammenfassen 11.5 – 11.6
     "11.7": S40,    # Negative Zahl, Minus vor der Variablen 11.7 – 11.8 — Erhebung 2b
     "10.1": S10,    # Klammern           — Vorstufe zu 2b und 3d
+    "10.16": S37,   # Klammer mit negativem Ergebnis quadrieren — Erhebung 3d
     "12.1": S4,     # Faktorisieren    — Erhebung 4a bis 4d
     # Kapitel 8 Wurzeln — bringt die Erhebungsteilaufgaben 3a, 3b und 3e.
     "8.1": S26,     # Wurzeln verstehen        8.1 – 8.2
