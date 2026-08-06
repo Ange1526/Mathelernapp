@@ -1885,8 +1885,77 @@ def passwort_aendern():
 
 
 # ── Start ──────────────────────────────────────────────────────────────────────
+def spalten_nachziehen():
+    """Fehlende Spalten in bestehenden Tabellen anlegen.
+
+    WARUM ES DAS BRAUCHT: `db.create_all()` legt fehlende TABELLEN an, aber
+    es fasst bestehende nie an. Kommt eine Spalte dazu — etwa `streak` bei
+    `user` —, bleibt die Datenbank auf dem alten Stand, und die erste
+    Abfrage stirbt mit «column user.streak does not exist». Lokal faellt das
+    nicht auf, weil man die Datei einfach loescht; auf dem Server mit echten
+    Daten ist Loeschen keine Option.
+
+    Diese Funktion vergleicht die Modelle mit dem, was wirklich in der
+    Datenbank steht, und ergaenzt nur, was fehlt. Sie loescht nichts und
+    aendert nichts Bestehendes — der schlimmste Fall ist, dass sie nichts
+    tut.
+
+    Sie laeuft bei jedem Start. Das kostet Sekundenbruchteile und erspart
+    beim naechsten Schemawechsel dasselbe Theater.
+    """
+    from sqlalchemy import inspect as _inspect, text as _text
+
+    pruefer = _inspect(db.engine)
+    vorhanden_tabellen = set(pruefer.get_table_names())
+
+    for tabelle in db.metadata.sorted_tables:
+        if tabelle.name not in vorhanden_tabellen:
+            continue                       # legt create_all() selbst an
+        da = {s["name"] for s in pruefer.get_columns(tabelle.name)}
+
+        for spalte in tabelle.columns:
+            if spalte.name in da:
+                continue
+            typ = spalte.type.compile(dialect=db.engine.dialect)
+            standard = ""
+            if spalte.default is not None and spalte.default.is_scalar:
+                wert = spalte.default.arg
+                standard = (f" DEFAULT {wert}" if isinstance(wert, (int, float))
+                            else f" DEFAULT '{wert}'")
+            befehl = (f'ALTER TABLE "{tabelle.name}" '
+                      f'ADD COLUMN "{spalte.name}" {typ}{standard}')
+            try:
+                with db.engine.begin() as verbindung:
+                    verbindung.execute(_text(befehl))
+                app.logger.info("Spalte ergaenzt: %s.%s",
+                                tabelle.name, spalte.name)
+            except Exception as fehler:               # noqa: BLE001
+                # Nicht abbrechen: eine Spalte, die sich nicht anlegen
+                # laesst, soll nicht den ganzen Start verhindern. Der
+                # Eintrag im Log sagt, wo nachzuschauen ist.
+                app.logger.warning("Spalte %s.%s nicht angelegt: %s",
+                                   tabelle.name, spalte.name, fehler)
+
+
 with app.app_context():
     db.create_all()
+    spalten_nachziehen()
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    # ── Start ────────────────────────────────────────────────────────────
+    # `app.run(debug=True)` horcht nur auf 127.0.0.1 — also NUR auf dem
+    # Rechner, auf dem es laeuft. Fuer den eigenen Test ist das richtig,
+    # fuer zehn Mitschueler nicht: sie kommen nicht heran.
+    #
+    # HOST=0.0.0.0 oeffnet die App fuers lokale Netz (gleiches WLAN).
+    # Fuer die Studie ueber das Internet braucht es einen Hoster; dann
+    # setzt dieser PORT und SECRET_KEY selbst.
+    #
+    # debug=True zeigt bei einem Fehler den Quelltext IM BROWSER und
+    # erlaubt das Ausfuehren von Code. Auf dem eigenen Rechner egal,
+    # sobald andere zugreifen ein Sicherheitsloch. Darum standardmaessig
+    # aus, sobald HOST gesetzt ist.
+    host = os.environ.get("HOST", "127.0.0.1")
+    port = int(os.environ.get("PORT", "5000"))
+    debug = os.environ.get("FLASK_DEBUG", "1" if host == "127.0.0.1" else "0")
+    app.run(host=host, port=port, debug=(debug == "1"))
