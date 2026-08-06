@@ -93,6 +93,8 @@ SCHABLONE_FUER: dict[str, str] = {
     # linearen Gleichung). 13.5 bis 13.9 sind S46 und S47, 13.10 ist die
     # Gemischt-Lektion und bleibt offen.
     "13.1": "13.1", "13.2": "13.1", "13.3": "13.1", "13.4": "13.1",
+    "13.5": "13.5", "13.6": "13.5",
+    "13.7": "13.7", "13.8": "13.7", "13.9": "13.7",
     # Faktorisieren — BF5 bringt Potenzen und zwei Variablen (12.5, 12.6),
     # BF6 und BF7 die dreigliedrigen Terme (12.7), die Zielform FAKTORISIERT
     # zusammen mit BF8 prueft die Vollstaendigkeit (12.8). Damit sind die

@@ -34,6 +34,8 @@ from .s22_s23_potenzen import S22, S23
 from .s24_s25_potenzgesetze import S24, S25
 from .s9_division import S30, S31, S32
 from .s45_gleichungen import S45
+from .s46_s47_klammern import S46
+from .s47_brueche import S47
 from .s60_mischen import S60
 
 #: Kapitelnummer in der App  ->  Schablone
@@ -66,6 +68,8 @@ KAPITEL = {
     "7.9": S25,     # Potenz eines Produkts         7.9 – 7.10 — Vorstufe 3e
     # Kapitel 13 — Gleichungen. S45 deckt 13.1 bis 13.4 ab.
     "13.1": S45,    # Einfache lineare Gleichungen  13.1 – 13.4
+    "13.5": S46,    # Klammern, Variablen beidseitig 13.5 – 13.6 — Erhebung 1a
+    "13.7": S47,    # Loesung als Bruch              13.7 – 13.9 — Erhebung 1a
     "10.1": S10,    # Klammern           — Vorstufe zu 2b und 3d
     "12.1": S4,     # Faktorisieren    — Erhebung 4a bis 4d
     # Kapitel 8 Wurzeln — bringt die Erhebungsteilaufgaben 3a, 3b und 3e.

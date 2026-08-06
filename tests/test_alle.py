@@ -118,6 +118,8 @@ LAEUFE = [
     #: bloss eine andere Zahl) — darum «exponent» und nicht «streng».
     Lauf("K16", "generator.s60_mischen", "S60", "exponent"),
     Lauf("K13", "generator.s45_gleichungen", "S45"),
+    Lauf("K13", "generator.s46_s47_klammern", "S46"),
+    Lauf("K13", "generator.s47_brueche", "S47"),
     # ── noch im alten Format, numerische Levelachse ──────────────────────
     #: S2 haengt an keiner Lektion mehr, wird aber weiter geprueft,
     #: solange die Datei existiert.

@@ -199,6 +199,46 @@ PUNKT_VOR_STRICH = Animation(
              "gleichartige Glieder zusammenfassen.",
 )
 
+#: S46 · Klammern und Variablen beidseitig — Lektionen 13.5 und 13.6.
+KLAMMER_GLEICHUNG = Animation(
+    titel="Klammern in einer Gleichung",
+    schritte=[
+        S("Zuerst die Klammer auflösen: der Faktor gilt für ALLES darin.",
+          ("2(x + 3)", "mark", "l"), (" = ", "", "gl"), ("2x + 8", "", "r")),
+        S("2 · x macht 2x, und 2 · 3 macht 6.",
+          ("2x + 6", "neu", "l"), (" = ", "", "gl"), ("2x + 8", "", "r")),
+        S("Jetzt die x auf eine Seite bringen — auf beiden Seiten −2x.",
+          ("6", "neu", "l"), (" = ", "", "gl"), ("8", "neu", "r")),
+        S("Die x sind weg, und 6 = 8 stimmt nicht.",
+          ("6 = 8", "mark", "l")),
+        S("Keine Zahl macht das wahr: die Gleichung hat KEINE Lösung.",
+          ("keine Lösung", "neu", "l")),
+    ],
+    merksatz="Erst alle Klammern auflösen, dann jede Seite zusammenfassen, "
+             "dann die Variablen auf die eine und die Zahlen auf die andere "
+             "Seite bringen.",
+)
+
+#: S47 · Lösung als Bruch — Lektionen 13.7 bis 13.9, Erhebungsaufgabe 1a.
+BRUCH_GLEICHUNG = Animation(
+    titel="Wenn die Lösung ein Bruch ist",
+    schritte=[
+        S("Wie immer: Klammern auf, Seiten zusammenfassen.",
+          ("2x + 1", "", "l"), (" = ", "", "gl"), ("4", "", "r")),
+        S("Die 1 muss weg — auf beiden Seiten −1.",
+          ("2x", "neu", "l"), (" = ", "", "gl"), ("3", "neu", "r")),
+        S("Jetzt durch 2 teilen. 3 : 2 geht nicht auf.",
+          ("x", "neu", "l"), (" = ", "", "gl"), ("3 : 2", "mark", "r")),
+        S("Das ist kein Grund zur Sorge — der Bruch IST die Antwort.",
+          ("x", "", "l"), (" = ", "", "gl"), ("3/2", "neu", "r")),
+        S("Nicht runden. Nur kürzen, wenn Zähler und Nenner einen "
+          "gemeinsamen Teiler haben.",
+          ("3/2", "mark", "r")),
+    ],
+    merksatz="Rechne wie bei jeder Gleichung — und lass am Schluss den Bruch "
+             "stehen, statt zu runden. Kürzen ist der letzte Schritt.",
+)
+
 #: S45 · Gleichungen — Lektionen 13.1 bis 13.4, Vorstufe zu Erhebung 1a.
 #: Die Waage ist das Bild dahinter: was links passiert, passiert rechts auch.
 GLEICHUNG = Animation(
@@ -631,6 +671,8 @@ FUER_KAPITEL: dict[str, Animation] = {
     "7.5": POTENZEN,
     "7.9": PRODUKT_POTENZ,
     "13.1": GLEICHUNG,
+    "13.5": KLAMMER_GLEICHUNG,
+    "13.7": BRUCH_GLEICHUNG,
     "9.1": DIVIDIEREN,
     "9.4": SUMME_TEILEN,
     "9.6": DIVISION_IM_TERM,
