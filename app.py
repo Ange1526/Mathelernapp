@@ -2202,6 +2202,83 @@ def passwort_aendern():
     return render_template("passwort_aendern.html")
 
 
+# ── Verwaltung ─────────────────────────────────────────────────────────────
+#
+# Ein einzelnes Konto zu loeschen ging bisher nur ueber die
+# Datenbankkonsole: sieben DELETE-Befehle in der richtigen Reihenfolge, und
+# ein vergessenes WHERE trifft alle. Das ist keine Aufgabe, die man abends
+# um elf von Hand macht.
+#
+# Diese Seite ist NUR erreichbar, wenn in der Umgebung ADMIN_EMAIL gesetzt
+# ist UND die angemeldete Person genau diese Adresse hat. Ist die Variable
+# nicht gesetzt, gibt es die Seite nicht — auf einem fremden Rechner kann
+# sie also niemand aufrufen.
+def _ist_verwalterin() -> bool:
+    adresse = (os.environ.get("ADMIN_EMAIL") or "").strip().lower()
+    if not adresse:
+        return False
+    return (current_user.is_authenticated
+            and (current_user.email or "").strip().lower() == adresse)
+
+
+def konto_loeschen(user):
+    """Ein Konto mit allem, was daran haengt.
+
+    Reihenfolge ist Pflicht: erst die abhaengigen Zeilen, zuletzt das Konto
+    selbst. Andersherum verweigert die Datenbank den Dienst.
+    """
+    uid = user.id
+    for tabelle in (TaskAttempt, BauformStand, KapitelStand, EinstufungsStand,
+                    Progress, MarkedTask, Lernweg, PasswordReset):
+        try:
+            tabelle.query.filter_by(user_id=uid).delete()
+        except Exception:                                  # noqa: BLE001
+            # Eine Tabelle, die es (noch) nicht gibt, soll das Loeschen
+            # nicht aufhalten.
+            db.session.rollback()
+    db.session.delete(user)
+    db.session.commit()
+
+
+@app.route("/verwaltung", methods=["GET", "POST"])
+@login_required
+def verwaltung():
+    if not _ist_verwalterin():
+        flash("Diese Seite gibt es nicht.", "error")
+        return redirect(url_for("dashboard"))
+
+    if request.method == "POST":
+        adresse = (request.form.get("email") or "").strip().lower()
+        if adresse == (current_user.email or "").strip().lower():
+            flash("Das eigene Konto lässt sich hier nicht löschen.", "error")
+        else:
+            ziel = User.query.filter(
+                db.func.lower(User.email) == adresse).first()
+            if not ziel:
+                flash(f"Kein Konto mit der Adresse {adresse} gefunden.",
+                      "error")
+            else:
+                name = ziel.username
+                konto_loeschen(ziel)
+                flash(f"Konto «{name}» ({adresse}) wurde gelöscht.",
+                      "success")
+        return redirect(url_for("verwaltung"))
+
+    konten = []
+    for u in User.query.order_by(User.id).all():
+        lw = Lernweg.query.filter_by(user_id=u.id).first()
+        konten.append({
+            "id": u.id,
+            "username": u.username,
+            "email": u.email,
+            "eingestuft": bool(lw and lw.eingestuft),
+            "sicher": len(lw.sichere_menge()) if lw else 0,
+            "versuche": TaskAttempt.query.filter_by(user_id=u.id).count(),
+        })
+    return render_template("verwaltung.html", konten=konten,
+                           eigene=current_user.email)
+
+
 @app.route("/neu-starten", methods=["GET", "POST"])
 @login_required
 def neu_starten():

@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="lektion-wrapper" style="padding:40px 20px;">
+  <div class="task-card" style="max-width:760px; margin:0 auto;">
+    <h2>Verwaltung</h2>
+    <p>Angemeldet als <strong>{{ eigene }}</strong>. Diese Seite sieht nur,
+       wer als Verwalterin eingetragen ist.</p>
+
+    <div class="hint-box">
+      <div class="hint-box-title">Konto löschen</div>
+      <div class="hint-box-text">
+        Gelöscht wird das Konto mit allem, was daran hängt: Lernweg,
+        Fortschritt, gelöste Aufgaben. <strong>Das lässt sich nicht
+        rückgängig machen.</strong> Das eigene Konto ist geschützt.
+      </div>
+    </div>
+
+    <form action="{{ url_for('verwaltung') }}" method="POST"
+          style="margin:20px 0; display:flex; gap:10px; flex-wrap:wrap;">
+      <input type="email" name="email" required placeholder="E-Mail-Adresse"
+             style="flex:1; min-width:240px; padding:12px 14px;
+                    border:2px solid #EDF2F7; border-radius:12px;
+                    font-size:1rem;">
+      <button type="submit" class="btn-star"
+              onclick="return confirm('Konto endgültig löschen?');">
+        Konto löschen
+      </button>
+    </form>
+
+    <h3 style="margin-top:30px;">Alle Konten ({{ konten|length }})</h3>
+    <table style="width:100%; border-collapse:collapse; font-size:0.92rem;">
+      <tr style="text-align:left; color:#718096;">
+        <th style="padding:8px 6px;">Name</th>
+        <th style="padding:8px 6px;">E-Mail</th>
+        <th style="padding:8px 6px;">Starttest</th>
+        <th style="padding:8px 6px;">Lektionen</th>
+        <th style="padding:8px 6px;">Aufgaben</th>
+      </tr>
+      {% for k in konten %}
+      <tr style="border-top:1px solid #EDF2F7;">
+        <td style="padding:8px 6px;">{{ k.username }}</td>
+        <td style="padding:8px 6px; color:#718096;">{{ k.email }}</td>
+        <td style="padding:8px 6px;">{{ "fertig" if k.eingestuft else "offen" }}</td>
+        <td style="padding:8px 6px;">{{ k.sicher }}</td>
+        <td style="padding:8px 6px;">{{ k.versuche }}</td>
+      </tr>
+      {% endfor %}
+    </table>
+
+    <a href="{{ url_for('dashboard') }}" class="back-link"
+       style="display:inline-block; margin-top:24px;">Zurück zur Lernreise</a>
+  </div>
+</div>
+{% endblock %}
