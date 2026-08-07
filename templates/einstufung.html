@@ -162,7 +162,11 @@
 
     <div class="fortschritt-wrapper">
         <div class="fortschritt-meta">
-            <span>Einstufung · Aufgabe {{ nummer }}{% if gesamt %} von etwa {{ gesamt }}{% endif %}</span>
+            {# «hoechstens» statt «etwa»: die Zahl ist eine Obergrenze, kein
+               Versprechen. Wer schwach abschneidet, ist nach acht bis zwoelf
+               Aufgaben fertig — «von etwa 30» haette ihn unnoetig
+               abgeschreckt. #}
+            <span>Einstufung · Aufgabe {{ nummer }}{% if gesamt %} von höchstens {{ gesamt }}{% endif %}</span>
             <span>{{ lektion_name }}</span>
         </div>
         <div class="fortschritt-bg">
@@ -196,11 +200,23 @@
         </form>
     </div>
 
+    <a href="{{ url_for('dashboard') }}"
+       style="margin-top:16px; color:#A0AEC0; font-size:0.85rem;
+              text-decoration:underline;">Abbrechen und zur Lernreise</a>
+
     <div class="hinweis-kasten">
         <strong>Das ist keine Prüfung.</strong> Der Test sucht nur heraus, wo
         du einsteigst und was du überspringen kannst. Wenn du eine Aufgabe
         nicht kannst, lass das Feld leer und klick auf Weiter — das ist eine
         genauso brauchbare Antwort wie eine richtige.
+        <br><br>
+        {# Eine Testperson brach bei Frage 12 ab und musste danach von vorne
+           beginnen. Der Zwischenstand liegt inzwischen in der Datenbank
+           statt im Browser-Cookie — er überlebt jetzt auch das Schliessen
+           des Fensters. Nur wusste das niemand, weil es nirgends stand. #}
+        <strong>Du kannst jederzeit aufhören.</strong> Wenn du das Fenster
+        schliesst und später wiederkommst, geht es genau dort weiter, wo du
+        aufgehört hast.
     </div>
 
 </div>

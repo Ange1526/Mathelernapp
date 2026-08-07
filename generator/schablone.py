@@ -73,7 +73,13 @@ class Bauform:
             if all(f(p, g) for f in self.filter):
                 return ErzeugteAufgabe(
                     schablone=schablone, bauform=self.nr, level=level,
-                    anleitung=anleitung, frage=g["frage"],
+                    # Eine Bauform darf die Anleitung ueberschreiben. Gebraucht
+                    # wird das in Kapitel 1: dort gehoert der Wortlaut der
+                    # Aufgabe («Wie heisst die Gegenzahl von −7?») nach OBEN
+                    # in die Anleitung, damit unten nur die Zahl steht — in
+                    # grosser Schrift, wie bei jeder anderen Aufgabe auch.
+                    anleitung=g.get("anleitung") or anleitung,
+                    frage=g["frage"],
                     loesung_text=g.get("loesung_text", ""), aufgabe=g["aufgabe"],
                     schritte=g.get("schritte", []), tipps=g.get("tipps", []),
                     parameter=p)

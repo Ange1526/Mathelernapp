@@ -41,48 +41,48 @@ ZIEL: dict[str, str] = {
 SCHABLONE_FUER: dict[str, str] = {
     # Kapitel 1 — S1 · Vorzeichen und Zahlengerade
     "1.1": "1.1",
-    "1.2": "1.1",
-    "1.3": "1.1",
-    "1.4": "1.1",
+    "1.2": "1.2",
+    "1.3": "1.3",
+    "1.4": "1.4",
     # Kapitel 1 — S3 · Addieren und Subtrahieren
     "1.5": "1.5",
-    "1.6": "1.5",
-    "1.7": "1.5",
-    "1.8": "1.5",
-    "1.9": "1.5",
+    "1.6": "1.6",
+    "1.7": "1.7",
+    "1.8": "1.7",
+    "1.9": "1.7",
     # Kapitel 1 — S5 · Multiplizieren und Dividieren
     "1.10": "1.10",
-    "1.11": "1.10",
-    "1.12": "1.10",
-    "1.13": "1.10",
-    "1.14": "1.10",
-    "1.15": "1.10",
+    "1.11": "1.11",
+    "1.12": "1.12",
+    "1.13": "1.13",
+    "1.14": "1.14",
+    "1.15": "1.15",
     # Kapitel 1 — S6 · Reihenfolge der Operationen
     "1.16": "1.16",
-    "1.17": "1.16",
-    "1.18": "1.16",
-    "1.19": "1.16",
+    "1.17": "1.17",
+    "1.18": "1.18",
+    "1.19": "1.19",
     # Kapitel 1 — M1 · Gemischt
     "1.20": "1.20",
     # Kapitel 2 — S7 · Kuerzen und Erweitern
     "2.1": "2.1",
-    "2.2": "2.1",
+    "2.2": "2.2",
     # Kapitel 2 — S8 · Addition und Subtraktion
     "2.3": "2.3",
-    "2.4": "2.3",
-    "2.5": "2.3",
-    "2.6": "2.3",
+    "2.4": "2.4",
+    "2.5": "2.5",
+    "2.6": "2.6",
     # Kapitel 2 — S9 · Brueche mit ganzen Zahlen
     "2.7": "2.7",
-    "2.8": "2.7",
+    "2.8": "2.8",
     # Kapitel 2 — S10 · Multiplikation
     "2.9": "2.9",
-    "2.11": "2.9",
+    "2.11": "2.11",
     # Kapitel 2 — S11 · Division
     "2.10": "2.10",
     # Kapitel 2 — S12 · Doppelbrueche und Gemischtes
     "2.12": "2.12",
-    "2.13": "2.12",
+    "2.13": "2.13",
     # Klammern — deckt 10.1 bis 10.11 ab, darunter 10.6, das haeufigste
     # Ruecksprungziel im ganzen Netz.
     # 10.1 — S33 · Klammern setzen und weglassen
@@ -104,14 +104,14 @@ SCHABLONE_FUER: dict[str, str] = {
     # Gemischt-Lektion. Sie standen frueher faelschlich hier drin.
     # Kapitel 3 — S12, S13, S14. 3.12 «Gemischt» bleibt offen.
     "3.1": "3.1", "3.2": "3.1", "3.3": "3.1",
-    "3.4": "3.4", "3.5": "3.4", "3.6": "3.4", "3.7": "3.4",
-    "3.8": "3.4", "3.9": "3.4",
+    "3.4": "3.4", "3.5": "3.4", "3.6": "3.4", "3.7": "3.7",
+    "3.8": "3.8", "3.9": "3.4",
     "3.10": "3.10", "3.11": "3.10",
     # Kapitel 5 — S18 und S19. 5.9 «Gemischt» bleibt offen.
     "5.1": "5.1", "5.2": "5.1", "5.3": "5.1", "5.4": "5.1",
     "5.5": "5.5", "5.6": "5.5", "5.7": "5.5", "5.8": "5.5",
     "4.1": "4.1", "4.7": "4.1",
-    "4.2": "4.2", "4.3": "4.2", "4.4": "4.2", "4.5": "4.2",
+    "4.2": "4.2", "4.3": "4.3", "4.4": "4.2", "4.5": "4.2",
     "4.6": "4.2", "4.8": "4.2",
     "4.9": "4.9",
     # Kapitel 7 — vier Schablonen statt einer. S22 deckt 7.1 und 7.2 ab,
@@ -121,14 +121,14 @@ SCHABLONE_FUER: dict[str, str] = {
     # 7.11 «Gemischt» bleibt offen, wie 4.10, 5.9, 6.8 und 8.10.
     "7.1": "7.1", "7.2": "7.1",
     "7.3": "7.3", "7.4": "7.3",
-    "7.5": "7.5", "7.6": "7.5", "7.7": "7.5", "7.8": "7.5",
+    "7.5": "7.5", "7.6": "7.6", "7.7": "7.7", "7.8": "7.8",
     "7.9": "7.9", "7.10": "7.9",
     # Kapitel 8 Wurzeln — vier Schablonen, S26 bis S29.
     # 8.10 «Gemischt» bleibt bewusst offen: keine der vier Schablonen baut
     # Aufgaben, die alle Formen des Kapitels mischen.
     "8.1": "8.1", "8.2": "8.1",
     "8.3": "8.3", "8.7": "8.3",
-    "8.4": "8.4", "8.5": "8.4", "8.6": "8.4", "8.8": "8.4",
+    "8.4": "8.4", "8.5": "8.5", "8.6": "8.6", "8.8": "8.4",
     "8.9": "8.9",
     # Kapitel 6 — S20 deckt 6.1 bis 6.4 ab (Punkt vor Strich, eine und zwei
     # Variablen, Vorzeichen), S21 die Lektionen 6.5 bis 6.7 (nach dem
@@ -149,7 +149,7 @@ SCHABLONE_FUER: dict[str, str] = {
     # Gemischt-Lektion und bleibt offen.
     "13.1": "13.1", "13.2": "13.1", "13.3": "13.1", "13.4": "13.1",
     "13.5": "13.5", "13.6": "13.5",
-    "13.7": "13.7", "13.8": "13.7", "13.9": "13.7",
+    "13.7": "13.7", "13.8": "13.7", "13.9": "13.9",
     # Kapitel 14 — Bruchterme. S48 erweitert (14.1, 14.2 und 14.8 — das ist
     # Erhebungsaufgabe 5a), S49 kuerzt (14.3, 14.4), S50 addiert bei
     # gleichem Nenner (14.6, 14.7), S51 multipliziert und dividiert
@@ -184,7 +184,7 @@ SCHABLONE_FUER: dict[str, str] = {
     # zusammen mit BF8 prueft die Vollstaendigkeit (12.8). Damit sind die
     # Erhebungsteilaufgaben 4b, 4c und 4d abgedeckt.
     # 12.1 bis 12.4 — S42 · Zahl und Variable ausklammern
-    "12.1": "12.1", "12.2": "12.1", "12.3": "12.1", "12.4": "12.1",
+    "12.1": "12.1", "12.2": "12.2", "12.3": "12.3", "12.4": "12.1",
     # 12.5 und 12.6 — S43 · Potenzen und mehrere Variablen
     "12.5": "12.5", "12.6": "12.5",
     # 12.7 und 12.8 — S44 · dreigliedrige Terme

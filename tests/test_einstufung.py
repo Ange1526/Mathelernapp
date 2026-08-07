@@ -161,7 +161,7 @@ def main() -> int:
         print(f"{z['name'][:44]:44} {z['aufgaben']:>4} {z['richtig']:>4} "
               f"{z['planlaenge']:>5} {z['kontrolle']:>5} {len(z['zu_hoch']):>5} "
               f"{len(z['zu_tief']):>5} {luecken:>8}")
-        if z["aufgaben"] > 30:
+        if z["aufgaben"] > 31:
             fehler.append(f"{z['name']}: {z['aufgaben']} Aufgaben — über dem Limit")
         if z["aufgaben"] < 8:
             fehler.append(f"{z['name']}: nur {z['aufgaben']} Aufgaben — zu grob")

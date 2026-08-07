@@ -1,9 +1,11 @@
-from flask import Flask, render_template, redirect, url_for, flash, request, session
+from flask import (Flask, render_template, redirect, url_for, flash,
+                   request, session, g)
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import timedelta, date
+import json
 import os
 import random
 import secrets
@@ -37,6 +39,25 @@ app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "dev-secret-matura-2024"
 # failed or bad record mac». `pool_pre_ping` schickt vorher ein winziges
 # Signal und baut bei Bedarf still eine neue Verbindung auf — das kostet
 # weniger als eine Millisekunde und erspart genau diesen Absturz.
+# Nach einem `commit()` wirft SQLAlchemy standardmaessig ALLE geladenen
+# Objekte weg — beim naechsten Zugriff wird jedes einzeln neu geholt.
+# Gemessen an einer abgeschickten Antwort: 35 Datenbankabfragen, davon
+# ACHT allein fuer den angemeldeten Benutzer, weil zwischendurch mehrmals
+# gespeichert wird.
+#
+# Lokal faellt das nicht auf (SQLite liegt auf derselben Platte). Auf einem
+# Server mit einer Datenbank in einem anderen Rechenzentrum kostet jede
+# Abfrage dreissig bis hundert Millisekunden — dann sind es zwei Sekunden
+# pro Klick, und genau darueber haben die Testpersonen sich beschwert.
+#
+# `expire_on_commit=False` laesst die Objekte nach dem Speichern gueltig.
+# Der Preis: liest jemand ANDERES gleichzeitig denselben Datensatz und
+# aendert ihn, sieht man den alten Stand bis zum Ende der Anfrage. Bei
+# einer Lern-App, in der jeder nur seine eigenen Daten anfasst, ist das
+# folgenlos.
+#: Wird unten beim Anlegen der Erweiterung uebergeben.
+SITZUNG = {"expire_on_commit": False}
+
 app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
     "pool_pre_ping": True,
     "pool_recycle": 280,        # Verbindungen vor dem Ablauf selbst erneuern
@@ -49,7 +70,7 @@ if database_url.startswith("postgres://"):
 app.config["SQLALCHEMY_DATABASE_URI"] = database_url
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
-db = SQLAlchemy(app)
+db = SQLAlchemy(app, session_options=SITZUNG)
 login_manager = LoginManager(app)
 login_manager.login_view = "login"
 
@@ -115,7 +136,7 @@ def get_hint(chapter):
     """Bei Generatorkapiteln kommt der Tipp aus der Schablone — er passt damit
     zur konkreten Bauform, nicht nur zum Kapitel."""
     if chapter in KAPITEL:
-        tipps = (session.get("aufgabe") or {}).get("tipps") or []
+        tipps = (aufgabe_laden() or {}).get("tipps") or []
         if len(tipps) >= 2:
             return tipps[1]
     return HINTS.get(chapter, HINTS["1.3"])
@@ -231,6 +252,30 @@ class KapitelStand(db.Model):
     #: Unterbrechung nicht mehr.
     offen = db.Column(db.String(255), default="")
 
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+
+class EinstufungsStand(db.Model):
+    """Der Zwischenstand des Einstufungstests — in der DATENBANK, nicht im Cookie.
+
+    WARUM: Flask legt die ganze Session in ein signiertes Cookie, und Browser
+    werfen Cookies ueber rund 4096 Zeichen weg. Der Einstufungsstand waechst
+    mit jeder Aufgabe; gemessen: 867 Zeichen zu Beginn, 4296 nach dreissig
+    Aufgaben. Beim Ueberlaufen verschwindet die GANZE Session — der Schueler
+    ist ausgeloggt, der Test weg, die Ergebnisseite nie gesehen. Genau das
+    haben die Testpersonen gemeldet: «stuerzt nach dem Starttest ab, danach
+    muss man sich neu anmelden, und den Plan sieht man nie».
+
+    Mit 48 statt 30 Aufgaben trifft es fast jeden. Im Cookie steht jetzt nur
+    noch ein Verweis; die Daten liegen hier und koennen beliebig wachsen.
+    """
+    id      = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    daten   = db.Column(db.Text, default="")
+    #: Die aktuell gestellte Aufgabe. Sie steckte ebenfalls im Cookie und
+    #: macht allein rund 2000 Zeichen aus — zusammen mit dem Einstufungsstand
+    #: reichte das zum Ueberlauf. Hier ist Platz.
+    aufgabe = db.Column(db.Text, default="")
     updated_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 
@@ -470,6 +515,74 @@ def neue_aufgabe_fuer(chapter, level, bauform=None):
 
 # ── Der persoenliche Weg ──────────────────────────────────────────────────────
 
+def _stand_datensatz():
+    """Der Datensatz des Benutzers — einmal je Anfrage geholt, dann gemerkt.
+
+    Zwischenstand und aktuelle Aufgabe liegen im selben Datensatz. Er wurde
+    pro Anfrage bis zu fuenfmal frisch geholt, weil jede Hilfsfunktion ihre
+    eigene Abfrage machte. Auf einer entfernten Datenbank sind das fuenf
+    Rundreisen statt einer.
+
+    `g` ist Flasks Ablage fuer die Dauer EINER Anfrage — danach ist sie
+    wieder leer, es kann also nichts zwischen Benutzern verwechselt werden.
+    """
+    if not hasattr(g, "_stand"):
+        g._stand = EinstufungsStand.query.filter_by(
+            user_id=current_user.id).first()
+    return g._stand
+
+
+def einstufung_laden():
+    """Zwischenstand aus der Datenbank holen — leeres Dict, wenn keiner da."""
+    st = _stand_datensatz()
+    if not st or not st.daten:
+        return {}
+    try:
+        return json.loads(st.daten)
+    except Exception:                                  # noqa: BLE001
+        return {}
+
+
+def einstufung_speichern(daten):
+    st = _stand_datensatz()
+    if not st:
+        st = EinstufungsStand(user_id=current_user.id)
+        db.session.add(st)
+        g._stand = st
+    st.daten = json.dumps(daten)
+    st.updated_at = datetime.utcnow()
+    db.session.commit()
+
+
+def aufgabe_laden():
+    """Die gestellte Aufgabe aus der Datenbank."""
+    st = _stand_datensatz()
+    if not st or not st.aufgabe:
+        return None
+    try:
+        return json.loads(st.aufgabe)
+    except Exception:                                  # noqa: BLE001
+        return None
+
+
+def aufgabe_speichern(daten):
+    st = _stand_datensatz()
+    if not st:
+        st = EinstufungsStand(user_id=current_user.id)
+        db.session.add(st)
+        g._stand = st
+    st.aufgabe = json.dumps(daten) if daten else ""
+    st.updated_at = datetime.utcnow()
+    db.session.commit()
+
+
+def einstufung_loeschen():
+    EinstufungsStand.query.filter_by(user_id=current_user.id).delete()
+    db.session.commit()
+    if hasattr(g, "_stand"):
+        del g._stand
+
+
 def lernweg():
     lw = Lernweg.query.filter_by(user_id=current_user.id).first()
     if not lw:
@@ -529,6 +642,24 @@ def aktuelles_level(chapter):
     return current_user.current_level
 
 
+def _bauform_staende(chapter, level):
+    """Alle Bauformstaende eines Kapitels und Levels — EINE Abfrage.
+
+    `bauform_stand()` holte jeden Stand einzeln. Beim Pruefen einer Antwort
+    wurde die Tabelle darum fuenfmal befragt, obwohl eine Abfrage alles
+    liefert. Auf einer entfernten Datenbank sind das vier Rundreisen zu viel.
+    """
+    if not hasattr(g, "_bfs"):
+        g._bfs = {}
+    schluessel = (chapter, level)
+    if schluessel not in g._bfs:
+        g._bfs[schluessel] = {
+            b.bauform: b for b in BauformStand.query
+            .filter_by(user_id=current_user.id, chapter=chapter, level=level)
+            .order_by(BauformStand.id)}
+    return g._bfs[schluessel]
+
+
 def bauform_stand(chapter, level, bauform):
     """Der Zaehlerstand einer Bauform — genau EIN Datensatz je Kombination.
 
@@ -543,14 +674,13 @@ def bauform_stand(chapter, level, bauform):
     `flush()` schiebt den neuen Datensatz in die laufende Transaktion, ohne
     sie abzuschliessen. Die naechste Abfrage findet ihn dann.
     """
-    bs = BauformStand.query.filter_by(
-        user_id=current_user.id, chapter=chapter, level=level,
-        bauform=bauform).order_by(BauformStand.id).first()
+    bs = _bauform_staende(chapter, level).get(bauform)
     if not bs:
         bs = BauformStand(user_id=current_user.id, chapter=chapter, level=level,
                           bauform=bauform, treffer=0, fehler=0, gemeistert=False)
         db.session.add(bs)
         db.session.flush()
+        _bauform_staende(chapter, level)[bauform] = bs
     return bs
 
 
@@ -599,8 +729,8 @@ def doppelte_bauformen_zusammenlegen():
 
 
 def gemeisterte(chapter, level):
-    return {b.bauform for b in BauformStand.query.filter_by(
-        user_id=current_user.id, chapter=chapter, level=level, gemeistert=True)}
+    return {nr for nr, b in _bauform_staende(chapter, level).items()
+            if b.gemeistert}
 
 
 def alle_bauformen(chapter, level):
@@ -751,8 +881,23 @@ def dashboard():
     g, ges, pct = netz_fortschritt(sicher)
     rest = restaufwand(sicher)
 
+    # ── Medaillen ────────────────────────────────────────────────────────
+    # Eine je vollstaendig abgeschlossenem Kapitel. Bewusst klein gehalten:
+    # eine Zahl in einem Kreis, mehr nicht. Grosse Belohnungssysteme haetten
+    # bei einer Studie ueber Adaptivitaet einen Haken — man wuesste hinterher
+    # nicht, ob die Anpassung gewirkt hat oder die Urkunde.
+    #
+    # Kapitel 16 zaehlt nicht mit: das sind die Mischaufgaben, die man nie
+    # «fertig» hat.
+    medaillen = [k for k in kapitel_liste
+                 if k["gesamt"] > 0 and k["fertig"] == k["gesamt"]
+                 and str(k["nummer"]) != "16"]
+
     return render_template(
         "dashboard.html",
+        medaillen=medaillen,
+        medaillen_gesamt=len([k for k in kapitel_liste
+                              if str(k["nummer"]) != "16"]),
         progress_map=progress_map,
         kapitel_liste=kapitel_liste,
         lernweg_stand=lw,
@@ -827,11 +972,11 @@ def lektion(chapter):
         session.get("task_open")
         and session.get("task_chapter") == chapter
         and session.get("task_level") == level
-        and session.get("aufgabe")
+        and aufgabe_laden()
     )
 
     if passend:
-        daten = session["aufgabe"]
+        daten = aufgabe_laden()
     else:
         bauform = naechste_bauform(chapter, level) if chapter in KAPITEL else None
         if chapter in KAPITEL and bauform is None:
@@ -841,7 +986,7 @@ def lektion(chapter):
             session["kernidee_zeigen"] = True
             session["kernidee_kapitel"] = chapter
         daten = neue_aufgabe_fuer(chapter, level, bauform)
-        session["aufgabe"]          = daten
+        aufgabe_speichern(daten)
         session["current_question"] = daten["frage"]
         session["current_solution"] = daten["loesung"]
         session["task_chapter"]     = chapter
@@ -982,20 +1127,29 @@ def level_ueberspringen(chapter):
     ks.offen = ""
     close_task()
 
-    if neu:
-        ks.level = neu
-        db.session.commit()
-        flash(f"Level {alt} übersprungen. Weiter mit Level {neu} — wenn es "
-              f"doch zu schwer wird, kommst du jederzeit zurück.", "info")
-        return redirect(url_for("lektion", chapter=chapter))
-
-    # Level C übersprungen: die Lektion ist durch.
-    ks.abgeschlossen = True
-    db.session.commit()
+    #: Wer überspringt, hat die LEKTION abgehakt, nicht bloss eine Stufe.
+    #: Vorher zählte nur der Sprung über Level C — man musste dreimal
+    #: klicken, und bis dahin blieb alles gesperrt, was diese Lektion
+    #: voraussetzt. Das ist genau das Gegenteil dessen, wofür der Knopf da
+    #: ist: er soll den Weg frei machen, nicht dreimal nachfragen.
     lw = lernweg()
     for lek, kap in SCHABLONE_FUER.items():
         if kap == chapter:
             lektion_fertig_melden(lw, lek)
+
+    if neu:
+        #: Das Level wandert trotzdem mit. Wer später zurückkommt, landet
+        #: dort, wo es interessant wird, und nicht wieder bei A.
+        ks.level = neu
+        ks.abgeschlossen = True
+        db.session.commit()
+        flash(f"Übersprungen. Die Lektion ist abgehakt und alles, was sie "
+              f"voraussetzt, ist offen — du kannst sie jederzeit auf Level "
+              f"{neu} nachholen.", "info")
+        return redirect(url_for("start"))
+
+    ks.abgeschlossen = True
+    db.session.commit()
     flash("Lektion übersprungen. Sie bleibt im Dashboard, falls du sie "
           "später doch üben willst.", "info")
     return redirect(url_for("start"))
@@ -1037,15 +1191,15 @@ def close_task():
     session["task_open"]  = False
     session["last_wrong"] = False
     session["task_tries"] = 0
-    session.pop("aufgabe", None)
-    session.pop("aufgabe", None)
+    aufgabe_speichern(None)
+    aufgabe_speichern(None)
 
 
 @app.route("/check", methods=["POST"])
 @login_required
 def check():
     user_input = request.form.get("antwort", "")
-    daten      = session.get("aufgabe")
+    daten      = aufgabe_laden()
     chapter    = request.form.get("chapter", "1.3")
 
     if not daten:
@@ -1340,10 +1494,10 @@ def einstufung():
     # Wer schon eingestuft ist und keinen laufenden Test hat, gehoert nicht
     # hierher. Ohne diese Zeile startet ein Klick auf den Link einen zweiten
     # Test und wirft den Plan weg, den der erste gerade erstellt hat.
-    if lw.eingestuft and not session.get("einstufung"):
+    if lw.eingestuft and not einstufung_laden():
         return redirect(url_for("start"))
 
-    e = Einstufung.aus_dict(session.get("einstufung") or {})
+    e = Einstufung.aus_dict(einstufung_laden())
 
     # Lektionen ohne Generator ueberspringen — in einer Schleife, nicht ueber
     # Redirects. Sonst laeuft der Browser bei zehn fehlenden Generatoren in
@@ -1352,18 +1506,51 @@ def einstufung():
     while lektion is not None and kapitel_fuer_lektion(lektion) is None:
         e.antwort(lektion, False)
         lektion = e.naechste()
-    session["einstufung"] = e.als_dict()
+    einstufung_speichern(e.als_dict())
 
     if lektion is None:
+        # ZUERST den Bericht bauen, DANN speichern.
+        #
+        # `bericht()` schreibt bei einem starken Ergebnis die Grundlagen
+        # gut — alles unter Lektion 5.1. Wurde vorher gespeichert, landete
+        # dieser Nachtrag nirgends, und der Schüler bekam als nächste
+        # Lektion 1.20 oder 2.8: eine Grundlage, die er längst kann, während
+        # Kapitel 15 bei ihm offen war. Genau das haben die Testpersonen
+        # gemeldet.
+        bericht = e.bericht()
+
         lw.setze_sicher(e.sicher)
         lw.eingestuft = True
+
+        # ── DORT ANFANGEN, WO ES GEHAKT HAT ──────────────────────────────
+        # `naechste_lektion` liefert die kleinste offene Nummer. Bei einem
+        # starken Schüler ist das eine Lektion, die er nur deshalb nicht
+        # bewiesen hat, weil sie nie gefragt wurde — während seine echte
+        # Lücke in Kapitel 12 liegt. Der Test hat sie gefunden, und dann
+        # schickt ihn die App woandershin.
+        #
+        # Darum: gibt es Lektionen, an denen er im Test tatsächlich
+        # gescheitert ist, beginnt er bei der ersten davon. Nur wenn er
+        # nirgends gescheitert ist, entscheidet die Reihenfolge.
+        # DIE REIHENFOLGE FOLGT DEM NETZ, NICHT DER FUNDSTELLE.
+        #
+        # Zwischenzeitlich begann der Schüler bei seiner ersten Lücke. Das
+        # klang richtig, ergab aber einen Sprung: erst Lektion 14.2, dann
+        # zurück auf 5.9, dann wieder aufwärts. Für den Lernenden sieht das
+        # nach Zufall aus, und es ist auch fachlich schlechter — was in 5.9
+        # fehlt, trägt bis 14.2 hinauf.
+        #
+        # Jetzt gilt wieder die Reihenfolge des Netzes: die kleinste offene
+        # Lektion. Bei einem starken Schüler sind Kapitel 1 bis 4
+        # gutgeschrieben, also beginnt er trotzdem weit oben — und seine
+        # Lücken liegen ohnehin im offenen Teil und kommen der Reihe nach.
         lw.aktuelle_lektion = naechste_lektion(e.sicher)
         db.session.commit()
         # Der Levelsprung: wer die Leitaufgabe auf B geloest hat, faengt in
         # den folgenden Kapiteln bei B an statt bei A.
         einstiegslevel_anwenden(e.einstiegslevel, e.sicher)
-        session.pop("einstufung", None)
-        session["einstufung_bericht"] = e.bericht()
+        einstufung_loeschen()
+        session["einstufung_bericht"] = bericht
         return redirect(url_for("einstufung_fertig"))
 
     kapitel = kapitel_fuer_lektion(lektion)
@@ -1377,7 +1564,7 @@ def einstufung():
     level = bestes_level(kapitel, e.naechstes_level())
     daten = leitaufgabe(kapitel, level)
     daten["einstufung_lektion"] = lektion
-    session["aufgabe"] = daten
+    aufgabe_speichern(daten)
     session["task_open"] = True
     session["task_chapter"] = kapitel
     session["task_level"] = level
@@ -1400,7 +1587,7 @@ def einstufung():
 @app.route("/einstufung/pruefen", methods=["POST"])
 @login_required
 def einstufung_pruefen():
-    daten = session.get("aufgabe") or {}
+    daten = aufgabe_laden() or {}
     lektion = daten.get("einstufung_lektion")
     if not lektion:
         return redirect(url_for("einstufung"))
@@ -1413,10 +1600,10 @@ def einstufung_pruefen():
     # Vertipper niemanden zu tief einstuft) — und dieselbe Aufgabe erschien
     # wieder. Wer eine Aufgabe nicht konnte, kam nicht mehr weiter.
     if request.form.get("kannnicht"):
-        e = Einstufung.aus_dict(session.get("einstufung") or {})
+        e = Einstufung.aus_dict(einstufung_laden())
         e.antwort(lektion, False)
-        session["einstufung"] = e.als_dict()
-        session.pop("aufgabe", None)
+        einstufung_speichern(e.als_dict())
+        aufgabe_speichern(None)
         return redirect(url_for("einstufung"))
 
     a = auswerten(request.form.get("antwort", ""), aufgabe_aus_session(daten))
@@ -1437,10 +1624,10 @@ def einstufung_pruefen():
         fehlerschluessel=a.fehlerschluessel))
     db.session.commit()
 
-    e = Einstufung.aus_dict(session.get("einstufung") or {})
+    e = Einstufung.aus_dict(einstufung_laden())
     e.antwort(lektion, a.zaehlt_als_richtig)
-    session["einstufung"] = e.als_dict()
-    session.pop("aufgabe", None)
+    einstufung_speichern(e.als_dict())
+    aufgabe_speichern(None)
     return redirect(url_for("einstufung"))
 
 
@@ -1666,7 +1853,7 @@ def probe():
         kapitel = kapitel_fuer_lektion(p.lektion())
     daten = neue_aufgabe_fuer(kapitel, "C")
     daten["probe_teilaufgabe"] = p.aktuelle()
-    session["aufgabe"] = daten
+    aufgabe_speichern(daten)
 
     return render_template(
         "probe.html", frage=daten["frage"],
@@ -1681,7 +1868,7 @@ def probe():
 @app.route("/probe/pruefen", methods=["POST"])
 @login_required
 def probe_pruefen():
-    daten = session.get("aufgabe") or {}
+    daten = aufgabe_laden() or {}
     if "probe_teilaufgabe" not in daten:
         return redirect(url_for("probe"))
     a = auswerten(request.form.get("antwort", ""), aufgabe_aus_session(daten))
@@ -1703,7 +1890,7 @@ def probe_pruefen():
     p = Probelauf.aus_dict(session.get("probe") or {})
     p.antwort(a.zaehlt_als_richtig)
     session["probe"] = p.als_dict()
-    session.pop("aufgabe", None)
+    aufgabe_speichern(None)
     return redirect(url_for("probe"))
 
 
@@ -1763,7 +1950,7 @@ def ziel_erreicht():
 def markieren():
     """Stern beim Ueben: Aufgabe fuer die Lehrperson merken und ueberspringen."""
     chapter = request.form.get("chapter", "1.3")
-    daten   = session.get("aufgabe") or {}
+    daten   = aufgabe_laden() or {}
     frage   = daten.get("frage") or session.get("current_question")
     loesung = daten.get("loesung")
 
@@ -1995,6 +2182,41 @@ def passwort_aendern():
             return redirect(url_for("dashboard"))
 
     return render_template("passwort_aendern.html")
+
+
+@app.route("/neu-starten", methods=["GET", "POST"])
+@login_required
+def neu_starten():
+    """Den eigenen Lernstand loeschen und wieder beim Starttest beginnen.
+
+    WARUM ALS FUNKTION UND NICHT PER DATENBANKBEFEHL: Wer den Test nochmals
+    machen will, muesste sonst in der Datenbank herumloeschen — mit dem
+    Risiko, ein vergessenes WHERE zu tippen und alle Konten zu treffen. Hier
+    kann nur das eigene Konto zurueckgesetzt werden, weil `current_user.id`
+    fest verdrahtet ist. Es gibt keinen Weg, damit fremde Daten anzufassen.
+
+    Das KONTO bleibt bestehen — Anmeldedaten und Serie aendern sich nicht.
+    Weg ist der Lernweg: Einstufung, Fortschritt, Kapitelstaende, Versuche.
+    """
+    if request.method == "POST":
+        uid = current_user.id
+        for tabelle in (TaskAttempt, BauformStand, KapitelStand,
+                        EinstufungsStand, Progress, MarkedTask, Lernweg):
+            tabelle.query.filter_by(user_id=uid).delete()
+        current_user.xp = 0
+        current_user.current_level = "A"
+        # NICHT auf None setzen: das Dashboard baut daraus eine Adresse und
+        # bricht sonst mit BuildError ab. Leerer Text ist genauso «nichts»,
+        # aber die Vorlage kann ihn abfragen.
+        current_user.current_chapter = ""
+        db.session.commit()
+        session.clear()
+        login_user(User.query.get(uid))
+        flash("Dein Lernstand wurde zurückgesetzt. Der Starttest beginnt "
+              "von vorne.", "success")
+        return redirect(url_for("start"))
+
+    return render_template("neu_starten.html")
 
 
 # ── Start ──────────────────────────────────────────────────────────────────────

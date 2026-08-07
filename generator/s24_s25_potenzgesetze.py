@@ -344,6 +344,65 @@ def kandidaten(muster, glieder, loesung):
                 f"Beim Addieren wird gezählt, nicht gerechnet — die Hochzahl "
                 f"bleibt stehen: {zeige(loesung)}."))
 
+    # ── Allgemeine Kandidaten ────────────────────────────────────────────
+    #
+    # WARUM ES SIE BRAUCHT: Die Eintraege oben treffen jeweils EINEN
+    # bestimmten Denkfehler und greifen darum nur bei der passenden
+    # Aufgabenform. Gemessen hatten neun der zwoelf Bauformen dieser
+    # Schablone am Ende genau EINEN Katalogeintrag — verlangt sind fuenf.
+    # Ein Schueler bekam dort bei fast jedem Fehler nur «falsch» statt
+    # einer Erklaerung, und das ausgerechnet in Kapitel 7, an dem
+    # Erhebungsaufgabe 3c haengt.
+    #
+    # In der urspruenglichen Schablone fiel das nicht auf: ueber zwoelf
+    # Bauformen gemittelt ergab sich 1,6 — knapp ueber der Schwelle. Erst
+    # beim Aufteilen nach Lektionen wurde es sichtbar.
+    #
+    # Die folgenden Kandidaten sind bewusst grob. Sie sagen nicht, WELCHER
+    # Denkfehler vorlag, sondern nur, in welche Richtung es danebenging.
+    # Das ist weniger wert als ein gezielter Eintrag, aber deutlich mehr
+    # als nichts — und `siebe` wirft sie weg, sobald ein gezielter Eintrag
+    # denselben Wert hat.
+    ziel = sympify(loesung)
+    if not variablen:
+        # Zahlenbasis — «2⁴ : 2²». Hier gibt es keine Variable, an der man
+        # die Hochzahl verschieben koennte; die Kandidaten muessen darum
+        # rein rechnerisch sein.
+        for name, wert, text in [
+            ("um_eins_zu_gross", ziel + 1, "Rechne nochmals nach."),
+            ("um_eins_zu_klein", ziel - 1, "Rechne nochmals nach."),
+            ("verdoppelt", ziel * 2, "Das Ergebnis ist doppelt so gross."),
+            ("halbiert", ziel / 2, "Das Ergebnis ist halb so gross."),
+            ("quadriert", ziel ** 2 if abs(ziel) < 100 else None,
+             "Hier wird nicht nochmals potenziert."),
+        ]:
+            try:
+                if wert is not None:
+                    raus.append(F(name, wert, text))
+            except Exception:                          # noqa: BLE001
+                pass
+        return raus
+
+    if variablen:
+        v = variablen[0]
+        for name, wert, text in [
+            ("hochzahl_eins_zu_viel", ziel * v,
+             "Die Hochzahl ist um eins zu gross. Zähl nochmals nach."),
+            ("hochzahl_eins_zu_wenig", ziel / v,
+             "Die Hochzahl ist um eins zu klein. Zähl nochmals nach."),
+            ("koeffizient_verdoppelt", ziel * 2,
+             "Die Zahl vor der Variablen stimmt nicht."),
+            ("vorzeichen_gedreht", -ziel,
+             "Das Vorzeichen stimmt nicht."),
+            ("koeffizient_um_eins", ziel + ziel / 2 if ziel != 0 else None,
+             "Die Zahl vor der Variablen stimmt nicht."),
+        ]:
+            try:
+                if wert is not None:
+                    raus.append(F(name, wert, text))
+            except Exception:                          # noqa: BLE001
+                pass
+
     return raus
 
 
@@ -475,10 +534,25 @@ def bf24_3(p):
         #: ((z²)²)² — die Verschachtelung braucht einen eigenen Text.
         innen = FP(Integer(1), ((v1, 2),), klammer=True, aussen=2)
         teil = Roh(f"({innen.text}){hoch(2)}", v1 ** 8)
+        # Ein `Roh`-Teil traegt keine Bausteine, aus denen `kandidaten()`
+        # weitere Fehler ableiten koennte — hier stand darum genau EIN
+        # Eintrag im Katalog. Die uebrigen vier werden von Hand gesetzt.
         return bau("+", [K(teil)], extra=[
             F("alle_addiert", v1 ** 6,
               "Auch bei zwei Klammern werden die Hochzahlen multipliziert: "
               "2 · 2 · 2 = 8."),
+            F("nur_innere_klammer", v1 ** 4,
+              "Die äussere Klammer zählt auch: nach (a²)² = a⁴ kommt noch "
+              "einmal hoch zwei."),
+            F("hochzahl_eins_zu_viel", v1 ** 9,
+              "2 · 2 · 2 ist 8, nicht 9."),
+            F("hochzahl_eins_zu_wenig", v1 ** 7,
+              "2 · 2 · 2 ist 8, nicht 7."),
+            F("verdoppelt", 2 * v1 ** 8,
+              "Vor der Variablen steht keine Zahl."),
+            #: v1**16 faellt am Filter `exponent_hoechstens(10)` durch und
+            #: verwarf die ganze Aufgabe. Ein Katalogeintrag darf die
+            #: Ziehung nicht scheitern lassen — darum bleibt er weg.
         ], loesung=v1 ** 8)
     aussen = max(e2, 2)
     #: Auf B traegt das Vorzeichen die Stufe: (−u⁴)² ist u⁸, das Minus

@@ -50,6 +50,17 @@ from .s41_bruch_klammer import S41
 from .s42_s44_faktorisieren import S42, S43, S44
 from .s11_ausmultiplizieren import S38
 from .s39_s40_ausmultiplizieren import S39, S40
+from .k1_teil1 import S1a, S1b, S1c, S1d, S2a, S2b
+from .lektionen_getrennt import (A_VARIABLE, A_ZAHL, G_BRUCH, G_KLAMMER,
+                                 P_GETEILT, P_HOCH, P_MAL, P_STRICH,
+                                 T_ADD, T_SUB, V_ADD, V_SUB,
+                                 W_GETEILT, W_PUNKT, W_STRICH)
+from .k2_lektionen import (K2_1, K2_2, K2_3, K2_4, K2_5, K2_6,
+                           K2_7, K2_8, K2_9, K2_10, K2_11,
+                           K2_12, K2_13)
+from .k1_teil3 import (S4a, S4b, S4c, S5a, S5b, S5c,
+                       S6a, S6b, S6c, S6d)
+from .k1_teil2 import S3 as K1S3
 from .s1_s3_vorzeichen import S1, S3
 from .s5_s6_punkt_reihenfolge import S5, S6
 from .k1_mischung import M1
@@ -113,20 +124,41 @@ M16 = mischung("M16", "Gemischte Gleichungen", "16.2",
 #: Kapitelnummer in der App  ->  Schablone
 #: Die Nummern folgen deiner Lektionslandkarte.
 KAPITEL = {
+    # Kapitel 2 — eine Schablone je Lektion (k2_lektionen.py)
+    "2.1": K2_1,
+    "2.2": K2_2,
+    "2.3": K2_3,
+    "2.4": K2_4,
+    "2.5": K2_5,
+    "2.6": K2_6,
+    "2.7": K2_7,
+    "2.8": K2_8,
+    "2.9": K2_9,
+    "2.10": K2_10,
+    "2.11": K2_11,
+    "2.12": K2_12,
+    "2.13": K2_13,
     # Kapitel 1 — Vorzeichen und Grundoperationen. Ohne .docx-Schablone
     # gebaut, aus den Lektionstiteln in netz_daten.py.
-    "1.1": S1,      # Vorzeichen und Zahlengerade            1.1 - 1.4
-    "1.5": S3,      # Addieren und Subtrahieren              1.5 - 1.9
-    "1.10": S5,     # Multiplizieren und Dividieren          1.10 - 1.15
-    "1.16": S6,     # Reihenfolge der Operationen            1.16 - 1.19
+    "1.1": S1a,     # Positive und negative Zahlen verstehen  1.1
+    "1.2": S1b,     # Zahlen auf der Zahlengeraden             1.2
+    "1.3": S1c,     # Vorzeichen und Operationszeichen         1.3
+    "1.4": S1d,     # Strich- und Punktoperatoren erkennen     1.4
+    "1.5": S2a,     # Addition mit positiven Zahlen            1.5
+    "1.6": S2b,     # Subtraktion mit positiven Zahlen         1.6
+    "1.7": K1S3,      # Addition und Subtraktion mit negativen Zahlen 1.7 - 1.9
+    "1.10": S4a,    # Multiplikation mit positiven Zahlen      1.10
+    "1.11": S4b,    # Multiplikation, unterschiedliche VZ      1.11
+    "1.12": S4c,    # Multiplikation zweier negativer Zahlen   1.12
+    "1.13": S5a,    # Division mit positiven Zahlen            1.13
+    "1.14": S5b,    # Division, unterschiedliche VZ            1.14
+    "1.15": S5c,    # Division zweier negativer Zahlen         1.15
+    "1.16": S6a,    # Punkt vor Strich ohne Klammern           1.16
+    "1.17": S6b,    # Mehrere Punktoperationen                 1.17
+    "1.18": S6c,    # Mehrere Strichoperationen                1.18
+    "1.19": S6d,    # Gemischte Punkt- und Strichoperationen   1.19
     "1.20": M1,     # Gemischt, siehe generator/k1_mischung.py
     # Kapitel 2 — Brueche. Quelle: Lehrmittel A, Kapitel 1.5, Seiten 45-60.
-    "2.1": S7,      # Kuerzen und Erweitern                  2.1 - 2.2
-    "2.3": S8,      # Addition und Subtraktion               2.3 - 2.6
-    "2.7": S9,      # Brueche mit ganzen Zahlen              2.7 - 2.8
-    "2.9": S10K2,   # Multiplikation von Bruechen            2.9 · 2.11
-    "2.10": S11K2,  # Division von Bruechen                  2.10
-    "2.12": S58,    # Doppelbrueche und Gemischtes           2.12 - 2.13
     # Kapitel 6 — S20 und S21 haben S2 hier abgeloest.
     "6.1": S20,     # Punkt vor Strich mit Variablen        6.1 – 6.4
     "6.5": S21,     # Ausrechnen und zusammenfassen         6.5 – 6.7 — Erhebung 2a
@@ -199,6 +231,19 @@ KAPITEL = {
     # /gemischt und ueber die Vertiefung, und erst dann, wenn die beteiligten
     # Kapitel sicher sind.
     "16.1": S60,    # zwei bis drei Kapitel in einer Aufgabe
+    # ── Nachtrag: sieben Lektionen, deren Aufgaben nicht zu ihrem
+    # Titel passten. Diese Zeilen stehen ganz UNTEN, weil bei einem
+    # doppelten Schluessel der spaetere Eintrag gewinnt — oben
+    # haetten die alten Zuordnungen sie wieder ueberschrieben.
+    # Sieben Lektionen, deren Aufgaben nicht zum Titel passten
+    # (siehe generator/lektionen_getrennt.py)
+    "7.5": P_MAL, "7.6": P_GETEILT, "7.7": P_STRICH, "7.8": P_HOCH,
+    "8.4": W_STRICH, "8.5": W_PUNKT, "8.6": W_GETEILT,
+    "13.7": G_KLAMMER, "13.9": G_BRUCH,
+    "3.7": V_ADD, "3.8": V_SUB,
+    "4.2": T_ADD, "4.3": T_SUB,
+    "12.2": A_ZAHL, "12.3": A_VARIABLE,
+
 }
 
 #: Welche Kapitel muessen sitzen, damit eine Mischaufgabe ueberhaupt fair ist?

@@ -1009,6 +1009,24 @@ FUER_KAPITEL: dict[str, Animation] = {
 }
 
 
+# Kapitel 1 liegt in einer eigenen Datei — die Animationen dort bauen auf
+# einer Zahlengeraden und einem Lift auf und gehoeren nicht zwischen die
+# Termumformungen. Der Import steht UNTEN, weil theorie_k1 aus dieser Datei
+# importiert; oben gaebe es einen Ringschluss.
+#
+# OHNE DIESE ZWEI ZEILEN gibt es fuer Kapitel 1 keine Theorie. Die Datei
+# theorie_k1.py kann vollstaendig vorhanden sein — sie wird schlicht nie
+# gelesen, und `fuer("1.1")` gibt None zurueck. Auf der Lektionsseite fehlt
+# dann der ganze Theoriebalken, und man sucht den Fehler bei der Animation
+# statt bei der Anmeldung.
+from .theorie_k1 import FUER_KAPITEL_K1        # noqa: E402
+FUER_KAPITEL.update(FUER_KAPITEL_K1)
+
+# Dasselbe fuer Kapitel 2 — die Brueche haben ihr eigenes Bild, den Balken.
+from .theorie_k2 import FUER_KAPITEL_K2        # noqa: E402
+FUER_KAPITEL.update(FUER_KAPITEL_K2)
+
+
 def fuer(kapitel: str) -> dict | None:
     a = FUER_KAPITEL.get(kapitel)
     return a.als_dict() if a else None

@@ -173,6 +173,18 @@
        jederzeit zurueckkann und damit ein zweiter Aufruf nichts kaputt
        macht.
     --------------------------------------------------------------- */
+    /* Aufgaben, die aus WORTEN bestehen — «Gegenzahl von 7», «Start bei −3,
+       5 Schritte nach rechts» — dürfen nicht durch den Formelsatz. KaTeX
+       setzt jeden Buchstaben kursiv und als eigene Variable; aus «Gegenzahl»
+       wird eine Kette aus zehn schrägen Einzelbuchstaben mit Lücken. Lesbar
+       ist das nicht.
+
+       Erkannt wird es an einem Wort mit drei oder mehr Buchstaben. Variablen
+       heissen a, b, x, uv — nie «von» oder «Schritte». */
+    function istText(roh) {
+        return /[A-Za-zÄÖÜäöüß]{3,}/.test(roh);
+    }
+
     function formelSetzen(el) {
         if (!el) { return; }
         if (typeof katex === "undefined") { return; }   // ohne KaTeX: Rohtext
@@ -184,11 +196,22 @@
         }
         if (!roh) { el.innerHTML = ""; return; }
 
+
+
         // Ein angehaengter Klartext wie «für m = 4» wird nicht gesetzt.
         var zusatz = "";
         var m = roh.match(/^(.*?)\s+(f\u00fcr\s.*)$/);
         var formel = roh;
         if (m) { formel = m[1]; zusatz = m[2]; }
+
+        // ERST den «für …»-Teil abtrennen, DANN auf Wörter prüfen. Sonst
+        // gilt «m + 4   für m = 4» als Wortaufgabe, obwohl der zu setzende
+        // Teil «m + 4» eine ganz normale Formel ist.
+        if (istText(formel)) {
+            el.classList.add("wortaufgabe");
+            el.textContent = roh;
+            return;
+        }
 
         try {
             katex.render(nachLatex(formel), el, {
@@ -364,6 +387,16 @@
     overflow: hidden;          /* nichts soll aus der Karte ragen */
 }
 .formel .katex { font-size: 1em; }
+/* Wortaufgaben lesen sich wie die Anleitung darüber: normal, nicht
+   riesig, nicht kursiv. Die Zahl steht im Satz, nicht darunter. */
+.formel.wortaufgabe {
+    font-size: 1.35rem;
+    font-weight: 600;
+    line-height: 1.45;
+    white-space: normal;
+    color: #2D3748;
+}
+
 .formel-zusatz {
     font-size: 0.55em;
     font-weight: 500;

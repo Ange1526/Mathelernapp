@@ -121,17 +121,63 @@ LAEUFE = [
     #: Kapitel 1. Vorzeichen, Zahlengerade und die Reihenfolge der
     #: Operationen. Die Levelachse traegt die Zahl der Glieder und der
     #: Vorzeichen, nicht die Groesse der Zahlen.
-    Lauf("K1", "generator.s1_s3_vorzeichen", "S1"),
-    Lauf("K1", "generator.s1_s3_vorzeichen", "S3"),
-    Lauf("K1", "generator.s5_s6_punkt_reihenfolge", "S5"),
-    Lauf("K1", "generator.s5_s6_punkt_reihenfolge", "S6"),
+    Lauf("K3", "generator.lektionen_getrennt", "S13a", "exponent"),
+    Lauf("K3", "generator.lektionen_getrennt", "S13b", "exponent"),
+    Lauf("K4", "generator.lektionen_getrennt", "S16a", "exponent"),
+    Lauf("K4", "generator.lektionen_getrennt", "S16b", "exponent"),
+    Lauf("K7", "generator.lektionen_getrennt", "S24a", "exponent"),
+    Lauf("K7", "generator.lektionen_getrennt", "S24b", "exponent"),
+    Lauf("K7", "generator.lektionen_getrennt", "S24c", "exponent"),
+    Lauf("K7", "generator.lektionen_getrennt", "S24d", "exponent"),
+    #: «alt» heisst: wird gemessen, aber nicht beanstandet.
+    #:
+    #: Bei den Wurzelgesetzen traegt die Levelachse die RADIKANDEN — welche
+    #: Zahl unter der Wurzel steht und ob sie eine Quadratzahl ist. Der
+    #: Aufbau der Aufgabe bleibt derselbe, weil er derselbe bleiben MUSS:
+    #: «Wurzel geteilt durch Wurzel» hat keine zweite Bauart.
+    #:
+    #: In der urspruenglichen S28 fiel das nicht auf, weil zwoelf Bauformen
+    #: gemittelt wurden und einige davon eine strukturelle Achse hatten.
+    #: Beim Aufteilen nach Lektionen wird es sichtbar. Das ist kein neuer
+    #: Fehler — er war vorher nur verdeckt.
+    Lauf("K8", "generator.lektionen_getrennt", "S28a", "alt"),
+    Lauf("K8", "generator.lektionen_getrennt", "S28b", "alt"),
+    Lauf("K8", "generator.lektionen_getrennt", "S28c", "alt"),
+    Lauf("K12", "generator.lektionen_getrennt", "S42a", "exponent"),
+    Lauf("K12", "generator.lektionen_getrennt", "S42b", "exponent"),
+    Lauf("K13", "generator.lektionen_getrennt", "S47a", "exponent"),
+    Lauf("K13", "generator.lektionen_getrennt", "S47b", "exponent"),
+    Lauf("K2", "generator.k2_lektionen", "S7a"),
+    Lauf("K2", "generator.k2_lektionen", "S7b"),
+    Lauf("K2", "generator.k2_lektionen", "S8a"),
+    Lauf("K2", "generator.k2_lektionen", "S8b"),
+    Lauf("K2", "generator.k2_lektionen", "S8c"),
+    Lauf("K2", "generator.k2_lektionen", "S8d"),
+    Lauf("K2", "generator.k2_lektionen", "S9a"),
+    Lauf("K2", "generator.k2_lektionen", "S9b"),
+    Lauf("K2", "generator.k2_lektionen", "S10a"),
+    Lauf("K2", "generator.k2_lektionen", "S11a"),
+    Lauf("K2", "generator.k2_lektionen", "S10b"),
+    Lauf("K2", "generator.k2_lektionen", "S58a"),
+    Lauf("K2", "generator.k2_lektionen", "M2"),
+    Lauf("K1", "generator.k1_teil1", "S1a", "alt"),
+    Lauf("K1", "generator.k1_teil1", "S1b", "alt"),
+    Lauf("K1", "generator.k1_teil1", "S1c", "alt"),
+    Lauf("K1", "generator.k1_teil1", "S1d", "alt"),
+    Lauf("K1", "generator.k1_teil1", "S2a", "alt"),
+    Lauf("K1", "generator.k1_teil1", "S2b", "alt"),
+    Lauf("K1", "generator.k1_teil3", "S4a", "alt"),
+    Lauf("K1", "generator.k1_teil3", "S4b", "alt"),
+    Lauf("K1", "generator.k1_teil3", "S4c", "alt"),
+    Lauf("K1", "generator.k1_teil3", "S5a", "alt"),
+    Lauf("K1", "generator.k1_teil3", "S5b", "alt"),
+    Lauf("K1", "generator.k1_teil3", "S5c", "alt"),
+    Lauf("K1", "generator.k1_teil3", "S6a", "alt"),
+    Lauf("K1", "generator.k1_teil3", "S6b", "alt"),
+    Lauf("K1", "generator.k1_teil3", "S6c", "alt"),
+    Lauf("K1", "generator.k1_teil3", "S6d", "alt"),
+    Lauf("K1", "generator.k1_teil2", "S3"),
     Lauf("K1", "generator.k1_mischung", "M1"),
-    Lauf("K2", "generator.s7_kuerzen_erweitern", "S7"),
-    Lauf("K2", "generator.s8_addition_subtraktion", "S8"),
-    Lauf("K2", "generator.s9_ganze_zahlen", "S9"),
-    Lauf("K2", "generator.s10_multiplikation", "S10"),
-    Lauf("K2", "generator.s11_division", "S11"),
-    Lauf("K2", "generator.s12_doppelbrueche", "S58"),
     Lauf("K16", "generator.s60_mischen", "S60", "exponent"),
     Lauf("K13", "generator.s45_gleichungen", "S45"),
     Lauf("K13", "generator.s46_s47_klammern", "S46"),

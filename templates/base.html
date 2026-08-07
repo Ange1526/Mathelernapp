@@ -124,10 +124,17 @@
 <body>
 
     <header class="header">
-        <div class="logo-area">
+        {# Das Logo fuehrt zurueck zur Lernreise — auf JEDER Seite.
+           Vorher hatten Starttest, Probe und die Abschlussseiten keinen Weg
+           zurueck; man kam nur ueber den Zurueck-Knopf des Browsers wieder
+           heraus, und der schickt mitten in einen abgeschickten Test. #}
+        <a href="{{ url_for('dashboard') if current_user.is_authenticated
+                   else url_for('index') }}"
+           class="logo-area" style="text-decoration:none; color:inherit;"
+           title="Zur Lernreise">
             <div class="logo-square">Σ</div>
             <div class="logo-text">AlgebraLernen</div>
-        </div>
+        </a>
 
         <div class="user-stats">
             {% if current_user.is_authenticated %}
@@ -140,6 +147,7 @@
                 </div>
                 
                 <div class="avatar-area">
+                    <a href="{{ url_for('neu_starten') }}" style="text-decoration: none; color: var(--text-medium); font-size: 0.9rem; margin-right: 14px;">Neu starten</a>
                     <a href="{{ url_for('logout') }}" style="text-decoration: none; color: var(--text-medium); font-size: 0.9rem;">Logout</a>
                 </div>
             {% else %}

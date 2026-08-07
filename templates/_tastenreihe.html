@@ -15,6 +15,15 @@
   `name="antwort"` tragen — beides wird gefunden.
 #}
 <div class="tastenreihe" role="group" aria-label="Sonderzeichen einfügen">
+  {# MINUS ZUERST. Eine Testperson meldete: «Ich kann über Handy kein
+     Minuszeichen eingeben.» Auf vielen Handytastaturen liegt das Minus
+     hinter einer zweiten Ebene oder fehlt in der Zahlenansicht ganz — und
+     ohne Minus ist die halbe Algebra unerreichbar. Es gehört darum an die
+     erste Stelle, noch vor die Wurzel. #}
+  <button type="button" class="taste" data-ein="-" title="minus"
+          data-formel="-">−</button>
+  <button type="button" class="taste" data-ein="+" title="plus"
+          data-formel="+">+</button>
   <button type="button" class="taste" data-ein="√(" data-zu=")" title="Wurzel"
           data-formel="\sqrt{\;\;}">√( )</button>
   <button type="button" class="taste" data-ein="^2"  title="hoch 2"
@@ -23,7 +32,12 @@
           data-formel="x^{3}">x³</button>
   <button type="button" class="taste" data-ein="^"   title="hoch"
           data-formel="x^{\square}">x^</button>
-  <button type="button" class="taste" data-ein="/"   title="Bruchstrich"
+  {# Die Bruchtaste setzt jetzt BEIDE Klammern, wie die Wurzeltaste.
+     Ohne sie bindet der Schrägstrich nur das letzte Zeichen: «x+2/3» ist
+     x + 2/3, nicht (x+2)/3. Wer den Unterschied nicht kennt, tippt die
+     richtige Rechnung und bekommt sie als falsch zurück. Der Cursor
+     landet in der ERSTEN Klammer, weil dort der Zähler hingehört. #}
+  <button type="button" class="taste" data-bruch="1" title="Bruchstrich"
           data-formel="\frac{a}{b}">a/b</button>
   <button type="button" class="taste" data-ein="*"   title="mal"
           data-formel="\cdot">·</button>
@@ -95,7 +109,21 @@
             const markiert = f.value.slice(a, b);
             const nachher = f.value.slice(b);
 
-            if (t.dataset.ersetzen) {
+            if (t.dataset.bruch) {
+                var vorBruch = f.value.slice(0, f.selectionStart);
+                var imBruch  = f.value.slice(f.selectionStart, f.selectionEnd);
+                var nachBruch = f.value.slice(f.selectionEnd);
+                var zielBruch;
+                if (imBruch) {
+                    // Markiertes wird zum Zähler, der Cursor in den Nenner.
+                    f.value = vorBruch + "(" + imBruch + ")/()" + nachBruch;
+                    zielBruch = vorBruch.length + imBruch.length + 4;
+                } else {
+                    f.value = vorBruch + "()/()" + nachBruch;
+                    zielBruch = vorBruch.length + 1;
+                }
+                f.setSelectionRange(zielBruch, zielBruch);
+            } else if (t.dataset.ersetzen) {
                 // Ein ganzes Wort als Antwort: alles andere wird ersetzt.
                 // «3 keine Lösung» waere Unsinn und kaeme als Eingabefehler
                 // zurueck.

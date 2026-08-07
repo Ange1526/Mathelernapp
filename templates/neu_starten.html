@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="lektion-wrapper" style="padding:40px 20px;">
+  <div class="task-card" style="max-width:560px; margin:0 auto;">
+    <h2>Von vorne beginnen?</h2>
+
+    <p>Damit wird <strong>dein</strong> Lernstand gelöscht — und nur deiner.
+       Andere Konten sind nicht betroffen.</p>
+
+    <div class="hint-box">
+      <div class="hint-box-title">Das wird gelöscht</div>
+      <div class="hint-box-text">
+        Das Ergebnis des Starttests, dein persönlicher Plan, alle
+        abgeschlossenen Lektionen, der Fortschritt in den Aufgabenarten und
+        die gelösten Aufgaben.
+      </div>
+    </div>
+
+    <div class="hint-box">
+      <div class="hint-box-title">Das bleibt</div>
+      <div class="hint-box-text">
+        Dein Konto mit Benutzername und Passwort. Du musst dich nicht neu
+        registrieren — nach dem Zurücksetzen beginnt einfach der Starttest
+        von vorne.
+      </div>
+    </div>
+
+    <p style="color:#822727;"><strong>Das lässt sich nicht rückgängig
+       machen.</strong></p>
+
+    <form action="{{ url_for('neu_starten') }}" method="POST"
+          style="margin-top:24px;">
+      <button type="submit" class="btn-star">Ja, alles zurücksetzen</button>
+    </form>
+
+    <a href="{{ url_for('dashboard') }}" class="back-link"
+       style="display:inline-block; margin-top:16px;">Nein, zurück</a>
+  </div>
+</div>
+{% endblock %}

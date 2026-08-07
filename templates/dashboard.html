@@ -159,6 +159,33 @@
     .chapters-grid.fein .chapter-num { margin-bottom: 12px; font-size: 0.85rem; padding: 5px 9px; }
     .chapters-grid.fein .chapter-title { font-size: 0.9rem; margin-bottom: 10px; line-height: 1.35; }
     .chapter-card.gesperrt { opacity: 0.45; }
+
+    /* Medaillen */
+    .medaillen-reihe {
+        background: white;
+        border-radius: 24px;
+        padding: 20px 24px;
+        margin-bottom: 24px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+    }
+    .medaillen-titel {
+        font-weight: 700; color: #2D3748; margin-bottom: 14px;
+        display: flex; justify-content: space-between; align-items: baseline;
+    }
+    .medaillen-zahl { font-size: 0.85rem; font-weight: 500; color: #718096; }
+    .medaillen { display: flex; flex-wrap: wrap; gap: 8px; }
+    .medaille {
+        width: 38px; height: 38px; border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        font-weight: 700; font-size: 0.95rem;
+        background: #EDF2F7; color: #A0AEC0;
+        border: 2px solid #E2E8F0;
+    }
+    .medaille.verdient {
+        background: linear-gradient(135deg, #F6AD55 0%, #ECC94B 100%);
+        color: #fff; border-color: #ED8936;
+        box-shadow: 0 2px 6px rgba(237,137,54,0.35);
+    }
     /* Vertiefung: kein Teil des Wegs, darum ohne Fortschrittsbalken und
        mit gestricheltem Rand — sichtbar anders als eine Lektion. */
     .chapter-card.vertiefung { border: 1px dashed #9262C4; }
@@ -178,7 +205,16 @@
               <a href="{{ url_for('lernen') }}" class="btn-continue">Jetzt weitermachen</a>
             {% else %}
               <p>Bereit für die nächste Mathe-Challenge?</p>
+              {# Ohne aktuelles Kapitel gibt es keine Adresse fuer «lektion»,
+                 und Flask bricht mit BuildError ab — die ganze Lernreise war
+                 dann unerreichbar. Passiert nach dem Zuruecksetzen und bei
+                 jedem frisch angelegten Konto. «lernen» findet die richtige
+                 Lektion selbst. #}
+              {% if current_user.current_chapter %}
               <a href="{{ url_for('lektion', chapter=current_user.current_chapter) }}" class="btn-continue">Jetzt weitermachen</a>
+              {% else %}
+              <a href="{{ url_for('lernen') }}" class="btn-continue">Jetzt weitermachen</a>
+              {% endif %}
             {% endif %}
             {% if gemischt_moeglich %}
               <a href="{{ url_for('gemischt') }}" class="btn-continue"
@@ -198,7 +234,28 @@
             <span class="kapitel-name">{{ kap.titel }}</span>
             <span class="kapitel-zaehler">{{ kap.fertig }} von {{ kap.gesamt }} sicher</span>
         </div>
-        <div class="chapters-grid fein">
+            {# ── Medaillensammlung ──────────────────────────────────────────────
+       Eine Medaille je vollstaendig abgeschlossenem Kapitel. Die noch
+       offenen stehen blass daneben — so sieht man, was es zu holen gibt,
+       ohne dass es nach Mahnung aussieht. #}
+    <div class="medaillen-reihe">
+        <div class="medaillen-titel">
+            Deine Medaillen
+            <span class="medaillen-zahl">{{ medaillen|length }} von {{ medaillen_gesamt }}</span>
+        </div>
+        <div class="medaillen">
+            {% for k in kapitel_liste %}
+            {% if k.nummer|string != "16" %}
+            <div class="medaille{% if k.fertig == k.gesamt and k.gesamt > 0 %} verdient{% endif %}"
+                 title="Kapitel {{ k.nummer }}{% if k.titel %} · {{ k.titel }}{% endif %} — {{ k.fertig }} von {{ k.gesamt }} Lektionen">
+                {{ k.nummer }}
+            </div>
+            {% endif %}
+            {% endfor %}
+        </div>
+    </div>
+
+<div class="chapters-grid fein">
             {% for lek in kap.lektionen %}
 
                 {% if lek.zustand == 'fertig' %}

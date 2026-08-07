@@ -65,7 +65,7 @@ MAX_AUFGABEN = 30
 
 #: Niveau -> Obergrenze. Wer unten steht, wird nicht mit Aufgaben zugedeckt,
 #: die er ohnehin nicht löst.
-GRENZE = {0: 16, 1: 22, 2: 30, 3: 30}
+GRENZE = {0: 12, 1: 20, 2: 27, 3: 30}
 
 #: So viele Aufgaben werden mindestens gestellt, auch wenn rechnerisch schon
 #: alles gutgeschrieben wäre. Sonst kommt ein starker Schüler nach vier
@@ -92,7 +92,7 @@ STREU_STELLEN = (0.0, 0.15, 0.35, 0.6, 0.85)
 FEIN_AB_PROZENT = 70
 
 #: Höchstzahl Sonden im Feinschliff.
-FEIN_SONDEN = 8
+FEIN_SONDEN = 10
 
 #: Niveau 0 bis 3 — die laufende Schätzung. Startet in der Mitte.
 NIVEAU_START = 2
@@ -145,14 +145,40 @@ class Strang:
         return f"<Strang {self.nr}: {self.tief}…{self.hoch}>"
 
 
+#: Kapitel, die im Einstufungstest NICHT gefragt werden.
+#:
+#: Kapitel 1 und 2 sind Grundschulstoff: Gegenzahl, Zahlengerade, Brüche
+#: kürzen. Drei Gründe, sie herauszunehmen:
+#:
+#: 1. Sie sind keine Diagnose. Wer Bruchgleichungen löst, kann die
+#:    Gegenzahl. Wer sie nicht kann, scheitert vorher an allem anderen.
+#: 2. Ihre Aufgaben passen nicht in einen Test. «Start bei 26, 19 Schritte
+#:    nach links» braucht einen Zahlenstrahl daneben, sonst ist es eine
+#:    Kopfrechenübung mit Ansage. In der Lektion ist der Zahlenstrahl da,
+#:    im Test nicht.
+#: 3. Sie standen am ENDE des Durchgangs, weil die Warteschlange nach
+#:    Erhebungsrelevanz sortiert ist und Kapitel 1 dort keine hat. Ein
+#:    starker Schüler bekam darum ausgerechnet zum Schluss die leichtesten
+#:    Aufgaben des ganzen Tests — und wenn er dabei einmal danebengriff,
+#:    schickte ihn die App nach Kapitel 1.
+#:
+#: Für schwache Schüler ändert das nichts: sie landen ohnehin bei 1.1,
+#: weil nichts darüber sitzt. Für starke werden Kapitel 1 und 2 über die
+#: Grundlagenregel gutgeschrieben.
+OHNE_KAPITEL = {1, 2}
+
+
 def straenge() -> list[Strang]:
-    """Alle Stränge, nach Netztiefe geordnet — leicht zuerst.
+    """Alle prüfbaren Stränge, nach Netztiefe geordnet — leicht zuerst.
 
     Grundlage ist `SCHABLONE_FUER`. Eine Lektion ohne Generator kann nicht
-    geprüft werden und taucht darum auch nicht auf.
+    geprüft werden und taucht darum auch nicht auf; dasselbe gilt für die
+    Kapitel in `OHNE_KAPITEL`.
     """
     gruppen: dict[str, list[str]] = {}
     for lektion, kap in SCHABLONE_FUER.items():
+        if int(lektion.split(".")[0]) in OHNE_KAPITEL:
+            continue
         gruppen.setdefault(kap, []).append(lektion)
     return [Strang(k, v) for k, v in sorted(gruppen.items(), key=lambda p: _num(p[0]))]
 
@@ -321,7 +347,23 @@ class Einstufung:
                 i = max(0, min(len(alle) - 1, (self.lo + self.hi) // 2))
                 s = alle[i]
                 if s.mitte not in self.geprueft:
-                    return (s.nr, s.mitte, "B")
+                    # ── DIE ERSTE FRAGE ENTSCHEIDET, OB JEMAND DRANBLEIBT ──
+                    # Bisher startete der Test in der Mitte der Leiter auf
+                    # Level B. Für eine Schülerin aus der Primarschule ist
+                    # das eine Aufgabe, die sie nicht lösen KANN — und die
+                    # Rückmeldung des Tests lautet damit von der ersten
+                    # Sekunde an: du gehörst hier nicht hin.
+                    #
+                    # Die Suche bleibt binär, aber die STUFE hängt jetzt am
+                    # bisherigen Verlauf: solange nichts gelöst wurde, wird
+                    # leicht gefragt. Wer die leichte Frage löst, bekommt
+                    # sofort eine schwerere — ein starker Schüler verliert
+                    # dadurch höchstens eine Aufgabe, ein schwacher gewinnt
+                    # den ganzen Test.
+                    geloest = sum(1 for x in self.protokoll if x[2])
+                    level = "A" if geloest == 0 else (
+                        "B" if geloest < 2 else "C")
+                    return (s.nr, s.mitte, level)
             self.phase = "straenge"
             self.warteschlange = self._reihenfolge()
 
@@ -770,7 +812,44 @@ class Einstufung:
             return "im Aufbau"
         return "am Anfang"
 
+    UNTERGRENZE = {3: "5.1", 2: "4.1"}
+
+    def _grundlagen_gutschreiben(self) -> None:
+        """Wer oben besteht, muss unten nicht mehr geprüft werden.
+
+        Ein Schüler, der Bruchgleichungen und Potenzgesetze löst, kann
+        Kapitel 1 bis 4 — Vorzeichen, Zahlengerade, Punkt vor Strich. Ihn
+        dort einsteigen zu lassen, weil der Test es nicht ausdrücklich
+        geprüft hat, ist Zeitverschwendung und der sicherste Weg, ihn zu
+        verlieren.
+
+        Die Umkehrung gilt NICHT: Es wird nur gutgeschrieben, was UNTER dem
+        erreichten Niveau liegt, nie darüber. Und wenn er in den Lektionen
+        ab Kapitel 5 doch stolpert, holt ihn die Lückensuche zurück — sie
+        springt dann gezielt in die Grundlagen. Gutschreiben heisst also
+        «nicht der Reihe nach durcharbeiten», nicht «für immer erledigt».
+        """
+        grenze = self.UNTERGRENZE.get(max(0, min(3, self.niveau)))
+        if not grenze:
+            return
+
+        # Das Niveau allein reicht nicht als Nachweis. Wer sich mit Mühe auf
+        # Stufe drei hochgearbeitet hat, aber die Hälfte falsch hatte, bekommt
+        # die Grundlagen NICHT geschenkt — sonst ist ausgerechnet der Schüler
+        # betroffen, der sie am nötigsten hätte. Verlangt sind mindestens
+        # sieben von zehn richtig gelösten Sonden.
+        geloest = sum(1 for x in self.protokoll if x[2])
+        if not self.protokoll or geloest / len(self.protokoll) < 0.7:
+            return
+        schwelle = _num(grenze)
+        for lektion in SCHABLONE_FUER:
+            if _num(lektion) < schwelle:
+                self.sicher.add(lektion)
+
     def bericht(self) -> dict:
+        # Erst die Grundlagen gutschreiben, dann alles daraus berechnen —
+        # sonst stünde im Plan noch, was gerade erlassen wurde.
+        self._grundlagen_gutschreiben()
         ziel = zielmenge()
         g = len(ziel & self.sicher)
         plan = self.plan()

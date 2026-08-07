@@ -225,6 +225,17 @@
     }
 
     .rueckmeldung.success { background: #F0FFF4; border: 2px solid #9AE6B4; color: #22543D; }
+
+    /* Die Erfolgsmeldung verschwindet von selbst. Zwei Sekunden stehen,
+       dann eine halbe Sekunde ausblenden — lang genug zum Lesen, kurz
+       genug, um nicht in die naechste Aufgabe hineinzuragen. */
+    .rueckmeldung.verblasst {
+        animation: wegblenden 0.5s ease-out 2s forwards;
+    }
+    @keyframes wegblenden {
+        to { opacity: 0; visibility: hidden; margin-top: 0;
+             padding-top: 0; padding-bottom: 0; height: 0; }
+    }
     .rueckmeldung.error   { background: #FFF5F5; border: 2px solid #FEB2B2; color: #822727; }
     .rueckmeldung.warning { background: #FFFFF0; border: 2px solid #F6E05E; color: #744210; }
 
@@ -331,10 +342,47 @@
         background: rgba(255,255,255,0.14);
         border-radius: 18px;
         margin: 16px 0 12px;
-        height: 92px;
+        /* Mindestens so hoch wie bisher, aber wachsend: der Lift steht
+           senkrecht und braucht mehr Platz als eine Zeile. */
+        min-height: 92px;
+        height: auto;
+        padding: 8px 0;
+    }
+    .th-umbruch { flex-basis: 100%; height: 0; }
+
+    /* Stehende Bilder — der Lift in Kapitel 1. Der Text bringt seine
+       Zeilenumbrueche selbst mit; `pre-line` sagt dem Browser, dass er sie
+       beachten soll. Keine Flexbox-Tricks, nichts, was schiefgehen kann. */
+    /* Der Bruchbalken in Kapitel 2 — gleiche Technik wie der Lift:
+       ein mehrzeiliger Text, den der Browser selbst umbricht. */
+    .th-bild {
+        white-space: pre-line;
+        text-align: left;
+        line-height: 1.5;
+        font-size: 1.15rem;
+        letter-spacing: 0.04em;
+    }
+
+    .th-lift {
+        white-space: pre-line;
+        text-align: left;
+        line-height: 1.35;
+        font-size: 1.25rem;
+        letter-spacing: 0.02em;
+    }
+
+    /* Stehende Bilder — der Lift in Kapitel 1. Acht Stockwerke brauchen
+       Platz; auf schmalen Fenstern wird die Schrift kleiner statt die
+       Buehne hoeher, damit die Aufgabe darunter sichtbar bleibt. */
+    .theorie-buehne.buehne-hoch { min-height: 290px; }
+    @media (max-width: 520px) {
+        .theorie-buehne.buehne-hoch { min-height: 250px; }
+        .buehne-hoch .th-lift { font-size: 1.05rem; }
     }
     .th-zeile {
         position: absolute; inset: 0;
+        /* Bei stehenden Bildern zaehlt die Zeilenhoehe, nicht die Mitte. */
+        line-height: 1.15;
         display: flex; align-items: center; justify-content: center;
         flex-wrap: wrap; gap: 2px;
         font-size: 1.9rem; font-weight: 600;
@@ -466,11 +514,30 @@
                 <label for="th-zu" class="th-schliessen" title="Ausblenden">✕</label>
             </div>
 
-            <div class="theorie-buehne">
+            {# Alle Schritte liegen absolut uebereinander — dadurch waechst
+               die Buehne NICHT mit ihrem Inhalt. Ein stehendes Bild wie der
+               Lift ragt sonst unsichtbar aus der Buehne heraus: das Markup
+               ist da, zu sehen ist nichts. Enthaelt ein Schritt Umbrueche,
+               bekommt die Buehne darum von Hand mehr Hoehe. #}
+            {# Enthaelt eine Animation ein stehendes Bild, braucht die Buehne
+               mehr Hoehe: die Schritte liegen absolut uebereinander und
+               lassen den Rahmen nicht mitwachsen. #}
+            {% set hat_umbruch = theorie.schritte
+               | map(attribute='teile') | map('list') | sum(start=[])
+               | selectattr('s', 'in', ['lift', 'bild']) | list | length > 0 %}
+            <div class="theorie-buehne{% if hat_umbruch %} buehne-hoch{% endif %}">
                 {% for schritt in theorie.schritte %}
                 <div class="th-zeile">
                     {% for teil in schritt.teile %}
+                    {%- if teil.t == "\n" -%}
+                    {# Zeilenumbruch fuer stehende Bilder wie den Lift. In
+                       einem Flex-Container erzwingt ein Element mit voller
+                       Breite und Hoehe null den Umbruch — ohne dass die
+                       Animationstechnik geaendert werden muss. #}
+                    <div class="th-umbruch"></div>
+                    {%- else -%}
                     <span class="th-teil{% if teil.s %} th-{{ teil.s }}{% endif %}">{{ teil.t }}</span>
+                    {%- endif -%}
                     {% endfor %}
                 </div>
                 {% endfor %}
@@ -542,7 +609,12 @@
 
         <!-- Konkrete Rueckmeldung zur letzten Antwort -->
         {% if antwort_text %}
-        <div class="rueckmeldung {{ antwort_status }}">
+        {# Bei RICHTIG blendet sich die Meldung nach kurzer Zeit selbst aus.
+           Sie stand bisher stehen, bis die naechste Antwort kam — und bei der
+           naechsten Aufgabe las man immer noch «Richtig!», was aussah, als
+           gehoere es zur neuen Aufgabe. Bei einem FEHLER bleibt sie stehen:
+           dort steht die Erklaerung, und die soll man in Ruhe lesen koennen. #}
+        <div class="rueckmeldung {{ antwort_status }}{% if antwort_status == 'success' %} verblasst{% endif %}">
             {% if antwort_status == 'success' %}✅{% elif antwort_status == 'warning' %}🟡{% else %}❌{% endif %}
             {{ antwort_text }}
         </div>
