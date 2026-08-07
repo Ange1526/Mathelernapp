@@ -160,6 +160,25 @@
     .chapters-grid.fein .chapter-title { font-size: 0.9rem; margin-bottom: 10px; line-height: 1.35; }
     .chapter-card.gesperrt { opacity: 0.45; }
 
+    .test-offen-kasten {
+        background: #F3EDFA;
+        border: 1px solid #D6BCF0;
+        border-radius: 20px;
+        padding: 18px 22px;
+        margin-bottom: 20px;
+        color: #5B4380;
+        line-height: 1.55;
+    }
+    .test-offen-kasten strong { display: block; margin-bottom: 4px;
+                                color: #4A2F73; }
+    .btn-test-weiter {
+        display: inline-block; margin-top: 12px;
+        background: linear-gradient(135deg, #7F73CF 0%, #B885DC 100%);
+        color: #fff; text-decoration: none;
+        padding: 10px 20px; border-radius: 12px; font-weight: 600;
+        font-size: 0.95rem;
+    }
+
     /* Medaillen */
     .medaillen-reihe {
         background: white;
@@ -234,7 +253,20 @@
             <span class="kapitel-name">{{ kap.titel }}</span>
             <span class="kapitel-zaehler">{{ kap.fertig }} von {{ kap.gesamt }} sicher</span>
         </div>
-            {# ── Medaillensammlung ──────────────────────────────────────────────
+            {% if test_offen %}
+    {# Der Starttest laeuft noch. Ohne diesen Hinweis stuende der Schueler
+       auf einer Lernreise, in der fast alles gesperrt ist, und wuesste
+       nicht warum. #}
+    <div class="test-offen-kasten">
+        <strong>Dein Starttest ist noch nicht fertig.</strong>
+        Solange er läuft, ist dein Lernweg noch nicht festgelegt und die
+        meisten Lektionen bleiben zu. Du kannst jederzeit weitermachen — es
+        geht dort weiter, wo du aufgehört hast.
+        <a href="{{ url_for('einstufung') }}" class="btn-test-weiter">Starttest fortsetzen</a>
+    </div>
+    {% endif %}
+
+    {# ── Medaillensammlung ──────────────────────────────────────────────
        Eine Medaille je vollstaendig abgeschlossenem Kapitel. Die noch
        offenen stehen blass daneben — so sieht man, was es zu holen gibt,
        ohne dass es nach Mahnung aussieht. #}

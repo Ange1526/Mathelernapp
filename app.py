@@ -799,7 +799,24 @@ def dashboard():
     # Lernreise: der Test wird nie angeboten, der Lernweg bleibt leer, und
     # Kacheln wie «Gemischte Aufgaben» tauchen gar nicht erst auf, weil noch
     # keine Lektion als sicher gilt. /start leitet von hier korrekt weiter.
-    if not lw.eingestuft:
+    # ── Wer noch nicht eingestuft ist ────────────────────────────────────
+    #
+    # Vorher schickte diese Stelle JEDEN unverzueglich in den Starttest.
+    # Damit gab es keinen Ausweg mehr: der Knopf «Abbrechen und zur
+    # Lernreise» fuehrte aufs Dashboard, das Dashboard zurueck in den Test.
+    # Wer einmal drin war, kam bis zum Ende nicht mehr heraus.
+    #
+    # Jetzt gilt: wer noch NIE angefangen hat, wird weitergeleitet — er
+    # braucht den Test, um ueberhaupt einen Lernweg zu bekommen. Wer schon
+    # mittendrin ist, darf aufs Dashboard und bekommt dort einen Hinweis
+    # mit dem Weg zurueck in den Test.
+    # Massstab ist die Zahl der BEANTWORTETEN Aufgaben, nicht die blosse
+    # Existenz eines Zwischenstands: der entsteht schon beim Anzeigen der
+    # ersten Frage. Sonst koennte man den Test mit einem Klick aufs Logo
+    # umgehen, ohne eine einzige Aufgabe geloest zu haben.
+    stand = einstufung_laden()
+    test_laeuft = bool(stand.get("gestellt"))
+    if not lw.eingestuft and not test_laeuft:
         return redirect(url_for("start"))
 
     doppelte_bauformen_zusammenlegen()
@@ -895,6 +912,7 @@ def dashboard():
 
     return render_template(
         "dashboard.html",
+        test_offen=(not lw.eingestuft),
         medaillen=medaillen,
         medaillen_gesamt=len([k for k in kapitel_liste
                               if str(k["nummer"]) != "16"]),
