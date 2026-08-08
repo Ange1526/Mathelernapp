@@ -2314,6 +2314,36 @@ def neu_starten():
     return render_template("neu_starten.html")
 
 
+# ── Sackgassen vermeiden ───────────────────────────────────────────────────
+#
+# Die Pruef-Adressen nehmen nur POST an. Ruft der Browser sie mit GET auf,
+# antwortet Flask mit «Method Not Allowed» — einer weissen Seite ohne
+# Ausweg, mitten im Starttest.
+#
+# Das passiert oefter, als man denkt: der Server startet waehrend einer
+# abgeschickten Antwort neu (bei Render nach jedem Deploy), der Browser
+# versucht es erneut und macht daraus ein GET. Oder jemand drueckt den
+# Zurueck-Knopf, oder laedt nach einem Absturz die Seite neu. Genau das ist
+# einer Testperson nach zwoelf Aufgaben passiert.
+#
+# Statt der Fehlerseite fuehrt ein GET jetzt dorthin zurueck, wo die Person
+# herkam. Der Zwischenstand liegt in der Datenbank, es geht also nichts
+# verloren — sie sieht einfach wieder ihre Aufgabe.
+@app.errorhandler(405)
+def methode_nicht_erlaubt(fehler):                    # noqa: ARG001
+    weg = request.path
+    if not current_user.is_authenticated:
+        return redirect(url_for("login"))
+    if weg.startswith("/einstufung"):
+        return redirect(url_for("einstufung"))
+    if weg.startswith("/probe"):
+        return redirect(url_for("probe"))
+    if weg.startswith(("/check", "/naechste", "/markieren",
+                       "/luecke-schliessen", "/level-ueberspringen")):
+        return redirect(url_for("lernen"))
+    return redirect(url_for("dashboard"))
+
+
 # ── Start ──────────────────────────────────────────────────────────────────────
 def spalten_nachziehen():
     """Fehlende Spalten in bestehenden Tabellen anlegen.
@@ -2403,12 +2433,22 @@ def spalten_nachziehen():
                                    tabelle.name, spalte.name, fehler)
 
 
-with app.app_context():
-    db.create_all()
-    spalten_nachziehen()
-
-if __name__ == "__main__":
-    # ── Start ────────────────────────────────────────────────────────────
+# ── Sackgassen vermeiden ───────────────────────────────────────────────────
+#
+# Die Pruef-Adressen nehmen nur POST an. Ruft der Browser sie mit GET auf,
+# antwortet Flask mit «Method Not Allowed» — einer weissen Seite ohne
+# Ausweg, mitten im Starttest.
+#
+# Das passiert oefter, als man denkt: der Server startet waehrend einer
+# abgeschickten Antwort neu (bei Render nach jedem Deploy), der Browser
+# versucht es erneut und macht daraus ein GET. Oder jemand drueckt den
+# Zurueck-Knopf, oder laedt nach einem Absturz die Seite neu. Genau das ist
+# einer Testperson nach zwoelf Aufgaben passiert.
+#
+# Statt der Fehlerseite fuehrt ein GET jetzt dorthin zurueck, wo die Person
+# herkam. Der Zwischenstand liegt in der Datenbank, es geht also nichts
+# verloren — sie sieht einfach wieder ihre Aufgabe.
+# ── Start ────────────────────────────────────────────────────────────
     # `app.run(debug=True)` horcht nur auf 127.0.0.1 — also NUR auf dem
     # Rechner, auf dem es laeuft. Fuer den eigenen Test ist das richtig,
     # fuer zehn Mitschueler nicht: sie kommen nicht heran.
